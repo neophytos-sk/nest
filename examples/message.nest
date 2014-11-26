@@ -1,10 +1,4 @@
-
-# Note that the meta "::typesys::lang::struct" command
-# is only used to define the new "struct" command,
-# which follows the unfolding of the nested ("nest")
-# calls dictated by "::typesys::lang::struct".
-#
-# ::basesys::lang::struct struct { ... }
+# ::nest::lang::struct struct { ... }
 
 struct struct {
     varchar name
@@ -23,17 +17,6 @@ struct struct {
     bool is_final_if_no_scope
 }
 
-# If any of our other structs has a slot named email
-# then we have to qualify the name, otherwise the struct
-# instance takes precedence (TODO: workaround needed).
-#
-# In fact, we have to qualify it in order to be able to 
-# use both forms to instantiate an instance of the struct
-# in one hand, and a value of base_type in the other hand.
-#
-# In other words, msg3 would produce the correct output
-# in any case, whereas msg4 would require the use of the
-# qualified name.
 
 struct email {
     varchar name = ""
@@ -213,8 +196,3 @@ message msg4 {
     }}
 }
 
-#message msg5 -subject "hello" -body "this is a test" {
-#    email from -name "zena wow" -address "zena@example.com"
-#}
-
-#db_insert -scope {user} -what msg1
