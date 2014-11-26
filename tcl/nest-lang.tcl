@@ -187,7 +187,6 @@ define_lang ::nest::lang {
     keyword "typeinst"
 
     # nest argument holds nested calls in the procs below
-    # i.e. with_context, nest, meta_helper
     proc nest {nest name args} {
         set tag [top_fwd]
         keyword $name
