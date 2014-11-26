@@ -26,6 +26,6 @@ https://github.com/neophytos-sk/nest
 
 Dependencies: 
 
-* TCL (http://www.tcl/tk)
+* TCL (http://www.tcl.tk)
 
 * tDOM (https://tdom.github.com)
