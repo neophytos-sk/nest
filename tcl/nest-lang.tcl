@@ -196,7 +196,6 @@ define_lang ::nest::lang {
         set nsp [uplevel {namespace current}]
         set type $tag
         set cmd [list [namespace which "node"] $tag $name {*}$args]
-        #set cmd [list [namespace which "node"] "typeinst" $name -x-type $type -x-nsp $nsp {*}$args]
         set node [uplevel $cmd]
 
         log "!!! nest: $name -> $nest"
