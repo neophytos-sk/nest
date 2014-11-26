@@ -585,9 +585,7 @@ define_lang ::nest::lang {
                            nsp CDATA #IMPLIED
                            default_value CDATA #IMPLIED
                            optional_p CDATA #IMPLIED
-                           container_type CDATA #IMPLIED
-                           subtype CDATA #IMPLIED
-                           lang_nsp CDATA #IMPLIED>
+                           container_type CDATA #IMPLIED>
 
             <!ELEMENT typeinst ANY>
             <!ATTLIST typeinst x-name CDATA #REQUIRED
