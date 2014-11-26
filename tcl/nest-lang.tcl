@@ -452,10 +452,8 @@ define_lang ::nest::lang {
     }
 
     proc is_declaration_mode_p {} {
-        # set context [top_context_of_type "eval"]
         variable stack_ctx
         set context [lindex $stack_ctx end]
-        #if { $context eq {proc metatype struct} || $context eq {proc meta metatype} }
         if { $context eq {proc struct struct} || $context eq {proc meta struct} } {
             return 1
         }
