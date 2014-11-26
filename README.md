@@ -29,3 +29,5 @@ Dependencies:
 * TCL (http://www.tcl.tk)
 
 * tDOM (https://tdom.github.com)
+
+* libxml2 (http://www.xmlsoft.org) [xmllint needed for the read-nest.tcl example]
