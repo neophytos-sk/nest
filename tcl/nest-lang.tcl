@@ -391,7 +391,7 @@ define_lang ::nest::lang {
     
     meta "typedecl" [namespace which "typedecl_helper"]
 
-    ::dom::createNodeCmd textNode t
+    dom createNodeCmd textNode t
 
     proc nt {text} { t -disableOutputEscaping ${text} }
 
@@ -407,7 +407,7 @@ define_lang ::nest::lang {
         set llength_args [llength $args]
         if { $llength_args == 2 } {
             if { [lindex $args 0] eq {=} } {
-                set args [list [list [namespace which "t"] [lindex $args 1]]]
+                set args [list [list ::nest::lang::t [lindex $args 1]]]
             }
         } elseif { $llength_args == 1 } {
 
@@ -424,7 +424,7 @@ define_lang ::nest::lang {
             set lookahead_ctx [get_lookahead_ctx $inst_type]
             lassign $lookahead_ctx lookahead_ctx_type lookahead_ctx_tag lookahead_ctx_name
             if { $lookahead_ctx_tag eq {base_type} } {
-                set args [list [list [namespace which "t"] [lindex $args 0]]]
+                set args [list [list ::nest::lang::t [lindex $args 0]]]
             }
         }
     }
