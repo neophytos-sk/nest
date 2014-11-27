@@ -71,12 +71,12 @@ message msg4 {
     subject "hello"
     body "this is a test"
 
-    break
-
     from {
         name "zena wow"
         address "zena@example.com"
     }
+
+    break
 
 
     to {

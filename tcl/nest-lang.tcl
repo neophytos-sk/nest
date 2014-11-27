@@ -203,9 +203,10 @@ define_lang ::nest::lang {
         log "!!! nest: $name -> $nest"
 
         set ctx [list {nest} $tag $name]
-        set_lookahead_ctx $name $ctx ;# needed by container_helper and type_helper
+        set alias_name [get_eval_path $name]
+        set_lookahead_ctx $alias_name $ctx ;# needed by container_helper and type_helper
         set nest [list with_ctx $ctx {*}$nest]
-        uplevel [list [namespace which "alias"] [get_eval_path $name] $nest]
+        uplevel [list [namespace which "alias"] $alias_name $nest]
 
 
         set cmd [list [namespace which {node}] $tag $name -x-type $tag {*}$args]
@@ -222,7 +223,7 @@ define_lang ::nest::lang {
             $node appendFromScript {
                 foreach typedecl [$node selectNodes {child::typedecl}] {
                     log "!!! nest: instantiate empty slot ${name}.[$typedecl @x-name]"
-                    typeinst slot [$typedecl @x-name]
+                    typeinst struct.slot [$typedecl @x-name]
                 }
                 struct.type $tag
                 struct.name $name
@@ -238,7 +239,7 @@ define_lang ::nest::lang {
 
                     log "!!! nest: instantiate full slot ${name}.[$typedecl @x-name]"
 
-                    typeinst slot [$typedecl @x-name] [subst -nocommands -nobackslashes {
+                    typeinst struct.slot [$typedecl @x-name] [subst -nocommands -nobackslashes {
                         struct.slot.name [$typedecl @x-name]
                         struct.slot.type [$typedecl @x-type]
                         struct.slot.parent ${name}
@@ -588,8 +589,10 @@ define_lang ::nest::lang {
 
         set tag [top_fwd]  ;# varchar nsp -> tag=varchar name=nsp
 
-        log "--->>> (type_helper) $tag $name {*}$args"
+        log "--->>> (type_helper) $tag [list $name] \n\t args=[list $args] \n ___"
         
+        log "____ lookahead_ctx=[get_lookahead_ctx $tag]"
+
         # ctx_type = (typedecl | typeinst)
         # tag = (varchar | bool | varint | ... | message)
 
