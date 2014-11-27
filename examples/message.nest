@@ -70,14 +70,11 @@ struct message {
 message msg4 {
     subject "hello"
     body "this is a test"
-    break
 
     from {
         name "zena wow"
         address "zena@example.com"
     }
-
-
 
     to {
         name "paris love"
@@ -91,6 +88,7 @@ message msg4 {
         name "someone great" 
         address "someone@example.com" 
     }
+
     multiple bcc {{
         name "vera cool"
         address "vera@example.com"

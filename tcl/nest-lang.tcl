@@ -4,7 +4,7 @@ package provide nest 0.1
 
 define_lang ::nest::lang {
 
-    variable debug 1
+    variable debug 0
     variable stack_ctx [list]
     variable stack_fwd [list]
 
@@ -102,6 +102,11 @@ define_lang ::nest::lang {
         return [string trimright $context_path "."]
     }
 
+    # used to get the full alias name
+    proc get_eval_path {name} {
+        join [concat [get_context_path_of_type {eval}] ${name}] {.}
+    }
+
     # context := {context_type context_tag context_name}
     proc set_lookahead_ctx {name context} {
         variable lookahead_ctx
@@ -190,10 +195,6 @@ define_lang ::nest::lang {
 
 
     alias {node} {lambda {tag name args} {with_ctx [list "eval" $tag $name] ::dom::execNodeCmd elementNode $tag -x-name $name {*}$args}}
-
-    proc get_eval_path {name} {
-        join [concat [get_context_path_of_type {eval}] ${name}] {.}
-    }
 
     # nest argument holds nested calls in the procs below
     proc nest {nest name args} {
@@ -285,7 +286,7 @@ define_lang ::nest::lang {
             # we need to decide whether it is a declaration
             # or an instantiation
             #HERE
-            if { ![is_declaration_mode_p] } {
+            if { ![declaration_mode_p] } {
                 # (map | multiple) slot_name instantiation_script
                 set instantiation_p 1
             } else {
@@ -477,37 +478,6 @@ define_lang ::nest::lang {
         }
     }
 
-    proc typedecl_helper {decl_type decl_name args} {
-        set decl_tag [top_fwd]
-
-        typedecl_args args
-        set cmd [list with_ctx [list {typedecl} $decl_type $decl_name] [namespace which {node}] {typedecl} $decl_name -x-type $decl_type {*}$args]
-        set node [uplevel $cmd]
-
-        set context_path [get_context_path_of_type "eval"]
-
-        log "--->>> (typedecl_helper) decl_type=$decl_type decl_name=$decl_name context_path=[list $context_path] stack_ctx=[list $::nest::lang::stack_ctx]"
-
-        if { ${context_path} ne {} } {
-            set dotted_name "${context_path}.$decl_name"
-        } else {
-            set dotted_name ${decl_name}
-        }
-
-        # EXPERIMENTAL
-        set_lookahead_ctx $dotted_name [list proc $decl_type $decl_name]
-
-        set dotted_nest [list {typeinst} $decl_type $dotted_name]
-        set dotted_nest [list with_ctx [list {typedecl} $decl_type $dotted_name] {*}$dotted_nest] 
-        set cmd [list [namespace which "alias"] $dotted_name $dotted_nest]
-        uplevel $cmd
-
-        return $node
-
-    }
-    
-    meta_old {typedecl} [namespace which "typedecl_helper"]
-
     dom createNodeCmd textNode t
 
     proc nt {text} { t -disableOutputEscaping ${text} }
@@ -556,62 +526,85 @@ define_lang ::nest::lang {
 
         log "--->>> (typeinst_helper) inst_type=$inst_type inst_name=$inst_name stack_ctx=[list $::nest::lang::stack_ctx]"
         
-        set cmd [list with_ctx [list {typeinst} $inst_type $inst_name] [namespace which {node}] {typeinst} $inst_name -x-type $inst_type {*}$args]
+        set cmd [list [namespace which {node}] {typeinst} $inst_name -x-type $inst_type {*}$args]
         return [uplevel $cmd]
 
     }
 
     meta_old  "typeinst" [namespace which "typeinst_helper"]
 
-    proc is_dotted_p {name} {
-        return [expr { [llength [split ${name} {.}]] > 1 }]
-    }
+    meta_old {typedecl} [namespace which "type_helper"]
 
-    proc top_mode_ctx {} {
+    proc declaration_mode_p {} {
         variable stack_ctx
-        set ctx [lsearch -inline -index 0 -not $stack_ctx "eval"]
-    }
 
-    proc is_declaration_mode_p {} {
-
-        #log "--- check mode ctx: stack_ctx=$stack_ctx"
-
-        set ctx [top_mode_ctx]
-        lassign $ctx ctx_type ctx_tag ctx_name
-        if { $ctx_tag eq {typedecl} } {
+        set first_ctx [lindex $stack_ctx end] 
+        if { $first_ctx eq {nest meta struct} || $first_ctx eq {eval meta struct} } {
             return 1
         }
 
         return 0
     }
 
-    proc type_helper {name args} {
+    proc type_helper {args} {
 
         set tag [top_fwd]  ;# varchar nsp -> tag=varchar name=nsp
 
-        log "--->>> (type_helper) $tag [list $name] \n\t args=[list $args] \n ___"
-        
-        log "____ lookahead_ctx=[get_lookahead_ctx $tag]"
+        log "!!! tag=$tag args=[list $args] stack_ctx=$::nest::lang::stack_ctx decl_p=[declaration_mode_p]"
 
-        # ctx_type = (typedecl | typeinst)
-        # tag = (varchar | bool | varint | ... | message)
+        if { [declaration_mode_p] } {
 
-        # TEMPORARY HACK, WE NEED TO INSPECT THE STATE
-        # TO DECIDE WHETHER WE ARE DEALING WITH A
-        # typeinst OR typedecl.
-        #
-        # FOR THE TIME BEING, IF IT HAS A SCRIPT/BODY
-        # IT IS TREATED AS typeinst
-        #
-        set llength_args [llength $args]
-        if { $llength_args % 2 == 1 } {
-            set ctx_type {typeinst}
+            # deal with args and create dom node
+            set args [lassign $args name]
+            if { [lindex $args 0] eq {=} } {
+                set args [lreplace $args 0 0 "-x-default_value"]
+            }
+
+            set decl_name $name
+            set decl_type $tag
+
+            set cmd [list [namespace which {node}] {typedecl} $decl_name -x-type $decl_type {*}$args]
+            set node [uplevel $cmd]
+
+            # get full alias name and register the alias
+            set alias_name [get_eval_path $decl_name]
+            set_lookahead_ctx $alias_name [list "nest/typedecl" $decl_type $decl_name]
+            set dotted_nest [list {typeinst} $decl_type $alias_name]
+            set dotted_nest [list with_ctx [list {typedecl} $decl_type $alias_name] {*}$dotted_nest] 
+            set cmd [list [namespace which "alias"] $alias_name $dotted_nest]
+            uplevel $cmd
+
+            log "--->>> (type_helper - declaration done) decl_type=$decl_type decl_name=$decl_name alias_name=$alias_name stack_ctx=[list $::nest::lang::stack_ctx]"
+
+
+            return $node
+
         } else {
-            set ctx_type {typedecl}
+
+            set inst_name $tag
+            lassign [get_lookahead_ctx $inst_name] ctx_type ctx_tag ctx_name
+            set inst_type $ctx_tag
+
+            if { $inst_type eq {base_type} } {
+
+                # message.subject "hello" 
+                # => tag=message.subject args={{hello}} 
+                # => inst_name=message.subject inst_type=base_type
+                
+                set args [lassign $args arg0]
+                if { $args ne {} } { error "something error with instantiation statement" }
+                set cmd [list [namespace which {node}] {typeinst} $tag -x-type $ctx_tag [list ::nest::lang::t $arg0]]
+                return [uplevel $cmd]
+
+            } else {
+
+                set cmd [list [namespace which {node}] {typeinst} $inst_name -x-type $inst_type {*}$args]
+                return [uplevel $cmd]
+
+            }
+
         }
-        set cmd [list $ctx_type $tag $name {*}$args]
-        set node [uplevel $cmd]
-        return $node
+
     }
 
     meta_old  "base_type" {nest {type_helper}}
@@ -642,8 +635,7 @@ define_lang ::nest::lang {
 
     proc unknown {field_type field_name args} {
 
-        set stack_ctx $::nest::lang::stack_ctx
-        #set stack_ctx [lsearch -all -inline -index 0 $stack_ctx {typedecl}]
+        variable stack_ctx
         set stack_ctx [lsearch -all -inline -index 0 $stack_ctx {nest}]
 
         log "--->>> (unknown) $field_type $field_name args=$args stack_ctx=[list $stack_ctx]"
@@ -738,54 +730,25 @@ define_lang ::nest::lang {
         ]>
     }
 
-    if {1} {
+    alias {meta} {lambda {metaCmd args} {{*}$metaCmd {*}$args}}
 
-        # THIS IS THE WAY THINGS SHOULD BE
-        # WORK IN PROGRESS
+    meta {nest} {nest {nest {type_helper}}} {struct} {
+        varchar name
+        varchar type
+        varchar nsp
 
-        alias {meta} {lambda {metaCmd args} {{*}$metaCmd {*}$args}}
-
-        meta {nest} {nest {nest {type_helper}}} {struct} {
+        # multiple struct slot = {} 
+        struct slot {
+            varchar parent
             varchar name
             varchar type
-            varchar nsp
-
-            #multiple struct slot = {} 
-            struct slot {
-                varchar parent
-                varchar name
-                varchar type
-                varchar default_value = ""
-                bool optional_p = false
-                varchar container = ""
-            }
-
-            varchar pk
-            bool is_final_if_no_scope
-
+            varchar default_value = ""
+            bool optional_p = false
+            varchar container = ""
         }
 
-    } else {
-
-        meta_old {struct} {nest {nest {type_helper}}} 
-        
-        struct struct {
-            varchar name
-            varchar type
-            varchar nsp
-
-            multiple struct slot = {} {
-                varchar parent
-                varchar name
-                varchar type
-                varchar default_value = ""
-                bool optional_p = false
-                varchar container = ""
-            }
-
-            varchar pk
-            bool is_final_if_no_scope
-        }
+        varchar pk
+        bool is_final_if_no_scope
 
     }
 
