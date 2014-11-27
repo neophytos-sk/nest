@@ -50,6 +50,7 @@ struct message {
 
     # typeinst section
     pk "message_id"
+    return
     is_final_if_no_scope "yes"
 
     # typedecl section
@@ -82,6 +83,9 @@ struct message {
     multiple varchar words
 
 }
+
+puts [array get ::nest::lang::aliases]
+return
 
 typeinst message msg1 {
 
