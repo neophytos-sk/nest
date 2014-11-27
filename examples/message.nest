@@ -131,7 +131,6 @@ message msg4 {
     }}
 }
 
-return
 
 # CORRECT
 message msg3 {
@@ -163,13 +162,15 @@ message msg3 {
         email.name "max loyal"
         email.address "max@example.com"
     }}
-    map message.wordcount_X {{
-        message.wordcount_X.word "the"
-        message.wordcount_X.count "123"
-    } {
-        message.wordcount_X.word "and"
-        message.wordcount_X.count "54"
-    }}
+    if {0} {
+        map message.wordcount_X {{
+            message.wordcount_X.word "the"
+            message.wordcount_X.count "123"
+        } {
+            message.wordcount_X.word "and"
+            message.wordcount_X.count "54"
+        }}
+    }
     map message.wordcount_Y {{
         word_count_pair.word "the"
         word_count_pair.count "123"
@@ -179,26 +180,24 @@ message msg3 {
     }}
 }
 
-if {0} {
-    typeinst message msg1 {
+message msg1 {
 
-        typeinst varchar subject = "hello"
+    typeinst varchar subject = "hello"
 
-        typeinst email from {
-            typeinst varchar name = "zena wow"
-            typeinst varchar address = "zena@example.com"
-        }
-
-        typeinst varchar body = "this is a test"
-
+    typeinst email from {
+        typeinst varchar name = "zena wow"
+        typeinst varchar address = "zena@example.com"
     }
 
-    message msg2 {
-        varchar subject = "hello"
-        email from {
-            varchar name = "zena wow"
-            varchar address = "zena@example.com"
-        }
-        varchar body = "this is a test"
+    typeinst varchar body = "this is a test"
+
+}
+
+message msg2 {
+    varchar subject "hello"
+    email from {
+        varchar name "zena wow"
+        varchar address "zena@example.com"
     }
+    varchar body "this is a test"
 }

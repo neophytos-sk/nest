@@ -188,21 +188,23 @@ define_lang ::nest::lang {
     #   keyword ${name}
     # }
 
+
     alias {node} {lambda {tag name args} {with_ctx [list "eval" $tag $name] ::dom::execNodeCmd elementNode $tag -x-name $name {*}$args}}
 
     # nest argument holds nested calls in the procs below
     proc nest {nest name args} {
-
         set tag [top_fwd]
         keyword $name
-        set decl_ctx [list {typedecl} $tag $name]
+
+
         set cmd [list [namespace which {node}] $tag $name -x-type $tag {*}$args]
         set node [uplevel $cmd]
 
         log "!!! nest: $name -> $nest"
 
-        set nest [list with_ctx $decl_ctx {*}$nest]
+        set decl_ctx [list {typedecl} $tag $name]
         set_lookahead_ctx $name $decl_ctx
+        set nest [list with_ctx $decl_ctx {*}$nest]
 
         uplevel [list [namespace which "alias"] $name $nest]
 
@@ -576,11 +578,6 @@ define_lang ::nest::lang {
             return 1
         }
 
-        if {$ctx_type eq {eval}} {
-            error "in eval context asking for mode"
-            return 1
-        }
-
         return 0
     }
 
@@ -588,14 +585,25 @@ define_lang ::nest::lang {
 
         set tag [top_fwd]  ;# varchar nsp -> tag=varchar name=nsp
 
-        set context [top_mode_ctx]
-        lassign $context mode_ctx_type mode_ctx_tag mode_ctx_name
-
-        log "--->>> (type_helper) $mode_ctx_type $tag $name {*}$args"
+        log "--->>> (type_helper) $tag $name {*}$args"
         
-        # mode_ctx_tag = (typedecl | typeinst)
-        # tag = (varchar | bool | varint | ... | ???object )
-        set cmd [list $mode_ctx_type $tag $name {*}$args]
+        # ctx_type = (typedecl | typeinst)
+        # tag = (varchar | bool | varint | ... | message)
+
+        # TEMPORARY HACK, WE NEED TO INSPECT THE STATE
+        # TO DECIDE WHETHER WE ARE DEALING WITH A
+        # typeinst OR typedecl.
+        #
+        # FOR THE TIME BEING, IF IT HAS A SCRIPT/BODY
+        # IT IS TREATED AS typeinst
+        #
+        set llength_args [llength $args]
+        if { $llength_args % 2 == 1 } {
+            set ctx_type {typeinst}
+        } else {
+            set ctx_type {typedecl}
+        }
+        set cmd [list $ctx_type $tag $name {*}$args]
         set node [uplevel $cmd]
         return $node
     }
@@ -690,7 +698,7 @@ define_lang ::nest::lang {
     dtd {
         <!DOCTYPE nest [
 
-            <!ELEMENT nest (struct | typeinst)*>
+            <!ELEMENT nest (struct | typedecl | typeinst)*>
             <!ELEMENT struct (struct | struct.slot | typedecl | typeinst)*>
             <!ATTLIST struct x-name CDATA #IMPLIED
                            x-type CDATA #REQUIRED
