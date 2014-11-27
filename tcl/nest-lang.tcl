@@ -191,6 +191,10 @@ define_lang ::nest::lang {
 
     alias {node} {lambda {tag name args} {with_ctx [list "eval" $tag $name] ::dom::execNodeCmd elementNode $tag -x-name $name {*}$args}}
 
+    proc get_eval_path {name} {
+        join [concat [get_context_path_of_type {eval}] ${name}] {.}
+    }
+
     # nest argument holds nested calls in the procs below
     proc nest {nest name args} {
         set tag [top_fwd]
@@ -201,7 +205,7 @@ define_lang ::nest::lang {
         set ctx [list {nest} $tag $name]
         set_lookahead_ctx $name $ctx ;# needed by container_helper and type_helper
         set nest [list with_ctx $ctx {*}$nest]
-        uplevel [list [namespace which "alias"] $name $nest]
+        uplevel [list [namespace which "alias"] [get_eval_path $name] $nest]
 
 
         set cmd [list [namespace which {node}] $tag $name -x-type $tag {*}$args]
@@ -209,7 +213,7 @@ define_lang ::nest::lang {
 
         #####
          
-        log [$node asXML]
+        # log [$node asXML]
 
         set nsp [uplevel {namespace current}]
 
@@ -674,6 +678,7 @@ define_lang ::nest::lang {
             }
         }
 
+        log "--->>> (unknown) aliases=[array get ::nest::lang::alias]"
         error "no redirect found for field: $field_type (field_name=$field_name args=[list $args])"
 
 
