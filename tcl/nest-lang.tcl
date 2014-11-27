@@ -196,21 +196,21 @@ define_lang ::nest::lang {
         set tag [top_fwd]
         keyword $name
 
+        set decl_ctx [list {typedecl} $tag $name]
+        set_lookahead_ctx $name $decl_ctx
 
         set cmd [list [namespace which {node}] $tag $name -x-type $tag {*}$args]
         set node [uplevel $cmd]
 
         log "!!! nest: $name -> $nest"
 
-        set decl_ctx [list {typedecl} $tag $name]
-        set_lookahead_ctx $name $decl_ctx
         set nest [list with_ctx $decl_ctx {*}$nest]
 
         uplevel [list [namespace which "alias"] $name $nest]
 
         set nsp [uplevel {namespace current}]
 
-        if { $tag ni {meta base_type} } {
+        if { $tag ni {meta meta_old base_type} } {
 
             $node appendFromScript {
                 foreach typedecl [$node selectNodes {child::typedecl}] {
@@ -256,12 +256,12 @@ define_lang ::nest::lang {
     #alias "shiftl" {lambda {_ args} {return $args}}
     #alias "chain" {lambda {args} {foreach arg $args {set args [{*}$arg {*}$args]}}}
 
-    alias {meta} {lambda {name nest args} {nest $nest $name {*}$args}}
+    alias {meta_old} {lambda {name nest args} {nest $nest $name {*}$args}}
 
 
     proc container_helper {arg0 args} {
 
-        # remove {proc meta map} from the top of the context stack
+        # remove {proc meta_old map} from the top of the context stack
         # and at the bottom, put it back so that it will be removed 
         # from whatever put it there
         set top_ctx [top_ctx]
@@ -442,7 +442,7 @@ define_lang ::nest::lang {
 
         }
 
-        # push the {proc meta map} context back to the top of the context stack
+        # push the {proc meta_old map} context back to the top of the context stack
         # as it were before we removed it in the beginning of this proc
         push_ctx $top_ctx
 
@@ -451,8 +451,8 @@ define_lang ::nest::lang {
 
     }
 
-    meta  "multiple" [namespace which "container_helper"]
-    meta  "map" [namespace which "container_helper"]
+    meta_old  "multiple" [namespace which "container_helper"]
+    meta_old  "map" [namespace which "container_helper"]
 
     proc typedecl_args {argsVar} {
 
@@ -498,7 +498,7 @@ define_lang ::nest::lang {
 
     }
     
-    meta {typedecl} [namespace which "typedecl_helper"]
+    meta_old {typedecl} [namespace which "typedecl_helper"]
 
     dom createNodeCmd textNode t
 
@@ -522,7 +522,7 @@ define_lang ::nest::lang {
 
             # we don't know which of the following two cases we are in
             # and the stack does not have the context info for this call
-            # i.e. the stack is {proc meta typeinst}
+            # i.e. the stack is {proc meta_old typeinst}
             #
             # message.subject "hello"
             # message.from { ... }
@@ -557,7 +557,7 @@ define_lang ::nest::lang {
 
     }
 
-    meta  "typeinst" [namespace which "typeinst_helper"]
+    meta_old  "typeinst" [namespace which "typeinst_helper"]
 
     proc is_dotted_p {name} {
         return [expr { [llength [split ${name} {.}]] > 1 }]
@@ -608,7 +608,7 @@ define_lang ::nest::lang {
         return $node
     }
 
-    meta  "base_type" {nest {type_helper}}
+    meta_old  "base_type" {nest {type_helper}}
 
     # a varying-length text string encoded using UTF-8 encoding
     base_type "varchar"
@@ -633,8 +633,6 @@ define_lang ::nest::lang {
 
     # a 64-bit floating point number
     base_type "double"
-
-    meta  "struct" {nest {nest {type_helper}}}
 
     proc unknown {field_type field_name args} {
 
@@ -732,6 +730,56 @@ define_lang ::nest::lang {
         ]>
     }
 
+    if {0} {
+
+        # THIS IS THE WAY THINGS SHOULD BE
+        # WORK IN PROGRESS
+
+        alias {meta} {{lambda} {metaCmd args} {{*}$metaCmd {*}$args}}
+
+        meta {nest} {nest {nest {type_helper}}} {struct} {struct} {
+            varchar name
+            varchar type
+            varchar nsp
+
+            multiple struct slot = {} {
+                varchar parent
+                varchar name
+                varchar type
+                varchar default_value = ""
+                bool optional_p = false
+                varchar container = ""
+            }
+
+            varchar pk
+            bool is_final_if_no_scope
+
+        }
+
+    } else {
+
+        meta_old {struct} {nest {nest {type_helper}}} 
+        
+        struct struct {
+            varchar name
+            varchar type
+            varchar nsp
+
+            multiple struct slot = {} {
+                varchar parent
+                varchar name
+                varchar type
+                varchar default_value = ""
+                bool optional_p = false
+                varchar container = ""
+            }
+
+            varchar pk
+            bool is_final_if_no_scope
+        }
+
+    }
+
     namespace export "struct" "varchar" "bool" "varint" "byte" "int16" "int32" "int64" "double" "multiple" "dtd" "lambda"
 
 }
@@ -740,6 +788,9 @@ define_lang ::nest::data {
     namespace import ::nest::lang::*
     namespace path [list ::nest::data ::nest::lang ::]
     namespace unknown ::nest::lang::unknown
+
+
+
 }
 
 
