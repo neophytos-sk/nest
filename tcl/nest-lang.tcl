@@ -4,7 +4,7 @@ package provide nest 0.1
 
 define_lang ::nest::lang {
 
-    variable debug 1
+    variable debug 0
     variable stack_ctx [list]
     variable stack_fwd [list]
 
