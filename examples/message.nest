@@ -1,7 +1,9 @@
 struct email {
     varchar name = ""
     varchar address
-    pk "address"
+    if (1) {
+        pk "address"
+    }
 }
 
 struct file {
@@ -28,8 +30,11 @@ struct word_count_pair {
 struct message {
 
     # typeinst section
-    pk "message_id"
-    is_final_if_no_scope "yes"
+    # new version breakpoint
+    if {1} {
+        pk "message_id"
+        is_final_if_no_scope "yes"
+    }
 
     # typedecl section
  
@@ -62,6 +67,8 @@ struct message {
 
 }
 
+# new version breakpoint
+#0return
 
 # CORRECT
 message msg4 {

@@ -210,6 +210,10 @@ define_lang ::nest::lang {
 
         set nsp [uplevel {namespace current}]
 
+# new version breakpoint        
+# return $node
+
+
         if { $tag ni {meta meta_old base_type} } {
 
             $node appendFromScript {
@@ -735,7 +739,7 @@ define_lang ::nest::lang {
         # THIS IS THE WAY THINGS SHOULD BE
         # WORK IN PROGRESS
 
-        alias {meta} {{lambda} {metaCmd args} {{*}$metaCmd {*}$args}}
+        alias {meta} {lambda {metaCmd args} {{*}$metaCmd {*}$args}}
 
         meta {nest} {nest {nest {type_helper}}} {struct} {struct} {
             varchar name
