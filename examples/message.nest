@@ -6,6 +6,7 @@ struct struct {
     varchar nsp
 
     multiple struct slot = {} {
+        varchar parent
         varchar name
         varchar type
         varchar default_value = ""
