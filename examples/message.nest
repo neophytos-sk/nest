@@ -1,9 +1,7 @@
 struct email {
     varchar name = ""
     varchar address
-    if (1) {
-        pk "address"
-    }
+    struct.pk "address"
 }
 
 struct file {
@@ -31,10 +29,8 @@ struct message {
 
     # typeinst section
     # new version breakpoint
-    if {1} {
-        pk "message_id"
-        is_final_if_no_scope "yes"
-    }
+    pk "message_id"
+    is_final_if_no_scope "yes"
 
     # typedecl section
  
@@ -68,16 +64,19 @@ struct message {
 }
 
 # new version breakpoint
-#0return
+# return
 
 # CORRECT
 message msg4 {
     subject "hello"
+    body "this is a test"
+
+    break
+
     from {
         name "zena wow"
         address "zena@example.com"
     }
-    body "this is a test"
     to {
         name "paris love"
         address "bff@example.com"
@@ -118,6 +117,7 @@ message msg4 {
     }}
 }
 
+return
 
 # CORRECT
 message msg3 {

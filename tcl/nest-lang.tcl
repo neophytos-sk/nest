@@ -4,7 +4,7 @@ package provide nest 0.1
 
 define_lang ::nest::lang {
 
-    variable debug 0
+    variable debug 1
     variable stack_ctx [list]
     variable stack_fwd [list]
 
@@ -196,34 +196,33 @@ define_lang ::nest::lang {
         set tag [top_fwd]
         keyword $name
 
-        set decl_ctx [list {typedecl} $tag $name]
-        set_lookahead_ctx $name $decl_ctx
+        log "!!! nest: $name -> $nest"
+
+        set ctx [list {nest} $tag $name]
+        set_lookahead_ctx $name $ctx ;# needed by container_helper and type_helper
+        set nest [list with_ctx $ctx {*}$nest]
+        uplevel [list [namespace which "alias"] $name $nest]
+
 
         set cmd [list [namespace which {node}] $tag $name -x-type $tag {*}$args]
         set node [uplevel $cmd]
 
-        log "!!! nest: $name -> $nest"
-
-        set nest [list with_ctx $decl_ctx {*}$nest]
-
-        uplevel [list [namespace which "alias"] $name $nest]
+        #####
+         
+        log [$node asXML]
 
         set nsp [uplevel {namespace current}]
 
-# new version breakpoint        
-# return $node
-
-
-        if { $tag ni {meta meta_old base_type} } {
+        if { $tag ni {meta_old base_type} } {
 
             $node appendFromScript {
                 foreach typedecl [$node selectNodes {child::typedecl}] {
                     log "!!! nest: instantiate empty slot ${name}.[$typedecl @x-name]"
                     typeinst slot [$typedecl @x-name]
                 }
-                type $tag
-                name $name
-                nsp $nsp
+                struct.type $tag
+                struct.name $name
+                struct.nsp $nsp
             }
 
             foreach typeinst [$node selectNodes {child::typeinst[@x-type="slot"]}] {
@@ -482,7 +481,7 @@ define_lang ::nest::lang {
 
         set context_path [get_context_path_of_type "eval"]
 
-        log "--->>> (typedecl_helper) context_path=[list $context_path] stack_ctx=[list $::nest::lang::stack_ctx]"
+        log "--->>> (typedecl_helper) decl_type=$decl_type decl_name=$decl_name context_path=[list $context_path] stack_ctx=[list $::nest::lang::stack_ctx]"
 
         if { ${context_path} ne {} } {
             set dotted_name "${context_path}.$decl_name"
@@ -550,11 +549,7 @@ define_lang ::nest::lang {
 
         typeinst_args $inst_type args
 
-        set context [top_context_of_type {typedecl}]
-        set context_tag [lindex $context 1]
-        set context_name [lindex $context 2]
-
-        log "--->>> (typeinst_helper) inst_type=$inst_type inst_name=$inst_name context=[list $context] stack_ctx=[list $::nest::lang::stack_ctx]"
+        log "--->>> (typeinst_helper) inst_type=$inst_type inst_name=$inst_name stack_ctx=[list $::nest::lang::stack_ctx]"
         
         set cmd [list with_ctx [list {typeinst} $inst_type $inst_name] [namespace which {node}] {typeinst} $inst_name -x-type $inst_type {*}$args]
         return [uplevel $cmd]
@@ -641,7 +636,8 @@ define_lang ::nest::lang {
     proc unknown {field_type field_name args} {
 
         set stack_ctx $::nest::lang::stack_ctx
-        set stack_ctx [lsearch -all -inline -index 0 $stack_ctx {typedecl}]
+        #set stack_ctx [lsearch -all -inline -index 0 $stack_ctx {typedecl}]
+        set stack_ctx [lsearch -all -inline -index 0 $stack_ctx {nest}]
 
         log "--->>> (unknown) $field_type $field_name args=$args stack_ctx=[list $stack_ctx]"
 
@@ -650,7 +646,7 @@ define_lang ::nest::lang {
             set redirect_name "${ctx_name}.$field_type"
             set redirect_exists_p [[namespace which check_alias] $redirect_name]
 
-            log "--->>> (unknown) checking each context for \"${field_type}\" -> ${redirect_name} ($redirect_exists_p)"
+            log "--->>> (unknown) checking context for \"${field_type}\" -> ${redirect_name} ($redirect_exists_p)"
 
             if { 0 } {
                 log "+++ stack_ctx=[list $::nest::lang::stack_ctx]"
@@ -678,7 +674,7 @@ define_lang ::nest::lang {
             }
         }
 
-        error "no redirect found for [list $field_type $field_name $args]"
+        error "no redirect found for field: $field_type (field_name=$field_name args=[list $args])"
 
 
     }
@@ -734,19 +730,20 @@ define_lang ::nest::lang {
         ]>
     }
 
-    if {0} {
+    if {1} {
 
         # THIS IS THE WAY THINGS SHOULD BE
         # WORK IN PROGRESS
 
         alias {meta} {lambda {metaCmd args} {{*}$metaCmd {*}$args}}
 
-        meta {nest} {nest {nest {type_helper}}} {struct} {struct} {
+        meta {nest} {nest {nest {type_helper}}} {struct} {
             varchar name
             varchar type
             varchar nsp
 
-            multiple struct slot = {} {
+            #multiple struct slot = {} 
+            struct slot {
                 varchar parent
                 varchar name
                 varchar type

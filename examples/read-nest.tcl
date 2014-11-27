@@ -13,5 +13,5 @@ set lang_nsp ::nest::data
 set doc [source_tdom $filename $lang_nsp]
 puts [$doc asXML]
 set root [$doc documentElement]
-::dom::scripting::validate $lang_nsp $root
+#::dom::scripting::validate $lang_nsp $root
 $doc delete
