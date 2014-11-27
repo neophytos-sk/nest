@@ -50,7 +50,6 @@ struct message {
 
     # typeinst section
     pk "message_id"
-    return
     is_final_if_no_scope "yes"
 
     # typedecl section
@@ -84,30 +83,55 @@ struct message {
 
 }
 
-puts [array get ::nest::lang::aliases]
+# CORRECT
+message msg4 {
+    subject "hello"
+    from {
+        name "zena wow"
+        address "zena@example.com"
+    }
+    body "this is a test"
+    to {
+        name "paris love"
+        address "bff@example.com"
+    }
+    cc { 
+        name "jane awesome"
+        address "jane@example.com"
+    }
+    cc { 
+        name "someone great" 
+        address "someone@example.com" 
+    }
+    multiple bcc {{
+        name "vera cool"
+        address "vera@example.com"
+    } {
+        name "greg wise"
+        address "greg@example.com"
+    } {
+        name "max loyal"
+        address "max@example.com"
+    }}
+    if {0} {
+        map wordcount_X {{
+            word "the"
+            count "123"
+        } {
+            word "and"
+            count "54"
+        }}
+    }
+    map wordcount_Y {{
+        word "the"
+        count "123"
+    } {
+        word "and"
+        count "54"
+    }}
+}
+
 return
-
-typeinst message msg1 {
-
-    typeinst varchar subject = "hello"
-
-    typeinst email from {
-        typeinst varchar name = "zena wow"
-        typeinst varchar address = "zena@example.com"
-    }
-
-    typeinst varchar body = "this is a test"
-
-}
-
-message msg2 {
-    varchar subject = "hello"
-    email from {
-        varchar name = "zena wow"
-        varchar address = "zena@example.com"
-    }
-    varchar body = "this is a test"
-}
 
 # CORRECT
 message msg3 {
@@ -155,49 +179,26 @@ message msg3 {
     }}
 }
 
-# CORRECT
-message msg4 {
-    subject "hello"
-    from {
-        name "zena wow"
-        address "zena@example.com"
-    }
-    body "this is a test"
-    to {
-        name "paris love"
-        address "bff@example.com"
-    }
-    cc { 
-        name "jane awesome"
-        address "jane@example.com"
-    }
-    cc { 
-        name "someone great" 
-        address "someone@example.com" 
-    }
-    multiple bcc {{
-        name "vera cool"
-        address "vera@example.com"
-    } {
-        name "greg wise"
-        address "greg@example.com"
-    } {
-        name "max loyal"
-        address "max@example.com"
-    }}
-    map wordcount_X {{
-        word "the"
-        count "123"
-    } {
-        word "and"
-        count "54"
-    }}
-    map wordcount_Y {{
-        word "the"
-        count "123"
-    } {
-        word "and"
-        count "54"
-    }}
-}
+if {0} {
+    typeinst message msg1 {
 
+        typeinst varchar subject = "hello"
+
+        typeinst email from {
+            typeinst varchar name = "zena wow"
+            typeinst varchar address = "zena@example.com"
+        }
+
+        typeinst varchar body = "this is a test"
+
+    }
+
+    message msg2 {
+        varchar subject = "hello"
+        email from {
+            varchar name = "zena wow"
+            varchar address = "zena@example.com"
+        }
+        varchar body = "this is a test"
+    }
+}

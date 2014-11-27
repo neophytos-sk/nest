@@ -194,22 +194,16 @@ define_lang ::nest::lang {
     proc nest {nest name args} {
 
         set tag [top_fwd]
-
-        keyword $name  ;# ::dom::createNodeCmd elementNode $name
-
-        set decl_ctx [list {typedecl} $tag ${name}]
-        set inst_ctx [list {typeinst} $tag $name]
-
-        set cmd [list with_ctx ${inst_ctx} \
-                    [namespace which {node}] $tag $name -x-type $tag {*}$args]
-                
+        keyword $name
+        set decl_ctx [list {typedecl} $tag $name]
+        set cmd [list [namespace which {node}] $tag $name -x-type $tag {*}$args]
         set node [uplevel $cmd]
 
         log "!!! nest: $name -> $nest"
 
         set nest [list with_ctx $decl_ctx {*}$nest]
-
         set_lookahead_ctx $name $decl_ctx
+
         uplevel [list [namespace which "alias"] $name $nest]
 
         set nsp [uplevel {namespace current}]
@@ -217,11 +211,10 @@ define_lang ::nest::lang {
         if { $tag ni {object base_type} } {
 
             $node appendFromScript {
-
                 foreach typedecl [$node selectNodes {child::typedecl}] {
+                    log "!!! nest: instantiate empty slot ${name}.[$typedecl @x-name]"
                     typeinst slot [$typedecl @x-name]
                 }
-
                 type $tag
                 name $name
                 nsp $nsp
@@ -234,10 +227,8 @@ define_lang ::nest::lang {
             $node appendFromScript {
                 foreach typedecl [$node selectNodes {child::typedecl}] {
 
-                    puts "name=$name typedecl_name=[$typedecl @x-name]"
+                    log "!!! nest: instantiate full slot ${name}.[$typedecl @x-name]"
 
-                    # make sure in instantiation mode
-                    # typeinst slot [$typedecl @x-name] 
                     typeinst slot [$typedecl @x-name] [subst -nocommands -nobackslashes {
                         struct.slot.name [$typedecl @x-name]
                         struct.slot.type [$typedecl @x-type]
@@ -283,7 +274,8 @@ define_lang ::nest::lang {
         if { $llength_args == 1 && $arg0 ne {struct} } {
             # we need to decide whether it is a declaration
             # or an instantiation
-            if {![is_declaration_mode_p] || ![exists_lookahead_ctx $arg0] } {
+            #HERE
+            if { ![is_declaration_mode_p] } {
                 # (map | multiple) slot_name instantiation_script
                 set instantiation_p 1
             } else {
@@ -479,7 +471,7 @@ define_lang ::nest::lang {
         set decl_tag [top_fwd]
 
         typedecl_args args
-        set cmd [list with_ctx [list {mode} {typedecl} $decl_type] [namespace which {node}] {typedecl} $decl_name -x-type $decl_type {*}$args]
+        set cmd [list with_ctx [list {typedecl} $decl_type $decl_name] [namespace which {node}] {typedecl} $decl_name -x-type $decl_type {*}$args]
         set node [uplevel $cmd]
 
         set context_path [get_context_path_of_type "eval"]
@@ -496,7 +488,7 @@ define_lang ::nest::lang {
         set_lookahead_ctx $dotted_name [list proc $decl_type $decl_name]
 
         set dotted_nest [list {typeinst} $decl_type $dotted_name]
-        set dotted_nest [list with_ctx [list {typedecl} $decl_tag $dotted_name] {*}$dotted_nest] 
+        set dotted_nest [list with_ctx [list {typedecl} $decl_type $dotted_name] {*}$dotted_nest] 
         set cmd [list [namespace which "alias"] $dotted_name $dotted_nest]
         uplevel $cmd
 
@@ -558,7 +550,7 @@ define_lang ::nest::lang {
 
         log "--->>> (typeinst_helper) inst_type=$inst_type inst_name=$inst_name context=[list $context] stack_ctx=[list $::nest::lang::stack_ctx]"
         
-        set cmd [list with_ctx [list {mode} {typeinst} $inst_name] [namespace which {node}] {typeinst} $inst_name -x-type $inst_type {*}$args]
+        set cmd [list with_ctx [list {typeinst} $inst_type $inst_name] [namespace which {node}] {typeinst} $inst_name -x-type $inst_type {*}$args]
         return [uplevel $cmd]
 
     }
