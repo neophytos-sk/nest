@@ -40,6 +40,7 @@ History:
 Notes:
 
 Check out the definition of the struct construct in nest, I think it's very cool:
+
     meta {nest} {nest {nest {type_helper}}} {struct} {
         varchar name
         varchar type
@@ -60,6 +61,7 @@ Check out the definition of the struct construct in nest, I think it's very cool
     }
 
 Check out its [lambda] proc:
+
     proc lambda {params body args} {
 
         set {llength_params} [llength ${params}]
