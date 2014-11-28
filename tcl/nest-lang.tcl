@@ -167,7 +167,6 @@ define_lang ::nest::lang {
 
     proc set_alias {name cmd} {
         variable alias
-        puts "!!! set_alias $name -> $cmd"
         set alias($name) "" ;# set alias($name) $cmd
     }
     proc get_alias {name} {
