@@ -382,7 +382,7 @@ define_lang ::nest::lang {
                 # => inst_name=message.subject inst_type=base_type
                 
                 set args [lassign $args arg0]
-                if { $args ne {} } { error "something error with instantiation statement" }
+                if { $args ne {} } { error "something wrong with instantiation statement" }
                 set cmd [list [namespace which {node}] $ctx_tag $tag -x-mode {inst} -x-type $ctx_tag [list ::nest::lang::t $arg0]]
                 return [uplevel $cmd]
 
