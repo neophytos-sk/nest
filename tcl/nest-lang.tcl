@@ -167,6 +167,7 @@ define_lang ::nest::lang {
 
     proc set_alias {name cmd} {
         variable alias
+        puts "!!! set_alias $name -> $cmd"
         set alias($name) "" ;# set alias($name) $cmd
     }
     proc get_alias {name} {
@@ -627,9 +628,23 @@ define_lang ::nest::lang {
 
     }
 
-    alias {pair} {lambda {typefirst typesecond name} {
-        nest {type_helper} $name [concat $typefirst {first} " ; " $typesecond {second}]
+    alias {template} {lambda {alias_name params body nest args} {
+        {alias} ${alias_name} [list {lambda} [concat ${params} {name}] \
+            [concat {nest} ${nest} \${name} ${body}]]
     }}
+
+    template {pair} {typefirst typesecond} {
+        ${typefirst} {first} 
+        ${typesecond} {second}
+    } {type_helper}
+    ## 
+    ## => alias {pair} {lambda {typefirst typesecond name} {
+    ##        nest {type_helper} ${name} {
+    ##          ${typefirst} {first} 
+    ##          ${typesecond} {second}
+    ##        }
+    ##    }}
+    ##
 
     namespace export "struct" "varchar" "bool" "varint" "byte" "int16" "int32" "int64" "double" "multiple" "dtd" "lambda"
 

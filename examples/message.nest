@@ -74,7 +74,7 @@ struct message {
 }
 
 # new version breakpoint
-#return
+return
 
 # CORRECT
 message msg4 {
