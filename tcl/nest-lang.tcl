@@ -592,7 +592,9 @@ define_lang ::nest::lang {
 
     namespace export "struct" "varchar" "bool" "varint" "byte" "int16" "int32" "int64" "double" "multiple" "dtd" "lambda"
 
-}
+} lang_doc
+
+puts [$lang_doc asXML]
 
 define_lang ::nest::data {
     namespace import ::nest::lang::*
@@ -602,6 +604,7 @@ define_lang ::nest::data {
 
 
 }
+
 
 
 

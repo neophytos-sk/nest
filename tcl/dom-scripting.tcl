@@ -20,7 +20,8 @@ proc ::dom::execNodeCmd {node_type node_tag args} {
 
 proc ::dom::createDocumentFromScript {rootname script} {
     set doc [dom createDocument $rootname]
-    $doc appendFromScript $script
+    set root [$doc documentElement]
+    $root appendFromScript $script
     return $doc
 }
 
