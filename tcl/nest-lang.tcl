@@ -90,21 +90,29 @@ define_lang ::nest::lang {
         return [lindex $stack_ctx $index]
     }
 
-    proc get_context_path_of_type {context_type} {
+    proc get_context_path_of_type {context_type varname} {
         variable stack_ctx
         set indexList 0 ;# match first element of nested list
         set contextList [lsearch -all -inline -exact -index $indexList $stack_ctx $context_type]
         set context_path ""
         foreach context [lreverse $contextList] {
             lassign $context context_type context_tag context_name
-            append context_path $context_name "."
+            append context_path [set $varname] "."
         }
         return [string trimright $context_path "."]
     }
 
     # used to get the full alias name
     proc get_eval_path {name} {
-        join [concat [get_context_path_of_type {eval}] ${name}] {.}
+        join [concat [get_context_path_of_type {eval} {context_name}] ${name}] {.}
+    }
+
+    proc get_nest_path {name} {
+        join [concat [get_context_path_of_type {nest} {context_name}] ${name}] {.}
+    }
+
+    proc get_decl_path {name} {
+        join [concat [get_context_path_of_type {decl} {context_name}] ${name}] {.}
     }
 
     # context := {context_type context_tag context_name}
@@ -244,7 +252,7 @@ define_lang ::nest::lang {
                     inst struct.slot [$decl @x-name] [subst -nocommands -nobackslashes {
                         struct.slot.name [$decl @x-name]
                         struct.slot.type [$decl @x-type]
-                        struct.slot.parent ${name}
+                        struct.slot.parent $name ;# TODO: need full path to the parent
                         if { [$decl hasAttribute "x-default_value"] } {
                             struct.slot.default_value [$decl @x-default_value ""]
                         }
@@ -259,7 +267,9 @@ define_lang ::nest::lang {
 
             }
         }
+
         return $node
+
     }
 
     dom createNodeCmd textNode t
@@ -291,24 +301,31 @@ define_lang ::nest::lang {
             # so we check the lookahead_context for the upcoming command
             # we know already that inst_helper calls the given inst_type command
 
-            set lookahead_ctx [get_lookahead_ctx $inst_type]
-            lassign $lookahead_ctx lookahead_ctx_type lookahead_ctx_tag lookahead_ctx_name
+            # note that "unknown" types (e.g. pair<varchar,varint> do not have a lookahead context
+            if { [exists_lookahead_ctx $inst_type] } {
+                set lookahead_ctx [get_lookahead_ctx $inst_type]
+                lassign $lookahead_ctx lookahead_ctx_type lookahead_ctx_tag lookahead_ctx_name
 
-            log "////// (inst_args) lookahead_ctx=$lookahead_ctx inst_type=$inst_type args=[list $args]"
+                log "////// (inst_args) lookahead_ctx=$lookahead_ctx inst_type=$inst_type args=[list $args]"
 
-            if { $lookahead_ctx_tag eq {base_type} } {
-                set args [list [list ::nest::lang::t [lindex $args 0]]]
+                if { $lookahead_ctx_tag eq {base_type} } {
+                    set args [list [list ::nest::lang::t [lindex $args 0]]]
+                }
             }
+
         }
     }
 
     proc declaration_mode_p {} {
         variable stack_ctx
+        variable stack_fwd
 
         set first_ctx [lindex $stack_ctx end] 
         if { $first_ctx eq {nest meta struct} || $first_ctx eq {eval meta struct} } {
+            log "!!! DECLARATION MODE"
             return 1
         }
+        log "!!! INSTANTIATION MODE"
 
         return 0
     }
@@ -351,26 +368,28 @@ define_lang ::nest::lang {
         } else {
 
             set inst_name $tag
-            lassign [get_lookahead_ctx $inst_name] ctx_type ctx_tag ctx_name
-            set inst_type $ctx_tag
+            if { [exists_lookahead_ctx $inst_name] } {
+                lassign [get_lookahead_ctx $inst_name] ctx_type ctx_tag ctx_name
+                set inst_type $ctx_tag
 
-            if { $inst_type eq {base_type} } {
+                if { $inst_type eq {base_type} } {
 
-                # message.subject "hello" 
-                # => tag=message.subject args={{hello}} 
-                # => inst_name=message.subject inst_type=base_type
-                
-                set args [lassign $args arg0]
-                if { $args ne {} } { error "something wrong with instantiation statement" }
-                set cmd [list [namespace which {node}] $ctx_tag $tag -x-mode {inst} -x-type $ctx_tag [list ::nest::lang::t $arg0]]
-                return [uplevel $cmd]
+                    # message.subject "hello" 
+                    # => tag=message.subject args={{hello}} 
+                    # => inst_name=message.subject inst_type=base_type
+                    
+                    set args [lassign $args arg0]
+                    if { $args ne {} } { error "something wrong with instantiation statement" }
+                    set cmd [list [namespace which {node}] $ctx_tag $tag -x-mode {inst} -x-type $ctx_tag [list ::nest::lang::t $arg0]]
+                    return [uplevel $cmd]
 
-            } else {
-
-                set cmd [list [namespace which {node}] $inst_type $inst_name -x-mode {inst} -x-type $inst_type {*}$args]
-                return [uplevel $cmd]
-
+                }
             }
+
+            # case for composite or "unknown" types (e.g. pair<varchar,varint)
+            # note that "unknown" types do not have a lookahead context
+            set cmd [list [namespace which {node}] $inst_type $inst_name -x-mode {inst} -x-type $inst_type {*}$args]
+            return [uplevel $cmd]
 
         }
 
@@ -392,7 +411,7 @@ define_lang ::nest::lang {
     #
     # INSTANTIATION EXAMPLE 1:
     # 
-    #   map wordcount {{ 
+    #   multiple wordcount {{ 
     #       word "the"
     #       count "123"
     #   } {
@@ -405,14 +424,14 @@ define_lang ::nest::lang {
     # DECLARATION EXAMPLE 1 ( llength_args==1 && arg0 ne {struct} ):
     #   struct message {
     #     ...
-    #     map word_count_pair wordcount
+    #     multiple word_count_pair wordcount
     #     ...
     #   }
     #
     # DECLARATION EXAMPLE 2 ( llength_args==2 && arg0 eq {struct} ):
     #   struct message {
     #     ...
-    #     map struct wordcount { 
+    #     multiple struct wordcount { 
     #       varchar word
     #       varint count
     #     }
@@ -423,40 +442,40 @@ define_lang ::nest::lang {
     # DECLARATION EXAMPLE 3 ( llength_args==3 && arg0 ne {struct} ):
     #   struct message {
     #     ...
-    #     map word_count_pair wordcount = {}
+    #     multiple word_count_pair wordcount = {}
     #     ...
     #   }
     #
     # DECLARATION EXAMPLE 4 ( llength_args==4 && arg0 eq {struct} ):
     #   struct message {
     #     ...
-    #     map struct wordcount = {} { 
+    #     multiple struct wordcount = {} { 
     #       varchar word
     #       varint count
     #     }
     #     ...
     #   }
     #
-    # DECLARATION EXAMPLE 5 (TODO):
-    #   struct message {
-    #     ...
-    #     map pair "from_type to_type" wordcount = {}
-    #     ...
-    #   }
-    #
 
     proc container_helper {arg0 args} {
-        log "!!! multiple declaration_mode_p=[declaration_mode_p]"
         if {[declaration_mode_p]} {
-            [with_fwd $arg0 type_helper {*}$args] setAttribute x-container [top_fwd]
+            log "!!! container DECLARATION"
+            set args [lassign $args name]
+            if { [lindex $args 0] eq {=} } {
+                set args [lreplace $args 0 0 "-default_value"]
+            }
+            [$arg0 $name {*}$args] setAttribute x-container [top_fwd]
         } else {
+            log "!!! container INSTANTIATION"
             set args [lassign $args argvals]
             foreach argval $argvals {
                 set lookahead_ctx [get_lookahead_ctx $arg0]
                 lassign $lookahead_ctx ctx_type ctx_tag ctx_name
                 if {$ctx_type eq {nest}} {
-                    [$arg0 $argval] setAttribute x-container [top_fwd]
+                    log "!!! container INSTANTIATION lookahead_ctx=[list $lookahead_ctx] arg0=${arg0} argval=[list ${argval}]"
+                    [with_fwd $arg0 $arg0 $argval] setAttribute x-container [top_fwd]
                 } else {
+                    log "!!! container INSTANTIATION lookahead_ctx_type={other} (not nest) arg0=${arg0} argval=[list ${argval}]"
                     [with_fwd $arg0 type_helper {*}$argval] setAttribute x-container [top_fwd]
                 }
             }
@@ -497,7 +516,63 @@ define_lang ::nest::lang {
             }
         }
 
-        error "no redirect found for field: $field_type (field_name=$field_name args=[list $args])"
+        # check for types of the form pair<varchar,varint>
+        set type_re {[_a-zA-Z][_a-zA-Z0-9]*}
+        set nsp_re {(?:\:\:[_a-zA-Z][_a-zA-Z0-9]*)*\:\:}
+
+        # recognizes expressions of the following forms:
+        # pair<string,i32>
+
+        set re {}
+        append re "(set|list)<(${type_re})>" "|"
+        append re "(pair)<(${type_re}),(${type_re})>"
+
+        set re "^(${nsp_re})?(?:${re})\$"
+
+        if { [regexp -- $re $field_type _dummy_ sm0 sm1 sm2 sm3 sm4 sm5] } {
+
+            log "!!! regexp success: sm0=$sm0 sm1=$sm1 sm2=$sm2 sm3=$sm3 sm4=$sm4 sm5=$sm5"
+
+            if { $sm0 ne {} } {
+
+                # treats case when "multiple pair<varchar,varint>" becomes:
+                #   ::dom::_elementNodeCmd::pair<varchar,varint> ...
+                # will be rewritten to:
+                #   ::dom::_elementNodeCmd::pair -x-type {struct} -x-verbatim {pair varchar varint} ...
+                # 
+                
+                if { $sm1 ne {} && $sm2 ne {} } {
+                    set redirect_name [list ${sm0}$sm1 -x-type {struct} -x-verbatim [list $sm1 $sm2]]
+                } elseif { $sm3 ne {} && $sm4 ne {} && $sm5 ne {} } {
+                    set redirect_name [list ${sm0}$sm3 -x-type {struct} -x-verbatim [list $sm3 $sm4 $sm5]]
+                } else {
+                    error "something wrong with regexp"
+                }
+
+                # we also need to set the lookahead_ctx to the same as the one for struct
+                # set name "${sm1}${sm3}<[join [concat $sm2 $sm4 $sm5] {,}]>"
+                # set_lookahead_ctx $name [get_lookahead_ctx {struct}]
+
+                log "!!! (unknown) redirect $field_type -> $redirect_name"
+
+            } else {
+
+                if { $sm1 ne {} && $sm2 ne {} } {
+                    set redirect_name [list $sm1 $sm2]
+                } elseif { $sm3 ne {} && $sm4 ne {} && $sm5 ne {} } {
+                    set redirect_name [list $sm3 $sm4 $sm5]
+                }
+
+            }
+
+            # be blind about it
+            set cmd [list {*}$redirect_name $field_name {*}$args]
+            set node [with_ctx [list "unknown" "unknown" $redirect_name] uplevel $cmd]
+            return $node
+        }
+
+
+        error "no redirect found for [list $field_type] (field_name=$field_name args=[list $args])"
 
 
     }
@@ -543,7 +618,6 @@ define_lang ::nest::lang {
 
     alias {base_type} {nest {type_helper}}
     alias {multiple} {container_helper}
-    alias {map} {container_helper}
     alias {inst} {inst_helper}
     alias {meta} {lambda {metaCmd args} {{*}$metaCmd {*}$args}}
 
@@ -589,6 +663,22 @@ define_lang ::nest::lang {
         bool is_final_if_no_scope
 
     }
+
+    # see if we can make it work as base_type
+    # so that we won't have to instantiate the struct
+    # to get to the pair, we lose information that way
+    proc pair_helper {args} {
+        if {[declaration_mode_p]} {
+            lassign $args typefrom typeto name
+            struct ${name} [concat $typefrom first ";" $typeto second]
+            set node [${name} ${name}]
+            return $node
+        } else {
+            set args [lassign $args name]
+            return [${name} {*}$args]
+        }
+    }
+    alias {pair} {pair_helper}
 
     namespace export "struct" "varchar" "bool" "varint" "byte" "int16" "int32" "int64" "double" "multiple" "dtd" "lambda"
 

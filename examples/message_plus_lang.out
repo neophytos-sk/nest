@@ -11,13 +11,49 @@
         <varchar x-name="name" x-mode="decl" x-type="varchar"/>
         <varchar x-name="type" x-mode="decl" x-type="varchar"/>
         <varchar x-name="nsp" x-mode="decl" x-type="varchar"/>
-        <struct x-name="slot" x-mode="decl" x-type="struct" x-default_value="" x-container="multiple">
+        <struct x-name="slot" x-mode="decl" x-type="struct" default_value="" x-container="multiple">
             <varchar x-name="parent" x-mode="decl" x-type="varchar"/>
             <varchar x-name="name" x-mode="decl" x-type="varchar"/>
             <varchar x-name="type" x-mode="decl" x-type="varchar"/>
             <varchar x-name="default_value" x-mode="decl" x-type="varchar" x-default_value=""/>
             <bool x-name="optional_p" x-mode="decl" x-type="bool" x-default_value="false"/>
             <varchar x-name="container" x-mode="decl" x-type="varchar" x-default_value=""/>
+            <inst x-name="struct.type" x-type="varchar">struct</inst>
+            <inst x-name="struct.name" x-type="varchar">slot</inst>
+            <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
+            <inst x-name="parent" x-type="struct.slot">
+                <inst x-name="struct.slot.name" x-type="varchar">parent</inst>
+                <inst x-name="struct.slot.type" x-type="varchar">varchar</inst>
+                <inst x-name="struct.slot.parent" x-type="varchar">slot</inst>
+            </inst>
+            <inst x-name="name" x-type="struct.slot">
+                <inst x-name="struct.slot.name" x-type="varchar">name</inst>
+                <inst x-name="struct.slot.type" x-type="varchar">varchar</inst>
+                <inst x-name="struct.slot.parent" x-type="varchar">slot</inst>
+            </inst>
+            <inst x-name="type" x-type="struct.slot">
+                <inst x-name="struct.slot.name" x-type="varchar">type</inst>
+                <inst x-name="struct.slot.type" x-type="varchar">varchar</inst>
+                <inst x-name="struct.slot.parent" x-type="varchar">slot</inst>
+            </inst>
+            <inst x-name="default_value" x-type="struct.slot">
+                <inst x-name="struct.slot.name" x-type="varchar">default_value</inst>
+                <inst x-name="struct.slot.type" x-type="varchar">varchar</inst>
+                <inst x-name="struct.slot.parent" x-type="varchar">slot</inst>
+                <inst x-name="struct.slot.default_value" x-type="varchar"></inst>
+            </inst>
+            <inst x-name="optional_p" x-type="struct.slot">
+                <inst x-name="struct.slot.name" x-type="varchar">optional_p</inst>
+                <inst x-name="struct.slot.type" x-type="varchar">bool</inst>
+                <inst x-name="struct.slot.parent" x-type="varchar">slot</inst>
+                <inst x-name="struct.slot.default_value" x-type="varchar">false</inst>
+            </inst>
+            <inst x-name="container" x-type="struct.slot">
+                <inst x-name="struct.slot.name" x-type="varchar">container</inst>
+                <inst x-name="struct.slot.type" x-type="varchar">varchar</inst>
+                <inst x-name="struct.slot.parent" x-type="varchar">slot</inst>
+                <inst x-name="struct.slot.default_value" x-type="varchar"></inst>
+            </inst>
         </struct>
         <varchar x-name="pk" x-mode="decl" x-type="varchar"/>
         <bool x-name="is_final_if_no_scope" x-mode="decl" x-type="bool"/>
@@ -43,7 +79,6 @@
             <inst x-name="struct.slot.name" x-type="varchar">slot</inst>
             <inst x-name="struct.slot.type" x-type="varchar">struct</inst>
             <inst x-name="struct.slot.parent" x-type="varchar">struct</inst>
-            <inst x-name="struct.slot.default_value" x-type="varchar"></inst>
             <inst x-name="struct.slot.container" x-type="varchar">multiple</inst>
         </inst>
         <inst x-name="pk" x-type="struct.slot">
@@ -166,21 +201,160 @@
             <inst x-name="struct.name" x-type="varchar">from</inst>
             <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
         </email>
-        <email x-name="to" x-mode="decl" x-type="email" x-container="multiple"/>
-        <email x-name="cc" x-mode="decl" x-type="email" x-default_value="" x-container="multiple"/>
-        <email x-name="bcc" x-mode="decl" x-type="email" x-default_value="" x-container="multiple"/>
+        <email x-name="to" x-mode="decl" x-type="email" x-container="multiple">
+            <inst x-name="struct.type" x-type="varchar">email</inst>
+            <inst x-name="struct.name" x-type="varchar">to</inst>
+            <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
+        </email>
+        <email x-name="cc" x-mode="decl" x-type="email" default_value="" x-container="multiple">
+            <inst x-name="struct.type" x-type="varchar">email</inst>
+            <inst x-name="struct.name" x-type="varchar">cc</inst>
+            <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
+        </email>
+        <email x-name="bcc" x-mode="decl" x-type="email" default_value="" x-container="multiple">
+            <inst x-name="struct.type" x-type="varchar">email</inst>
+            <inst x-name="struct.name" x-type="varchar">bcc</inst>
+            <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
+        </email>
         <bool x-name="public_p" x-mode="decl" x-type="bool" x-default_value="false"/>
-        <category x-name="categories" x-mode="decl" x-type="category" x-default_value="" x-container="multiple"/>
-        <folder x-name="folders" x-mode="decl" x-type="folder" x-default_value="" x-container="multiple"/>
-        <varchar x-name="tags" x-mode="decl" x-type="varchar" x-default_value="" x-container="multiple"/>
-        <file x-name="attachment" x-mode="decl" x-type="file" x-default_value="" x-container="multiple"/>
-        <struct x-name="wordcount_X" x-mode="decl" x-type="struct" x-default_value="" x-container="map">
+        <category x-name="categories" x-mode="decl" x-type="category" default_value="" x-container="multiple">
+            <inst x-name="struct.type" x-type="varchar">category</inst>
+            <inst x-name="struct.name" x-type="varchar">categories</inst>
+            <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
+        </category>
+        <folder x-name="folders" x-mode="decl" x-type="folder" default_value="" x-container="multiple">
+            <inst x-name="struct.type" x-type="varchar">folder</inst>
+            <inst x-name="struct.name" x-type="varchar">folders</inst>
+            <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
+        </folder>
+        <varchar x-name="tags" x-mode="decl" x-type="varchar" default_value="" x-container="multiple"/>
+        <file x-name="attachment" x-mode="decl" x-type="file" default_value="" x-container="multiple">
+            <inst x-name="struct.type" x-type="varchar">file</inst>
+            <inst x-name="struct.name" x-type="varchar">attachment</inst>
+            <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
+        </file>
+        <struct x-name="_wordcount_X" x-mode="decl" x-type="struct">
             <varchar x-name="word" x-mode="decl" x-type="varchar"/>
             <int32 x-name="count" x-mode="decl" x-type="int32"/>
+            <inst x-name="struct.type" x-type="varchar">struct</inst>
+            <inst x-name="struct.name" x-type="varchar">_wordcount_X</inst>
+            <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
+            <inst x-name="word" x-type="struct.slot">
+                <inst x-name="struct.slot.name" x-type="varchar">word</inst>
+                <inst x-name="struct.slot.type" x-type="varchar">varchar</inst>
+                <inst x-name="struct.slot.parent" x-type="varchar">_wordcount_X</inst>
+            </inst>
+            <inst x-name="count" x-type="struct.slot">
+                <inst x-name="struct.slot.name" x-type="varchar">count</inst>
+                <inst x-name="struct.slot.type" x-type="varchar">int32</inst>
+                <inst x-name="struct.slot.parent" x-type="varchar">_wordcount_X</inst>
+            </inst>
         </struct>
-        <word_count_pair x-name="wordcount_Y" x-mode="decl" x-type="word_count_pair" x-container="map"/>
-        <word_count_pair x-name="wordcount_Z" x-mode="decl" x-type="word_count_pair" x-default_value="" x-container="map"/>
+        <_wordcount_X x-name="wordcount_X" x-mode="decl" x-type="_wordcount_X" x-container="multiple">
+            <inst x-name="struct.type" x-type="varchar">_wordcount_X</inst>
+            <inst x-name="struct.name" x-type="varchar">wordcount_X</inst>
+            <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
+        </_wordcount_X>
+        <word_count_pair x-name="wordcount_Y" x-mode="decl" x-type="word_count_pair" x-container="multiple">
+            <inst x-name="struct.type" x-type="varchar">word_count_pair</inst>
+            <inst x-name="struct.name" x-type="varchar">wordcount_Y</inst>
+            <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
+        </word_count_pair>
+        <word_count_pair x-name="wordcount_Z" x-mode="decl" x-type="word_count_pair" default_value="" x-container="multiple">
+            <inst x-name="struct.type" x-type="varchar">word_count_pair</inst>
+            <inst x-name="struct.name" x-type="varchar">wordcount_Z</inst>
+            <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
+        </word_count_pair>
         <varchar x-name="words" x-mode="decl" x-type="varchar" x-container="multiple"/>
+        <struct x-name="wordcount_pair_type" x-mode="decl" x-type="struct">
+            <varchar x-name="first" x-mode="decl" x-type="varchar"/>
+            <varint x-name="second" x-mode="decl" x-type="varint"/>
+            <inst x-name="struct.type" x-type="varchar">struct</inst>
+            <inst x-name="struct.name" x-type="varchar">wordcount_pair_type</inst>
+            <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
+            <inst x-name="first" x-type="struct.slot">
+                <inst x-name="struct.slot.name" x-type="varchar">first</inst>
+                <inst x-name="struct.slot.type" x-type="varchar">varchar</inst>
+                <inst x-name="struct.slot.parent" x-type="varchar">wordcount_pair_type</inst>
+            </inst>
+            <inst x-name="second" x-type="struct.slot">
+                <inst x-name="struct.slot.name" x-type="varchar">second</inst>
+                <inst x-name="struct.slot.type" x-type="varchar">varint</inst>
+                <inst x-name="struct.slot.parent" x-type="varchar">wordcount_pair_type</inst>
+            </inst>
+        </struct>
+        <wordcount_pair_type x-name="wordcount_pair_type" x-mode="decl" x-type="wordcount_pair_type">
+            <inst x-name="struct.type" x-type="varchar">wordcount_pair_type</inst>
+            <inst x-name="struct.name" x-type="varchar">wordcount_pair_type</inst>
+            <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
+        </wordcount_pair_type>
+        <wordcount_pair_type x-name="wordcount_W" x-mode="decl" x-type="wordcount_pair_type" x-container="multiple"/>
+        <struct x-name="wordcount_V" x-mode="decl" x-type="struct">
+            <varchar x-name="first" x-mode="decl" x-type="varchar"/>
+            <varint x-name="second" x-mode="decl" x-type="varint"/>
+            <inst x-name="struct.type" x-type="varchar">struct</inst>
+            <inst x-name="struct.name" x-type="varchar">wordcount_V</inst>
+            <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
+            <inst x-name="first" x-type="struct.slot">
+                <inst x-name="struct.slot.name" x-type="varchar">first</inst>
+                <inst x-name="struct.slot.type" x-type="varchar">varchar</inst>
+                <inst x-name="struct.slot.parent" x-type="varchar">wordcount_V</inst>
+            </inst>
+            <inst x-name="second" x-type="struct.slot">
+                <inst x-name="struct.slot.name" x-type="varchar">second</inst>
+                <inst x-name="struct.slot.type" x-type="varchar">varint</inst>
+                <inst x-name="struct.slot.parent" x-type="varchar">wordcount_V</inst>
+            </inst>
+        </struct>
+        <wordcount_V x-name="wordcount_V" x-mode="decl" x-type="wordcount_V">
+            <inst x-name="struct.type" x-type="varchar">wordcount_V</inst>
+            <inst x-name="struct.name" x-type="varchar">wordcount_V</inst>
+            <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
+        </wordcount_V>
+        <struct x-name="wordcount_U" x-mode="decl" x-type="struct">
+            <varchar x-name="first" x-mode="decl" x-type="varchar"/>
+            <varint x-name="second" x-mode="decl" x-type="varint"/>
+            <inst x-name="struct.type" x-type="varchar">struct</inst>
+            <inst x-name="struct.name" x-type="varchar">wordcount_U</inst>
+            <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
+            <inst x-name="first" x-type="struct.slot">
+                <inst x-name="struct.slot.name" x-type="varchar">first</inst>
+                <inst x-name="struct.slot.type" x-type="varchar">varchar</inst>
+                <inst x-name="struct.slot.parent" x-type="varchar">wordcount_U</inst>
+            </inst>
+            <inst x-name="second" x-type="struct.slot">
+                <inst x-name="struct.slot.name" x-type="varchar">second</inst>
+                <inst x-name="struct.slot.type" x-type="varchar">varint</inst>
+                <inst x-name="struct.slot.parent" x-type="varchar">wordcount_U</inst>
+            </inst>
+        </struct>
+        <wordcount_U x-name="wordcount_U" x-mode="decl" x-type="wordcount_U">
+            <inst x-name="struct.type" x-type="varchar">wordcount_U</inst>
+            <inst x-name="struct.name" x-type="varchar">wordcount_U</inst>
+            <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
+        </wordcount_U>
+        <struct x-name="wordcount_T" x-mode="decl" x-type="struct">
+            <varchar x-name="first" x-mode="decl" x-type="varchar"/>
+            <varint x-name="second" x-mode="decl" x-type="varint"/>
+            <inst x-name="struct.type" x-type="varchar">struct</inst>
+            <inst x-name="struct.name" x-type="varchar">wordcount_T</inst>
+            <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
+            <inst x-name="first" x-type="struct.slot">
+                <inst x-name="struct.slot.name" x-type="varchar">first</inst>
+                <inst x-name="struct.slot.type" x-type="varchar">varchar</inst>
+                <inst x-name="struct.slot.parent" x-type="varchar">wordcount_T</inst>
+            </inst>
+            <inst x-name="second" x-type="struct.slot">
+                <inst x-name="struct.slot.name" x-type="varchar">second</inst>
+                <inst x-name="struct.slot.type" x-type="varchar">varint</inst>
+                <inst x-name="struct.slot.parent" x-type="varchar">wordcount_T</inst>
+            </inst>
+        </struct>
+        <wordcount_T x-name="wordcount_T" x-mode="decl" x-type="wordcount_T" x-container="multiple">
+            <inst x-name="struct.type" x-type="varchar">wordcount_T</inst>
+            <inst x-name="struct.name" x-type="varchar">wordcount_T</inst>
+            <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
+        </wordcount_T>
         <inst x-name="struct.type" x-type="varchar">struct</inst>
         <inst x-name="struct.name" x-type="varchar">message</inst>
         <inst x-name="struct.nsp" x-type="varchar">::nest::data</inst>
@@ -226,14 +400,12 @@
             <inst x-name="struct.slot.name" x-type="varchar">cc</inst>
             <inst x-name="struct.slot.type" x-type="varchar">email</inst>
             <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
-            <inst x-name="struct.slot.default_value" x-type="varchar"></inst>
             <inst x-name="struct.slot.container" x-type="varchar">multiple</inst>
         </inst>
         <inst x-name="bcc" x-type="struct.slot">
             <inst x-name="struct.slot.name" x-type="varchar">bcc</inst>
             <inst x-name="struct.slot.type" x-type="varchar">email</inst>
             <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
-            <inst x-name="struct.slot.default_value" x-type="varchar"></inst>
             <inst x-name="struct.slot.container" x-type="varchar">multiple</inst>
         </inst>
         <inst x-name="public_p" x-type="struct.slot">
@@ -246,53 +418,99 @@
             <inst x-name="struct.slot.name" x-type="varchar">categories</inst>
             <inst x-name="struct.slot.type" x-type="varchar">category</inst>
             <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
-            <inst x-name="struct.slot.default_value" x-type="varchar"></inst>
             <inst x-name="struct.slot.container" x-type="varchar">multiple</inst>
         </inst>
         <inst x-name="folders" x-type="struct.slot">
             <inst x-name="struct.slot.name" x-type="varchar">folders</inst>
             <inst x-name="struct.slot.type" x-type="varchar">folder</inst>
             <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
-            <inst x-name="struct.slot.default_value" x-type="varchar"></inst>
             <inst x-name="struct.slot.container" x-type="varchar">multiple</inst>
         </inst>
         <inst x-name="tags" x-type="struct.slot">
             <inst x-name="struct.slot.name" x-type="varchar">tags</inst>
             <inst x-name="struct.slot.type" x-type="varchar">varchar</inst>
             <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
-            <inst x-name="struct.slot.default_value" x-type="varchar"></inst>
             <inst x-name="struct.slot.container" x-type="varchar">multiple</inst>
         </inst>
         <inst x-name="attachment" x-type="struct.slot">
             <inst x-name="struct.slot.name" x-type="varchar">attachment</inst>
             <inst x-name="struct.slot.type" x-type="varchar">file</inst>
             <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
-            <inst x-name="struct.slot.default_value" x-type="varchar"></inst>
             <inst x-name="struct.slot.container" x-type="varchar">multiple</inst>
+        </inst>
+        <inst x-name="_wordcount_X" x-type="struct.slot">
+            <inst x-name="struct.slot.name" x-type="varchar">_wordcount_X</inst>
+            <inst x-name="struct.slot.type" x-type="varchar">struct</inst>
+            <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
         </inst>
         <inst x-name="wordcount_X" x-type="struct.slot">
             <inst x-name="struct.slot.name" x-type="varchar">wordcount_X</inst>
-            <inst x-name="struct.slot.type" x-type="varchar">struct</inst>
+            <inst x-name="struct.slot.type" x-type="varchar">_wordcount_X</inst>
             <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
-            <inst x-name="struct.slot.default_value" x-type="varchar"></inst>
-            <inst x-name="struct.slot.container" x-type="varchar">map</inst>
+            <inst x-name="struct.slot.container" x-type="varchar">multiple</inst>
         </inst>
         <inst x-name="wordcount_Y" x-type="struct.slot">
             <inst x-name="struct.slot.name" x-type="varchar">wordcount_Y</inst>
             <inst x-name="struct.slot.type" x-type="varchar">word_count_pair</inst>
             <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
-            <inst x-name="struct.slot.container" x-type="varchar">map</inst>
+            <inst x-name="struct.slot.container" x-type="varchar">multiple</inst>
         </inst>
         <inst x-name="wordcount_Z" x-type="struct.slot">
             <inst x-name="struct.slot.name" x-type="varchar">wordcount_Z</inst>
             <inst x-name="struct.slot.type" x-type="varchar">word_count_pair</inst>
             <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
-            <inst x-name="struct.slot.default_value" x-type="varchar"></inst>
-            <inst x-name="struct.slot.container" x-type="varchar">map</inst>
+            <inst x-name="struct.slot.container" x-type="varchar">multiple</inst>
         </inst>
         <inst x-name="words" x-type="struct.slot">
             <inst x-name="struct.slot.name" x-type="varchar">words</inst>
             <inst x-name="struct.slot.type" x-type="varchar">varchar</inst>
+            <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
+            <inst x-name="struct.slot.container" x-type="varchar">multiple</inst>
+        </inst>
+        <inst x-name="wordcount_pair_type" x-type="struct.slot">
+            <inst x-name="struct.slot.name" x-type="varchar">wordcount_pair_type</inst>
+            <inst x-name="struct.slot.type" x-type="varchar">struct</inst>
+            <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
+        </inst>
+        <inst x-name="wordcount_pair_type" x-type="struct.slot">
+            <inst x-name="struct.slot.name" x-type="varchar">wordcount_pair_type</inst>
+            <inst x-name="struct.slot.type" x-type="varchar">wordcount_pair_type</inst>
+            <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
+        </inst>
+        <inst x-name="wordcount_W" x-type="struct.slot">
+            <inst x-name="struct.slot.name" x-type="varchar">wordcount_W</inst>
+            <inst x-name="struct.slot.type" x-type="varchar">wordcount_pair_type</inst>
+            <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
+            <inst x-name="struct.slot.container" x-type="varchar">multiple</inst>
+        </inst>
+        <inst x-name="wordcount_V" x-type="struct.slot">
+            <inst x-name="struct.slot.name" x-type="varchar">wordcount_V</inst>
+            <inst x-name="struct.slot.type" x-type="varchar">struct</inst>
+            <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
+        </inst>
+        <inst x-name="wordcount_V" x-type="struct.slot">
+            <inst x-name="struct.slot.name" x-type="varchar">wordcount_V</inst>
+            <inst x-name="struct.slot.type" x-type="varchar">wordcount_V</inst>
+            <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
+        </inst>
+        <inst x-name="wordcount_U" x-type="struct.slot">
+            <inst x-name="struct.slot.name" x-type="varchar">wordcount_U</inst>
+            <inst x-name="struct.slot.type" x-type="varchar">struct</inst>
+            <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
+        </inst>
+        <inst x-name="wordcount_U" x-type="struct.slot">
+            <inst x-name="struct.slot.name" x-type="varchar">wordcount_U</inst>
+            <inst x-name="struct.slot.type" x-type="varchar">wordcount_U</inst>
+            <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
+        </inst>
+        <inst x-name="wordcount_T" x-type="struct.slot">
+            <inst x-name="struct.slot.name" x-type="varchar">wordcount_T</inst>
+            <inst x-name="struct.slot.type" x-type="varchar">struct</inst>
+            <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
+        </inst>
+        <inst x-name="wordcount_T" x-type="struct.slot">
+            <inst x-name="struct.slot.name" x-type="varchar">wordcount_T</inst>
+            <inst x-name="struct.slot.type" x-type="varchar">wordcount_T</inst>
             <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
             <inst x-name="struct.slot.container" x-type="varchar">multiple</inst>
         </inst>
@@ -304,46 +522,70 @@
             <inst x-name="email.name" x-type="varchar">zena wow</inst>
             <inst x-name="email.address" x-type="varchar">zena@example.com</inst>
         </email>
-        <inst x-name="to" x-type="email">
+        <email x-name="to" x-mode="inst" x-type="email">
             <inst x-name="email.name" x-type="varchar">paris love</inst>
             <inst x-name="email.address" x-type="varchar">bff@example.com</inst>
-        </inst>
-        <inst x-name="cc" x-type="email">
+        </email>
+        <email x-name="cc" x-mode="inst" x-type="email">
             <inst x-name="email.name" x-type="varchar">jane awesome</inst>
             <inst x-name="email.address" x-type="varchar">jane@example.com</inst>
-        </inst>
-        <inst x-name="cc" x-type="email">
+        </email>
+        <email x-name="cc" x-mode="inst" x-type="email">
             <inst x-name="email.name" x-type="varchar">someone great</inst>
             <inst x-name="email.address" x-type="varchar">someone@example.com</inst>
-        </inst>
-        <inst x-name="bcc" x-type="email" x-container="multiple">
+        </email>
+        <email x-name="bcc" x-mode="inst" x-type="email" x-container="multiple">
             <inst x-name="email.name" x-type="varchar">vera cool</inst>
             <inst x-name="email.address" x-type="varchar">vera@example.com</inst>
-        </inst>
-        <inst x-name="bcc" x-type="email" x-container="multiple">
+        </email>
+        <email x-name="bcc" x-mode="inst" x-type="email" x-container="multiple">
             <inst x-name="email.name" x-type="varchar">greg wise</inst>
             <inst x-name="email.address" x-type="varchar">greg@example.com</inst>
-        </inst>
-        <inst x-name="bcc" x-type="email" x-container="multiple">
+        </email>
+        <email x-name="bcc" x-mode="inst" x-type="email" x-container="multiple">
             <inst x-name="email.name" x-type="varchar">max loyal</inst>
             <inst x-name="email.address" x-type="varchar">max@example.com</inst>
+        </email>
+        <_wordcount_X x-name="wordcount_X" x-mode="inst" x-type="_wordcount_X" x-container="multiple">
+            <inst x-name="_wordcount_X.word" x-type="varchar">X_the</inst>
+            <inst x-name="_wordcount_X.count" x-type="int32">X_123</inst>
+        </_wordcount_X>
+        <_wordcount_X x-name="wordcount_X" x-mode="inst" x-type="_wordcount_X" x-container="multiple">
+            <inst x-name="_wordcount_X.word" x-type="varchar">X_and</inst>
+            <inst x-name="_wordcount_X.count" x-type="int32">X_54</inst>
+        </_wordcount_X>
+        <word_count_pair x-name="wordcount_Y" x-mode="inst" x-type="word_count_pair" x-container="multiple">
+            <inst x-name="word_count_pair.word" x-type="varchar">Y_the</inst>
+            <inst x-name="word_count_pair.count" x-type="varint">Y_123</inst>
+        </word_count_pair>
+        <word_count_pair x-name="wordcount_Y" x-mode="inst" x-type="word_count_pair" x-container="multiple">
+            <inst x-name="word_count_pair.word" x-type="varchar">Y_and</inst>
+            <inst x-name="word_count_pair.count" x-type="varint">Y_54</inst>
+        </word_count_pair>
+        <wordcount_V x-name="wordcount_V" x-mode="inst" x-type="wordcount_V">
+            <inst x-name="wordcount_V.first" x-type="varchar">V_the</inst>
+            <inst x-name="wordcount_V.second" x-type="varint">V_123</inst>
+        </wordcount_V>
+        <wordcount_U x-name="wordcount_U" x-mode="inst" x-type="wordcount_U">
+            <inst x-name="wordcount_U.first" x-type="varchar">U_the</inst>
+            <inst x-name="wordcount_U.second" x-type="varint">U_123</inst>
+        </wordcount_U>
+        <inst x-name="wordcount_W" x-type="wordcount_pair_type" x-container="multiple">
+            <inst x-name="wordcount_pair_type.first" x-type="varchar">W_the</inst>
+            <inst x-name="wordcount_pair_type.second" x-type="varint">W_123</inst>
         </inst>
-        <inst x-name="wordcount_X" x-type="struct" x-container="map">
-            <inst x-name="wordcount_X.word" x-type="varchar">the</inst>
-            <inst x-name="wordcount_X.count" x-type="int32">123</inst>
+        <inst x-name="wordcount_W" x-type="wordcount_pair_type" x-container="multiple">
+            <inst x-name="wordcount_pair_type.first" x-type="varchar">W_and</inst>
+            <inst x-name="wordcount_pair_type.second" x-type="varint">W_54</inst>
         </inst>
-        <inst x-name="wordcount_X" x-type="struct" x-container="map">
-            <inst x-name="wordcount_X.word" x-type="varchar">and</inst>
-            <inst x-name="wordcount_X.count" x-type="int32">54</inst>
-        </inst>
-        <inst x-name="wordcount_Y" x-type="word_count_pair" x-container="map">
-            <inst x-name="word_count_pair.word" x-type="varchar">the</inst>
-            <inst x-name="word_count_pair.count" x-type="varint">123</inst>
-        </inst>
-        <inst x-name="wordcount_Y" x-type="word_count_pair" x-container="map">
-            <inst x-name="word_count_pair.word" x-type="varchar">and</inst>
-            <inst x-name="word_count_pair.count" x-type="varint">54</inst>
-        </inst>
+        <wordcount_T x-name="wordcount_T" x-mode="inst" x-type="wordcount_T" x-container="multiple">
+            <inst x-name="wordcount_T.first" x-type="varchar">T_the</inst>
+            <inst x-name="wordcount_T.second" x-type="varint">T_123</inst>
+        </wordcount_T>
+        <wordcount_T x-name="wordcount_T" x-mode="inst" x-type="wordcount_T" x-container="multiple">
+            <inst x-name="wordcount_T.first" x-type="varchar">T_and</inst>
+            <inst x-name="wordcount_T.second" x-type="varint">T_54</inst>
+        </wordcount_T>
         <inst x-name="struct.type" x-type="varchar">message</inst>
         <inst x-name="struct.name" x-type="varchar">msg4</inst>
         <inst x-name="struct.nsp" x-type="varchar">::nest::data</inst>

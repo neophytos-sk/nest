@@ -52,14 +52,24 @@ struct message {
     multiple varchar tags = {}
     multiple file attachment = {}
 
-    map struct wordcount_X = {} {
+    struct _wordcount_X {
         varchar word
         int32 count
     }
+    multiple _wordcount_X wordcount_X
 
-    map word_count_pair wordcount_Y
-    map word_count_pair wordcount_Z = {}
+    multiple word_count_pair wordcount_Y
+    multiple word_count_pair wordcount_Z = {}
     multiple varchar words
+
+    pair varchar varint wordcount_pair_type
+    multiple wordcount_pair_type wordcount_W
+
+    pair varchar varint wordcount_V
+    
+    pair<varchar,varint> wordcount_U
+
+    multiple pair<varchar,varint> wordcount_T
 
 }
 
@@ -100,26 +110,54 @@ message msg4 {
         address "max@example.com"
     }}
 
-    map wordcount_X {{
-        word "the"
-        count "123"
+    multiple wordcount_X {{
+        word "X_the"
+        count "X_123"
     } {
-        word "and"
-        count "54"
+        word "X_and"
+        count "X_54"
     }}
 
-    map wordcount_Y {{
-        word "the"
-        count "123"
+    multiple wordcount_Y {{
+        word "Y_the"
+        count "Y_123"
     } {
-        word "and"
-        count "54"
+        word "Y_and"
+        count "Y_54"
     }}
+
+    wordcount_V {
+        first "V_the"
+        second "V_123"
+    }
+    
+    wordcount_U {
+        first "U_the"
+        second "U_123"
+    }
+
+    multiple wordcount_W {{
+        first "W_the"
+        second "W_123"
+    } {
+        first "W_and"
+        second "W_54"
+    }}
+
+    multiple wordcount_T {{
+        first "T_the"
+        second "T_123"
+    } {
+        first "T_and"
+        second "T_54"
+    }}
+
 }
 
 return
 
-# CORRECT
+# OLD
+
 message msg3 {
     message.subject "hello"
     message.from {
@@ -165,26 +203,4 @@ message msg3 {
         word_count_pair.word "and"
         word_count_pair.count "54"
     }}
-}
-
-message msg1 {
-
-    typeinst varchar subject = "hello"
-
-    typeinst email from {
-        typeinst varchar name = "zena wow"
-        typeinst varchar address = "zena@example.com"
-    }
-
-    typeinst varchar body = "this is a test"
-
-}
-
-message msg2 {
-    varchar subject "hello"
-    email from {
-        varchar name "zena wow"
-        varchar address "zena@example.com"
-    }
-    varchar body "this is a test"
 }
