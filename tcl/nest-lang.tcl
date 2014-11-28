@@ -1,6 +1,6 @@
 package require tdom
 
-package provide nest 0.1
+package provide nest 0.2
 
 define_lang ::nest::lang {
 
