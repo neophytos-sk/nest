@@ -32,8 +32,6 @@ Dependencies:
 
 * libxml2 (http://www.xmlsoft.org) [xmllint needed for the read-nest.tcl example]
 
-NOTES:
-
 
 History:
 
@@ -41,9 +39,7 @@ History:
 
 Notes:
 
-* check out the definition of the struct construct in nest, I think it's very cool:
-
-=====
+Check out the definition of the struct construct in nest, I think it's very cool:
     meta {nest} {nest {nest {type_helper}}} {struct} {
         varchar name
         varchar type
@@ -62,11 +58,8 @@ Notes:
         bool is_final_if_no_scope
 
     }
-=====
 
-* check out its [lambda] proc:
-
-=====
+Check out its [lambda] proc:
     proc lambda {params body args} {
 
         set {llength_params} [llength ${params}]
@@ -107,6 +100,5 @@ Notes:
         }
 
     } 
-=====
 
  
