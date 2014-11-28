@@ -107,14 +107,6 @@ define_lang ::nest::lang {
         join [concat [get_context_path_of_type {eval} {context_name}] ${name}] {.}
     }
 
-    proc get_nest_path {name} {
-        join [concat [get_context_path_of_type {nest} {context_name}] ${name}] {.}
-    }
-
-    proc get_decl_path {name} {
-        join [concat [get_context_path_of_type {decl} {context_name}] ${name}] {.}
-    }
-
     # context := {context_type context_tag context_name}
     proc set_lookahead_ctx {name context} {
         variable lookahead_ctx
