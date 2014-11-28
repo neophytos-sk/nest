@@ -318,7 +318,6 @@ define_lang ::nest::lang {
 
     proc declaration_mode_p {} {
         variable stack_ctx
-        variable stack_fwd
 
         set first_ctx [lindex $stack_ctx end] 
         if { $first_ctx eq {nest meta struct} || $first_ctx eq {eval meta struct} } {
