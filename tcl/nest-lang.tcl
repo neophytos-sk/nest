@@ -262,12 +262,6 @@ define_lang ::nest::lang {
         return $node
     }
 
-
-    #alias "shiftl" {lambda {_ args} {return $args}}
-    #alias "chain" {lambda {args} {foreach arg $args {set args [{*}$arg {*}$args]}}}
-
-    alias {meta_old} {lambda {name nest args} {nest $nest $name {*}$args}}
-
     dom createNodeCmd textNode t
 
     proc nt {text} { t -disableOutputEscaping ${text} }
@@ -308,20 +302,6 @@ define_lang ::nest::lang {
             }
         }
     }
-
-    proc inst_helper {inst_type inst_name args} {
-        set inst_tag [top_fwd]
-
-        inst_args $inst_type args
-
-        log "--->>> (inst_helper) inst_type=$inst_type inst_name=$inst_name stack_ctx=[list $::nest::lang::stack_ctx]"
-        
-        set cmd [list [namespace which {node}] {inst} $inst_name -x-type $inst_type {*}$args]
-        return [uplevel $cmd]
-
-    }
-
-    meta_old  "inst" [namespace which "inst_helper"]
 
     proc declaration_mode_p {} {
         variable stack_ctx
@@ -394,6 +374,18 @@ define_lang ::nest::lang {
             }
 
         }
+
+    }
+
+    proc inst_helper {inst_type inst_name args} {
+        set inst_tag [top_fwd]
+
+        inst_args $inst_type args
+
+        log "--->>> (inst_helper) inst_type=$inst_type inst_name=$inst_name stack_ctx=[list $::nest::lang::stack_ctx]"
+        
+        set cmd [list [namespace which {node}] {inst} $inst_name -x-type $inst_type {*}$args]
+        return [uplevel $cmd]
 
     }
 
@@ -471,10 +463,6 @@ define_lang ::nest::lang {
             }
         }
     }
-
-    alias {multiple} {container_helper}
-
-    alias {map} {container_helper}
 
     proc unknown {field_type field_name args} {
 
@@ -562,6 +550,10 @@ define_lang ::nest::lang {
     }
 
     alias {base_type} {nest {type_helper}}
+    alias {multiple} {container_helper}
+    alias {map} {container_helper}
+    alias {inst} {inst_helper}
+    alias {meta} {lambda {metaCmd args} {{*}$metaCmd {*}$args}}
 
     # a varying-length text string encoded using UTF-8 encoding
     base_type "varchar"
@@ -586,8 +578,6 @@ define_lang ::nest::lang {
 
     # a 64-bit floating point number
     base_type "double"
-
-    alias {meta} {lambda {metaCmd args} {{*}$metaCmd {*}$args}}
 
     meta {nest} {nest {nest {type_helper}}} {struct} {
         varchar name
