@@ -44,7 +44,7 @@ define_lang ::nest::lang {
     #
     # EXAMPLE 1:
     #
-    # struct typedecl {
+    # struct decl {
     #     varchar name
     #     varchar type
     #     varchar default
@@ -53,7 +53,7 @@ define_lang ::nest::lang {
     #     varchar subtype
     # }
     # 
-    # stack_ctx = {proc base_type bool} {eval struct typedecl} {proc struct struct}
+    # stack_ctx = {proc base_type bool} {eval struct decl} {proc struct struct}
     #
     # EXAMPLE 2:
     # 
@@ -221,38 +221,38 @@ define_lang ::nest::lang {
 
         if { $tag ni {meta_old base_type} } {
 
-            set typedecls [$node selectNodes {child::*[@x-mode="typedecl"]}]
+            set decls [$node selectNodes {child::*[@x-mode="decl"]}]
             $node appendFromScript {
-                foreach typedecl $typedecls {
-                    log "!!! nest: instantiate empty slot ${name}.[$typedecl @x-name]"
-                    typeinst struct.slot [$typedecl @x-name]
+                foreach decl $decls {
+                    log "!!! nest: instantiate empty slot ${name}.[$decl @x-name]"
+                    inst struct.slot [$decl @x-name]
                 }
                 struct.type $tag
                 struct.name $name
                 struct.nsp $nsp
             }
 
-            foreach typeinst [$node selectNodes {child::typeinst[@x-type="struct.slot"]}] {
-                $typeinst delete
+            foreach inst [$node selectNodes {child::inst[@x-type="struct.slot"]}] {
+                $inst delete
             }
 
             $node appendFromScript {
-                foreach typedecl $typedecls {
+                foreach decl $decls {
 
-                    log "!!! nest: instantiate full slot ${name}.[$typedecl @x-name]"
+                    log "!!! nest: instantiate full slot ${name}.[$decl @x-name]"
 
-                    typeinst struct.slot [$typedecl @x-name] [subst -nocommands -nobackslashes {
-                        struct.slot.name [$typedecl @x-name]
-                        struct.slot.type [$typedecl @x-type]
+                    inst struct.slot [$decl @x-name] [subst -nocommands -nobackslashes {
+                        struct.slot.name [$decl @x-name]
+                        struct.slot.type [$decl @x-type]
                         struct.slot.parent ${name}
-                        if { [$typedecl hasAttribute "x-default_value"] } {
-                            struct.slot.default_value [$typedecl @x-default_value ""]
+                        if { [$decl hasAttribute "x-default_value"] } {
+                            struct.slot.default_value [$decl @x-default_value ""]
                         }
-                        if { [$typedecl hasAttribute "x-optional_p"] } {
-                            struct.slot.optional_p [$typedecl @x-optional_p ""]
+                        if { [$decl hasAttribute "x-optional_p"] } {
+                            struct.slot.optional_p [$decl @x-optional_p ""]
                         }
-                        if { [$typedecl hasAttribute "x-container"] } {
-                            struct.slot.container [$typedecl @x-container ""]
+                        if { [$decl hasAttribute "x-container"] } {
+                            struct.slot.container [$decl @x-container ""]
                         }
                     }]
                 }
@@ -272,7 +272,7 @@ define_lang ::nest::lang {
 
     proc nt {text} { t -disableOutputEscaping ${text} }
 
-    proc typeinst_args {inst_type argsVar} {
+    proc inst_args {inst_type argsVar} {
 
         upvar $argsVar args
 
@@ -290,18 +290,18 @@ define_lang ::nest::lang {
 
             # we don't know which of the following two cases we are in
             # and the stack does not have the context info for this call
-            # i.e. the stack is {proc meta_old typeinst}
+            # i.e. the stack is {proc meta_old inst}
             #
             # message.subject "hello"
             # message.from { ... }
             #
             # so we check the lookahead_context for the upcoming command
-            # we know already that typeinst_helper calls the given inst_type command
+            # we know already that inst_helper calls the given inst_type command
 
             set lookahead_ctx [get_lookahead_ctx $inst_type]
             lassign $lookahead_ctx lookahead_ctx_type lookahead_ctx_tag lookahead_ctx_name
 
-            log "////// (typeinst_args) lookahead_ctx=$lookahead_ctx inst_type=$inst_type args=[list $args]"
+            log "////// (inst_args) lookahead_ctx=$lookahead_ctx inst_type=$inst_type args=[list $args]"
 
             if { $lookahead_ctx_tag eq {base_type} } {
                 set args [list [list ::nest::lang::t [lindex $args 0]]]
@@ -309,21 +309,19 @@ define_lang ::nest::lang {
         }
     }
 
-    proc typeinst_helper {inst_type inst_name args} {
+    proc inst_helper {inst_type inst_name args} {
         set inst_tag [top_fwd]
 
-        typeinst_args $inst_type args
+        inst_args $inst_type args
 
-        log "--->>> (typeinst_helper) inst_type=$inst_type inst_name=$inst_name stack_ctx=[list $::nest::lang::stack_ctx]"
+        log "--->>> (inst_helper) inst_type=$inst_type inst_name=$inst_name stack_ctx=[list $::nest::lang::stack_ctx]"
         
-        set cmd [list [namespace which {node}] {typeinst} $inst_name -x-type $inst_type {*}$args]
+        set cmd [list [namespace which {node}] {inst} $inst_name -x-type $inst_type {*}$args]
         return [uplevel $cmd]
 
     }
 
-    meta_old  "typeinst" [namespace which "typeinst_helper"]
-
-    meta_old {typedecl} [namespace which "type_helper"]
+    meta_old  "inst" [namespace which "inst_helper"]
 
     proc declaration_mode_p {} {
         variable stack_ctx
@@ -353,8 +351,7 @@ define_lang ::nest::lang {
             set decl_name $name
             set decl_type $tag
 
-            # set cmd [list [namespace which {node}] {typedecl} $decl_name -x-mode {typedecl} -x-type $decl_type {*}$args]
-            set cmd [list [namespace which {node}] $decl_type $decl_name -x-mode {typedecl} -x-type $decl_type {*}$args]
+            set cmd [list [namespace which {node}] $decl_type $decl_name -x-mode {decl} -x-type $decl_type {*}$args]
             set node [uplevel $cmd]
 
             # get full alias name and register the alias
@@ -362,8 +359,7 @@ define_lang ::nest::lang {
             set lookahead_ctx [list {nest} $decl_type $decl_name]
             set_lookahead_ctx $alias_name $lookahead_ctx
 
-            set dotted_nest [list {typeinst} $decl_type $alias_name]
-            #set dotted_nest [list with_ctx [list {typedecl} $decl_type $alias_name] {*}$dotted_nest] 
+            set dotted_nest [list {inst} $decl_type $alias_name]
             set dotted_nest [list with_ctx $lookahead_ctx {*}$dotted_nest] 
             set cmd [list [namespace which "alias"] $alias_name $dotted_nest]
             uplevel $cmd
@@ -387,14 +383,14 @@ define_lang ::nest::lang {
                 
                 set args [lassign $args arg0]
                 if { $args ne {} } { error "something error with instantiation statement" }
-                #set cmd [list [namespace which {node}] {typeinst} $tag -x-mode {typeinst} -x-type $ctx_tag [list ::nest::lang::t $arg0]]
-                set cmd [list [namespace which {node}] $ctx_tag $tag -x-mode {typeinst} -x-type $ctx_tag [list ::nest::lang::t $arg0]]
+                #set cmd [list [namespace which {node}] {inst} $tag -x-mode {inst} -x-type $ctx_tag [list ::nest::lang::t $arg0]]
+                set cmd [list [namespace which {node}] $ctx_tag $tag -x-mode {inst} -x-type $ctx_tag [list ::nest::lang::t $arg0]]
                 return [uplevel $cmd]
 
             } else {
 
-                # set cmd [list [namespace which {node}] {typeinst} $inst_name -x-mode {typeinst} -x-type $inst_type {*}$args]
-                set cmd [list [namespace which {node}] $inst_type $inst_name -x-mode {typeinst} -x-type $inst_type {*}$args]
+                # set cmd [list [namespace which {node}] {inst} $inst_name -x-mode {inst} -x-type $inst_type {*}$args]
+                set cmd [list [namespace which {node}] $inst_type $inst_name -x-mode {inst} -x-type $inst_type {*}$args]
                 return [uplevel $cmd]
 
             }
@@ -545,31 +541,19 @@ define_lang ::nest::lang {
     dtd {
         <!DOCTYPE nest [
 
-            <!ELEMENT nest (struct | typedecl | typeinst)*>
-            <!ELEMENT struct (struct | struct.slot | typedecl | typeinst)*>
+            <!ELEMENT nest (struct | inst)*>
+            <!ELEMENT struct (struct | struct.slot | inst)*>
             <!ATTLIST struct x-name CDATA #IMPLIED
                            x-type CDATA #REQUIRED
                            x-default_value CDATA #IMPLIED
                            x-container CDATA #IMPLIED>
 
-            <!ELEMENT struct.slot (typedecl | typeinst)*>
+            <!ELEMENT struct.slot (inst)*>
             <!ATTLIST struct.slot x-name CDATA #IMPLIED
                            x-type CDATA #REQUIRED>
 
-            <!ELEMENT typedecl (typedecl)*>
-            <!ATTLIST typedecl x-name CDATA #REQUIRED
-                           x-type CDATA #REQUIRED
-                           x-default_value CDATA #IMPLIED
-                           x-container CDATA #IMPLIED
-                           name CDATA #IMPLIED
-                           type CDATA #IMPLIED
-                           nsp CDATA #IMPLIED
-                           default_value CDATA #IMPLIED
-                           optional_p CDATA #IMPLIED
-                           container_type CDATA #IMPLIED>
-
-            <!ELEMENT typeinst ANY>
-            <!ATTLIST typeinst x-name CDATA #REQUIRED
+            <!ELEMENT inst ANY>
+            <!ATTLIST inst x-name CDATA #REQUIRED
                                x-type CDATA #REQUIRED
                                x-container CDATA #IMPLIED
                                x-map_p CDATA #IMPLIED
@@ -578,8 +562,6 @@ define_lang ::nest::lang {
 
         ]>
     }
-
-    alias {meta} {lambda {metaCmd args} {{*}$metaCmd {*}$args}}
 
     alias {base_type} {nest {type_helper}}
 
@@ -607,6 +589,7 @@ define_lang ::nest::lang {
     # a 64-bit floating point number
     base_type "double"
 
+    alias {meta} {lambda {metaCmd args} {{*}$metaCmd {*}$args}}
 
     meta {nest} {nest {nest {type_helper}}} {struct} {
         varchar name
