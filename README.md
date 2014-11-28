@@ -60,7 +60,7 @@ Check out the definition of the struct construct in nest, I think it's very cool
 
     }
 
-Check out its [lambda] proc:
+Check out its lambda proc:
 
     proc lambda {params body args} {
 
