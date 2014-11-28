@@ -383,13 +383,11 @@ define_lang ::nest::lang {
                 
                 set args [lassign $args arg0]
                 if { $args ne {} } { error "something error with instantiation statement" }
-                #set cmd [list [namespace which {node}] {inst} $tag -x-mode {inst} -x-type $ctx_tag [list ::nest::lang::t $arg0]]
                 set cmd [list [namespace which {node}] $ctx_tag $tag -x-mode {inst} -x-type $ctx_tag [list ::nest::lang::t $arg0]]
                 return [uplevel $cmd]
 
             } else {
 
-                # set cmd [list [namespace which {node}] {inst} $inst_name -x-mode {inst} -x-type $inst_type {*}$args]
                 set cmd [list [namespace which {node}] $inst_type $inst_name -x-mode {inst} -x-type $inst_type {*}$args]
                 return [uplevel $cmd]
 
