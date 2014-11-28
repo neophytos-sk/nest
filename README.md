@@ -60,3 +60,10 @@ Check out the definition of the struct construct in nest, I think it's very cool
 
     }
 
+Before the chicken and the egg, it was the nest --- pairs, nest-style:
+
+    alias {pair} {lambda {typefirst typesecond name} {
+        nest {type_helper} $name [concat $typefirst {first} " ; " $typesecond {second}]
+    }}
+
+

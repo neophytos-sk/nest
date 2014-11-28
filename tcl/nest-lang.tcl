@@ -635,21 +635,9 @@ define_lang ::nest::lang {
 
     }
 
-    # see if we can make it work as base_type
-    # so that we won't have to instantiate the struct
-    # to get to the pair, we lose information that way
-    proc pair_helper {args} {
-        if {[declaration_mode_p]} {
-            lassign $args typefrom typeto name
-            struct ${name} [concat $typefrom first ";" $typeto second]
-            set node [${name} ${name}]
-            return $node
-        } else {
-            set args [lassign $args name]
-            return [${name} {*}$args]
-        }
-    }
-    alias {pair} {pair_helper}
+    alias {pair} {lambda {typefirst typesecond name} {
+        nest {type_helper} $name [concat $typefirst {first} " ; " $typesecond {second}]
+    }}
 
     namespace export "struct" "varchar" "bool" "varint" "byte" "int16" "int32" "int64" "double" "multiple" "dtd" "lambda"
 
