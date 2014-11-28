@@ -1,5 +1,5 @@
 <nest>
-    <struct x-name="email" x-type="struct">
+    <struct x-name="email" x-mode="decl" x-type="struct">
         <varchar x-name="name" x-mode="decl" x-type="varchar" x-default_value=""/>
         <varchar x-name="address" x-mode="decl" x-type="varchar"/>
         <inst x-name="struct.pk" x-type="varchar">address</inst>
@@ -18,7 +18,7 @@
             <inst x-name="struct.slot.parent" x-type="varchar">email</inst>
         </inst>
     </struct>
-    <struct x-name="file" x-type="struct">
+    <struct x-name="file" x-mode="decl" x-type="struct">
         <varchar x-name="name" x-mode="decl" x-type="varchar"/>
         <varchar x-name="mime_type" x-mode="decl" x-type="varchar"/>
         <int32 x-name="size" x-mode="decl" x-type="int32"/>
@@ -41,7 +41,7 @@
             <inst x-name="struct.slot.parent" x-type="varchar">file</inst>
         </inst>
     </struct>
-    <struct x-name="folder" x-type="struct">
+    <struct x-name="folder" x-mode="decl" x-type="struct">
         <varchar x-name="name" x-mode="decl" x-type="varchar"/>
         <int32 x-name="num_items" x-mode="decl" x-type="int32"/>
         <inst x-name="struct.type" x-type="varchar">struct</inst>
@@ -58,7 +58,7 @@
             <inst x-name="struct.slot.parent" x-type="varchar">folder</inst>
         </inst>
     </struct>
-    <struct x-name="category" x-type="struct">
+    <struct x-name="category" x-mode="decl" x-type="struct">
         <varchar x-name="category_name" x-mode="decl" x-type="varchar"/>
         <varchar x-name="parent_category" x-mode="decl" x-type="varchar"/>
         <inst x-name="struct.type" x-type="varchar">struct</inst>
@@ -75,7 +75,7 @@
             <inst x-name="struct.slot.parent" x-type="varchar">category</inst>
         </inst>
     </struct>
-    <struct x-name="word_count_pair" x-type="struct">
+    <struct x-name="word_count_pair" x-mode="decl" x-type="struct">
         <varchar x-name="word" x-mode="decl" x-type="varchar"/>
         <varint x-name="count" x-mode="decl" x-type="varint"/>
         <inst x-name="struct.type" x-type="varchar">struct</inst>
@@ -92,7 +92,7 @@
             <inst x-name="struct.slot.parent" x-type="varchar">word_count_pair</inst>
         </inst>
     </struct>
-    <struct x-name="message" x-type="struct">
+    <struct x-name="message" x-mode="decl" x-type="struct">
         <inst x-name="struct.pk" x-type="varchar">message_id</inst>
         <inst x-name="struct.is_final_if_no_scope" x-type="bool">yes</inst>
         <varint x-name="message_id" x-mode="decl" x-type="varint"/>
@@ -100,7 +100,7 @@
         <int16 x-name="num_comments" x-mode="decl" x-type="int16" x-default_value="0"/>
         <varchar x-name="subject" x-mode="decl" x-type="varchar"/>
         <varchar x-name="body" x-mode="decl" x-type="varchar"/>
-        <email x-name="from" x-type="email">
+        <email x-name="from" x-mode="decl" x-type="email">
             <inst x-name="struct.type" x-type="varchar">email</inst>
             <inst x-name="struct.name" x-type="varchar">from</inst>
             <inst x-name="struct.nsp" x-type="varchar">::nest::lang</inst>
@@ -148,6 +148,11 @@
         <inst x-name="body" x-type="struct.slot">
             <inst x-name="struct.slot.name" x-type="varchar">body</inst>
             <inst x-name="struct.slot.type" x-type="varchar">varchar</inst>
+            <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
+        </inst>
+        <inst x-name="from" x-type="struct.slot">
+            <inst x-name="struct.slot.name" x-type="varchar">from</inst>
+            <inst x-name="struct.slot.type" x-type="varchar">email</inst>
             <inst x-name="struct.slot.parent" x-type="varchar">message</inst>
         </inst>
         <inst x-name="to" x-type="struct.slot">
@@ -231,7 +236,7 @@
             <inst x-name="struct.slot.container" x-type="varchar">multiple</inst>
         </inst>
     </struct>
-    <message x-name="msg4" x-type="message">
+    <message x-name="msg4" x-mode="decl" x-type="message">
         <inst x-name="subject" x-type="varchar">hello</inst>
         <inst x-name="body" x-type="varchar">this is a test</inst>
         <email x-name="from" x-mode="inst" x-type="email">
