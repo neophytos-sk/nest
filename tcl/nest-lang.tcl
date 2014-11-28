@@ -519,7 +519,6 @@ define_lang ::nest::lang {
         # forced to do this to keep multiple ignorant of the
         # type it is given
         set type_re {[_a-zA-Z][_a-zA-Z0-9]*}
-        set nsp_re {(?:\:\:[_a-zA-Z][_a-zA-Z0-9]*)*\:\:}
 
         set re {}
         append re "(set|list)<(${type_re})>" "|"
