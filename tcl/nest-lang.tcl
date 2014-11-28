@@ -477,16 +477,10 @@ define_lang ::nest::lang {
 
             log "--->>> (unknown) checking context for \"${field_type}\" -> ${redirect_name} ($redirect_exists_p)"
 
-            if { 0 } {
-                log "+++ stack_ctx=[list $::nest::lang::stack_ctx]"
-                log "+++ info proc=[uplevel [list info proc $redirect_name]]"
-                log "+++ alias=[array get ::nest::lang::alias]"
-                log "+++ alias_exists_p=[[namespace which check_alias] $redirect_name]"
-            }
-
-
             if { $redirect_exists_p } {
+
                 log "+++ $field_type $field_name $args -> redirect_name=$redirect_name"
+
                 set unknown_ctx [list "unknown" "unknown" $redirect_name]
                 set cmd [list $redirect_name $field_name {*}$args]
                 with_ctx $unknown_ctx uplevel $cmd
@@ -503,7 +497,6 @@ define_lang ::nest::lang {
             }
         }
 
-        log "--->>> (unknown) aliases=[array get ::nest::lang::alias]"
         error "no redirect found for field: $field_type (field_name=$field_name args=[list $args])"
 
 
