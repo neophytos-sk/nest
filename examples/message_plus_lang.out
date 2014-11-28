@@ -1,4 +1,4 @@
-<lang>
+<lang x-nsp="::nest::lang">
     <base_type x-name="varchar" x-mode="decl" x-type="base_type"/>
     <base_type x-name="bool" x-mode="decl" x-type="base_type"/>
     <base_type x-name="varint" x-mode="decl" x-type="base_type"/>
