@@ -64,7 +64,7 @@ struct message {
 }
 
 # new version breakpoint
-# return
+#return
 
 # CORRECT
 message msg4 {
@@ -99,15 +99,15 @@ message msg4 {
         name "max loyal"
         address "max@example.com"
     }}
-    if {0} {
-        map wordcount_X {{
-            word "the"
-            count "123"
-        } {
-            word "and"
-            count "54"
-        }}
-    }
+
+    map wordcount_X {{
+        word "the"
+        count "123"
+    } {
+        word "and"
+        count "54"
+    }}
+
     map wordcount_Y {{
         word "the"
         count "123"

@@ -4,7 +4,7 @@ package provide nest 0.1
 
 define_lang ::nest::lang {
 
-    variable debug 0
+    variable debug 1
     variable stack_ctx [list]
     variable stack_fwd [list]
 
@@ -221,8 +221,9 @@ define_lang ::nest::lang {
 
         if { $tag ni {meta_old base_type} } {
 
+            set typedecls [$node selectNodes {child::*[@x-mode="typedecl"]}]
             $node appendFromScript {
-                foreach typedecl [$node selectNodes {child::typedecl}] {
+                foreach typedecl $typedecls {
                     log "!!! nest: instantiate empty slot ${name}.[$typedecl @x-name]"
                     typeinst struct.slot [$typedecl @x-name]
                 }
@@ -231,12 +232,12 @@ define_lang ::nest::lang {
                 struct.nsp $nsp
             }
 
-            foreach typeinst [$node selectNodes {child::typeinst[@x-type="slot"]}] {
+            foreach typeinst [$node selectNodes {child::typeinst[@x-type="struct.slot"]}] {
                 $typeinst delete
             }
 
             $node appendFromScript {
-                foreach typedecl [$node selectNodes {child::typedecl}] {
+                foreach typedecl $typedecls {
 
                     log "!!! nest: instantiate full slot ${name}.[$typedecl @x-name]"
 
@@ -266,217 +267,6 @@ define_lang ::nest::lang {
     #alias "chain" {lambda {args} {foreach arg $args {set args [{*}$arg {*}$args]}}}
 
     alias {meta_old} {lambda {name nest args} {nest $nest $name {*}$args}}
-
-
-    proc container_helper {arg0 args} {
-
-        # remove {proc meta_old map} from the top of the context stack
-        # and at the bottom, put it back so that it will be removed 
-        # from whatever put it there
-        set top_ctx [top_ctx]
-        pop_ctx
-
-        set container_type [top_fwd]
-
-        set nodes [list]
-        set llength_args [llength $args]
-
-
-        if { $llength_args == 1 && $arg0 ne {struct} } {
-            # we need to decide whether it is a declaration
-            # or an instantiation
-            #HERE
-            if { ![declaration_mode_p] } {
-                # (map | multiple) slot_name instantiation_script
-                set instantiation_p 1
-            } else {
-                # (map | multiple) type slot_name
-                set instantiation_p 0
-            }
-        } else {
-            # all other acceptable cases are declarations
-            if { $llength_args in {1 2 3 4} } {
-                set instantiation_p 0
-            } else {
-                set usage_info ""
-                append usage_info "\n\t * DECL: (map|multiple) type slot_name = default_value ?decl_script?"
-                append usage_info "\n\t * DECL: (map|multiple) type slot_name"
-                append usage_info "\n\t * INST: (map|multiple) slot_name inst_script"
-                error "must be any of the following cases:${usage_info}"
-            }
-        }
-
-        log "@@@@ (container_helper) llength_args=$llength_args instantiation_p=$instantiation_p"
-
-
-        if { $instantiation_p } {
-
-            # EXAMPLE:
-            # 
-            #   map wordcount {{ 
-            #       word "the"
-            #       count "123"
-            #   } {
-            #   } { 
-            #       word "and" 
-            #       count "54" 
-            #   }}
-
-            set name $arg0
-
-            log "----- (container instantiation) name=[list $name] args=$args"
-
-            set type $arg0
-            set tag $type
-
-            # does not play well with embedded structures
-            set cmd [list $name]
-
-            lassign $args argv
-            foreach arg $argv {
-                set node [uplevel $cmd [list $arg]]
-                #log [$node asXML]
-                lappend nodes $node
-            }
-
-        } else {
-
-            # EXAMPLE 1 ( llength_args==1 && arg0 ne {struct} ):
-            #   struct message {
-            #     ...
-            #     map word_count_pair wordcount
-            #     ...
-            #   }
-            #
-            # EXAMPLE 2 ( llength_args==2 && arg0 eq {struct} ):
-            #   struct message {
-            #     ...
-            #     map struct wordcount { 
-            #       varchar word
-            #       varint count
-            #     }
-            #     ...
-            #   }
-            #
-            #
-            # EXAMPLE 3 ( llength_args==3 && arg0 ne {struct} ):
-            #   struct message {
-            #     ...
-            #     map word_count_pair wordcount = {}
-            #     ...
-            #   }
-            #
-            # EXAMPLE 4 ( llength_args==4 && arg0 eq {struct} ):
-            #   struct message {
-            #     ...
-            #     map struct wordcount = {} { 
-            #       varchar word
-            #       varint count
-            #     }
-            #     ...
-            #   }
-            #
-            # EXAMPLE 5 (TODO):
-            #   struct message {
-            #     ...
-            #     map pair "from_type to_type" wordcount = {}
-            #     ...
-            #   }
-            #
-
-
-            set type $arg0
-            set tag $type
-            set args [lassign $args name]
-
-            set context [top_context_of_type "eval"]
-            lassign $context context_type context_tag context_name
-
-            log "++++++ (container declaration) tag=type=$type name=$name args=$args stack_ctx=$::nest::lang::stack_ctx context=$context"
-
-            # arg0 = type
-            if { [exists_lookahead_ctx $arg0] } {
-
-                typedecl_args args
-                set args [concat -x-container $container_type $args] 
-
-                set cmd [list $arg0 $name {*}$args]
-                set node [uplevel $cmd]
-                lappend nodes $node
-
-                if { $llength_args in {2 4} && $arg0 eq {struct} } {
-
-                    # EXAMPLE 4:
-                    # struct message {
-                    #   map struct wordcount_X {
-                    #     varchar word
-                    #     varint count
-                    #   }
-                    # }
-                    #
-                    # DECL ABOVE WAS: struct wordcount_X_type {...}
-                    # INST AGAIN NOW: wordcount_X_type wordcount_X 
-
-                    # WE DO NOT KNOW HOW TO DEAL WITH THIS CASE WELL
-                    # COME BACK LATER
-
-                    #error "not handled properly yet"
-
-                    #if { $name in {slot wordcount_X message.wordcount_X}} exit
-
-                }
-
-                log "llength_args=$llength_args args=$args cmd=$cmd"
-                #log [[lindex $nodes end] asXML]
-
-
-            } else {
-
-                # context = {eval struct message}
-                # lookahead_context of message = {proc struct message}
-                # push a temporary context so that typedecl_helper gets it right
-                set lookahead_ctx [get_lookahead_ctx $context_name]
-                push_ctx $lookahead_ctx
-                set cmd [list {typedecl} $type $name {*}$args]
-                lappend nodes [with_fwd $tag uplevel $cmd]
-                pop_ctx
-
-            }
-
-            if {0} {
-                log "----- (container_helper) cmd=$type ${name} {*}$args"
-                log [[lindex $nodes end] asXML]
-            }
-            
-
-        }
-
-        # push the {proc meta_old map} context back to the top of the context stack
-        # as it were before we removed it in the beginning of this proc
-        push_ctx $top_ctx
-
-        return $nodes
-
-
-    }
-
-    meta_old  "multiple" [namespace which "container_helper"]
-    meta_old  "map" [namespace which "container_helper"]
-
-    proc typedecl_args {argsVar} {
-
-        upvar $argsVar args
-
-        # rewrite args of the form
-        #   varchar device = "sms"
-        # to
-        #   varchar device -x-default_value "sms"
-
-        if { [llength $args] && [lindex $args 0] eq {=} } {
-            # we don't make any claims about the field being optional or not
-            set args [concat -x-default_value [lrange $args 1 end]]
-        }
-    }
 
     dom createNodeCmd textNode t
 
@@ -563,14 +353,18 @@ define_lang ::nest::lang {
             set decl_name $name
             set decl_type $tag
 
-            set cmd [list [namespace which {node}] {typedecl} $decl_name -x-type $decl_type {*}$args]
+            # set cmd [list [namespace which {node}] {typedecl} $decl_name -x-mode {typedecl} -x-type $decl_type {*}$args]
+            set cmd [list [namespace which {node}] $decl_type $decl_name -x-mode {typedecl} -x-type $decl_type {*}$args]
             set node [uplevel $cmd]
 
             # get full alias name and register the alias
             set alias_name [get_eval_path $decl_name]
-            set_lookahead_ctx $alias_name [list "nest/typedecl" $decl_type $decl_name]
+            set lookahead_ctx [list {nest} $decl_type $decl_name]
+            set_lookahead_ctx $alias_name $lookahead_ctx
+
             set dotted_nest [list {typeinst} $decl_type $alias_name]
-            set dotted_nest [list with_ctx [list {typedecl} $decl_type $alias_name] {*}$dotted_nest] 
+            #set dotted_nest [list with_ctx [list {typedecl} $decl_type $alias_name] {*}$dotted_nest] 
+            set dotted_nest [list with_ctx $lookahead_ctx {*}$dotted_nest] 
             set cmd [list [namespace which "alias"] $alias_name $dotted_nest]
             uplevel $cmd
 
@@ -593,12 +387,14 @@ define_lang ::nest::lang {
                 
                 set args [lassign $args arg0]
                 if { $args ne {} } { error "something error with instantiation statement" }
-                set cmd [list [namespace which {node}] {typeinst} $tag -x-type $ctx_tag [list ::nest::lang::t $arg0]]
+                #set cmd [list [namespace which {node}] {typeinst} $tag -x-mode {typeinst} -x-type $ctx_tag [list ::nest::lang::t $arg0]]
+                set cmd [list [namespace which {node}] $ctx_tag $tag -x-mode {typeinst} -x-type $ctx_tag [list ::nest::lang::t $arg0]]
                 return [uplevel $cmd]
 
             } else {
 
-                set cmd [list [namespace which {node}] {typeinst} $inst_name -x-type $inst_type {*}$args]
+                # set cmd [list [namespace which {node}] {typeinst} $inst_name -x-mode {typeinst} -x-type $inst_type {*}$args]
+                set cmd [list [namespace which {node}] $inst_type $inst_name -x-mode {typeinst} -x-type $inst_type {*}$args]
                 return [uplevel $cmd]
 
             }
@@ -606,6 +402,85 @@ define_lang ::nest::lang {
         }
 
     }
+
+    # container_helper
+    #
+    # INSTANTIATION EXAMPLE 1:
+    # 
+    #   map wordcount {{ 
+    #       word "the"
+    #       count "123"
+    #   } {
+    #   } { 
+    #       word "and" 
+    #       count "54" 
+    #   }}
+    #
+    #
+    # DECLARATION EXAMPLE 1 ( llength_args==1 && arg0 ne {struct} ):
+    #   struct message {
+    #     ...
+    #     map word_count_pair wordcount
+    #     ...
+    #   }
+    #
+    # DECLARATION EXAMPLE 2 ( llength_args==2 && arg0 eq {struct} ):
+    #   struct message {
+    #     ...
+    #     map struct wordcount { 
+    #       varchar word
+    #       varint count
+    #     }
+    #     ...
+    #   }
+    #
+    #
+    # DECLARATION EXAMPLE 3 ( llength_args==3 && arg0 ne {struct} ):
+    #   struct message {
+    #     ...
+    #     map word_count_pair wordcount = {}
+    #     ...
+    #   }
+    #
+    # DECLARATION EXAMPLE 4 ( llength_args==4 && arg0 eq {struct} ):
+    #   struct message {
+    #     ...
+    #     map struct wordcount = {} { 
+    #       varchar word
+    #       varint count
+    #     }
+    #     ...
+    #   }
+    #
+    # DECLARATION EXAMPLE 5 (TODO):
+    #   struct message {
+    #     ...
+    #     map pair "from_type to_type" wordcount = {}
+    #     ...
+    #   }
+    #
+
+    proc container_helper {arg0 args} {
+        log "!!! multiple declaration_mode_p=[declaration_mode_p]"
+        if {[declaration_mode_p]} {
+            [with_fwd $arg0 type_helper {*}$args] setAttribute x-container [top_fwd]
+        } else {
+            set args [lassign $args argvals]
+            foreach argval $argvals {
+                set lookahead_ctx [get_lookahead_ctx $arg0]
+                lassign $lookahead_ctx ctx_type ctx_tag ctx_name
+                if {$ctx_type eq {nest}} {
+                    [$arg0 $argval] setAttribute x-container [top_fwd]
+                } else {
+                    [with_fwd $arg0 type_helper {*}$argval] setAttribute x-container [top_fwd]
+                }
+            }
+        }
+    }
+
+    alias {multiple} {container_helper}
+
+    alias {map} {container_helper}
 
     meta_old  "base_type" {nest {type_helper}}
 
