@@ -482,32 +482,6 @@ define_lang ::nest::lang {
 
     alias {map} {container_helper}
 
-    meta_old  "base_type" {nest {type_helper}}
-
-    # a varying-length text string encoded using UTF-8 encoding
-    base_type "varchar"
-
-    # a boolean value (true or false)
-    base_type "bool"
-
-    # a varying-bit signed integer
-    base_type "varint"
-
-    # an 8-bit signed integer
-    base_type "byte"
-
-    # a 16-bit signed integer
-    base_type "int16"
-
-    # a 32-bit signed integer
-    base_type "int32"
-
-    # a 64-bit signed integer
-    base_type "int64"
-
-    # a 64-bit floating point number
-    base_type "double"
-
     proc unknown {field_type field_name args} {
 
         variable stack_ctx
@@ -606,6 +580,33 @@ define_lang ::nest::lang {
     }
 
     alias {meta} {lambda {metaCmd args} {{*}$metaCmd {*}$args}}
+
+    alias {base_type} {nest {type_helper}}
+
+    # a varying-length text string encoded using UTF-8 encoding
+    base_type "varchar"
+
+    # a boolean value (true or false)
+    base_type "bool"
+
+    # a varying-bit signed integer
+    base_type "varint"
+
+    # an 8-bit signed integer
+    base_type "byte"
+
+    # a 16-bit signed integer
+    base_type "int16"
+
+    # a 32-bit signed integer
+    base_type "int32"
+
+    # a 64-bit signed integer
+    base_type "int64"
+
+    # a 64-bit floating point number
+    base_type "double"
+
 
     meta {nest} {nest {nest {type_helper}}} {struct} {
         varchar name
