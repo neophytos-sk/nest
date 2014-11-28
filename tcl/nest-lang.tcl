@@ -1,6 +1,6 @@
 package require tdom
 
-package provide nest 0.4
+package provide nest 0.5
 
 define_lang ::nest::lang {
 
@@ -44,7 +44,7 @@ define_lang ::nest::lang {
     #
     # EXAMPLE 1:
     #
-    # struct decl {
+    # struct slot {
     #     varchar name
     #     varchar type
     #     varchar default
@@ -53,7 +53,7 @@ define_lang ::nest::lang {
     #     varchar subtype
     # }
     # 
-    # stack_ctx = {proc base_type bool} {eval struct decl} {proc struct struct}
+    # stack_ctx = {nest base_type bool} {eval struct slot} {nest meta struct} {eval meta struct}
     #
     # EXAMPLE 2:
     # 
@@ -62,7 +62,7 @@ define_lang ::nest::lang {
     #   -> varchar address
     # }
     #
-    # stack_ctx = {proc base_type varchar} {eval struct email} {proc struct struct}
+    # stack_ctx = {nest base_type varchar} {eval struct email} {nest meta struct}
 
     proc push_ctx {ctx} {
         variable stack_ctx
