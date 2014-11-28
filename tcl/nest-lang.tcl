@@ -284,7 +284,6 @@ define_lang ::nest::lang {
 
             # we don't know which of the following two cases we are in
             # and the stack does not have the context info for this call
-            # i.e. the stack is {proc meta_old inst}
             #
             # message.subject "hello"
             # message.from { ... }
