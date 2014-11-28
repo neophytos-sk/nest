@@ -210,7 +210,7 @@ define_lang ::nest::lang {
         uplevel [list [namespace which "alias"] $alias_name $nest]
 
 
-        set cmd [list [namespace which {node}] $tag $name -x-type $tag {*}$args]
+        set cmd [list [namespace which {node}] $tag $name -x-mode {decl} -x-type $tag {*}$args]
         set node [uplevel $cmd]
 
         #####
