@@ -516,52 +516,25 @@ define_lang ::nest::lang {
         }
 
         # check for types of the form pair<varchar,varint>
+        # forced to do this to keep multiple ignorant of the
+        # type it is given
         set type_re {[_a-zA-Z][_a-zA-Z0-9]*}
         set nsp_re {(?:\:\:[_a-zA-Z][_a-zA-Z0-9]*)*\:\:}
-
-        # recognizes expressions of the following forms:
-        # pair<string,i32>
 
         set re {}
         append re "(set|list)<(${type_re})>" "|"
         append re "(pair)<(${type_re}),(${type_re})>"
 
-        set re "^(${nsp_re})?(?:${re})\$"
+        set re "^(?:${re})\$"
 
-        if { [regexp -- $re $field_type _dummy_ sm0 sm1 sm2 sm3 sm4 sm5] } {
+        if { [regexp -- $re $field_type _dummy_ sm1 sm2 sm3 sm4 sm5] } {
 
-            log "!!! regexp success: sm0=$sm0 sm1=$sm1 sm2=$sm2 sm3=$sm3 sm4=$sm4 sm5=$sm5"
+            log "!!! regexp success: sm1=$sm1 sm2=$sm2 sm3=$sm3 sm4=$sm4 sm5=$sm5"
 
-            if { $sm0 ne {} } {
-
-                # treats case when "multiple pair<varchar,varint>" becomes:
-                #   ::dom::_elementNodeCmd::pair<varchar,varint> ...
-                # will be rewritten to:
-                #   ::dom::_elementNodeCmd::pair -x-type {struct} -x-verbatim {pair varchar varint} ...
-                # 
-                
-                if { $sm1 ne {} && $sm2 ne {} } {
-                    set redirect_name [list ${sm0}$sm1 -x-type {struct} -x-verbatim [list $sm1 $sm2]]
-                } elseif { $sm3 ne {} && $sm4 ne {} && $sm5 ne {} } {
-                    set redirect_name [list ${sm0}$sm3 -x-type {struct} -x-verbatim [list $sm3 $sm4 $sm5]]
-                } else {
-                    error "something wrong with regexp"
-                }
-
-                # we also need to set the lookahead_ctx to the same as the one for struct
-                # set name "${sm1}${sm3}<[join [concat $sm2 $sm4 $sm5] {,}]>"
-                # set_lookahead_ctx $name [get_lookahead_ctx {struct}]
-
-                log "!!! (unknown) redirect $field_type -> $redirect_name"
-
-            } else {
-
-                if { $sm1 ne {} && $sm2 ne {} } {
-                    set redirect_name [list $sm1 $sm2]
-                } elseif { $sm3 ne {} && $sm4 ne {} && $sm5 ne {} } {
-                    set redirect_name [list $sm3 $sm4 $sm5]
-                }
-
+            if { $sm1 ne {} && $sm2 ne {} } {
+                set redirect_name [list $sm1 $sm2]
+            } elseif { $sm3 ne {} && $sm4 ne {} && $sm5 ne {} } {
+                set redirect_name [list $sm3 $sm4 $sm5]
             }
 
             # be blind about it
