@@ -4,7 +4,7 @@ package provide nest 0.1
 
 define_lang ::nest::lang {
 
-    variable debug 1
+    variable debug 0
     variable stack_ctx [list]
     variable stack_fwd [list]
 
@@ -612,8 +612,7 @@ define_lang ::nest::lang {
         varchar type
         varchar nsp
 
-        # multiple struct slot = {} 
-        struct slot {
+        multiple struct slot = {} {
             varchar parent
             varchar name
             varchar type
