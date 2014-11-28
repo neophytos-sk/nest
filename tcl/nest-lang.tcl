@@ -219,7 +219,7 @@ define_lang ::nest::lang {
 
         set nsp [uplevel {namespace current}]
 
-        if { $tag ni {meta_old base_type} } {
+        if { $tag ni {base_type} } {
 
             set decls [$node selectNodes {child::*[@x-mode="decl"]}]
             $node appendFromScript {
