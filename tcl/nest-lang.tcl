@@ -1,6 +1,6 @@
 package require tdom
 
-package provide nest 0.6
+package provide nest 0.7
 
 define_lang ::nest::lang {
 
@@ -8,15 +8,15 @@ define_lang ::nest::lang {
     variable stack_ctx [list]
     variable stack_fwd [list]
 
+    array set lookahead_ctx [list]
+    array set alias [list]
+
     proc log {msg} {
         variable debug
         if {$debug} {
             puts $msg
         }
     }
-
-    array set lookahead_ctx [list]
-    array set alias [list]
 
     proc push_fwd {name} {
         variable stack_fwd
@@ -81,13 +81,6 @@ define_lang ::nest::lang {
         set result [uplevel $args]
         pop_ctx
         return $result
-    }
-
-    proc top_context_of_type {context_type} {
-        variable stack_ctx
-        set indexList 0 ;# match first element of nested list
-        set index [lsearch -exact -index $indexList $stack_ctx $context_type]
-        return [lindex $stack_ctx $index]
     }
 
     proc get_context_path_of_type {context_type varname} {
@@ -198,7 +191,6 @@ define_lang ::nest::lang {
 
     # nest argument holds nested calls in the procs below
     proc nest {nest name args} {
-        puts args=$args
         set tag [top_fwd]
         keyword $name
 
