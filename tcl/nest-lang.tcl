@@ -1,6 +1,6 @@
 package require tdom
 
-package provide nest 0.5
+package provide nest 0.6
 
 define_lang ::nest::lang {
 
@@ -634,10 +634,10 @@ define_lang ::nest::lang {
     } {type_helper}
     ## 
     ## => alias {pair} {lambda {typefirst typesecond name} {
-    ##        nest {type_helper} ${name} {
-    ##          ${typefirst} {first} 
-    ##          ${typesecond} {second}
-    ##        }
+    ##        nest {type_helper} ${name} [subst -nocommands -nobackslashes {
+    ##            ${typefirst} {first} 
+    ##            ${typesecond} {second}
+    ##        }]
     ##    }}
     ##
 

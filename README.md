@@ -36,6 +36,7 @@ Dependencies:
 History:
 
 * nest-0.5 released (2014-11-28) - 383 non-blank, non-comment, non-debugging lines
+* nest-0.6 released (2014-11-29) - template programming in nest, pair construct
 
 Notes:
 
