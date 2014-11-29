@@ -34,14 +34,13 @@ Dependencies:
 
 History:
 
-* nest-0.5 released (2014-11-28) - 383 non-blank, non-comment, non-debugging lines
-* nest-0.7 released (2014-11-29) - template programming in nest, pair construct
+* nest-0.8 released (2014-11-29) - template programming, pair construct, inst/decl mode
 
 Notes:
 
 Check out the definition of the struct construct in nest, I think it's very cool:
 
-    meta {nest} {nest {nest {type_helper}}} {struct} {
+    meta {nest} {nest {with_mode {inst} nest {type_helper}}} {struct} {
         varchar name
         varchar type
         varchar nsp
