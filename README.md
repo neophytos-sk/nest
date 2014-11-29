@@ -38,7 +38,7 @@ History:
 
 Notes:
 
-Check out the definition of the struct construct in nest, I think it's very cool:
+Check out the definition of the struct construct in nest, I think it's cool:
 
     meta {nest} {nest {with_mode {inst} nest {type_helper}}} {struct} {
         varchar name
