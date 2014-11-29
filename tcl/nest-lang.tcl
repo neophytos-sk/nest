@@ -200,10 +200,10 @@ define_lang ::nest::lang {
         set alias_name [get_eval_path $name]
         set_lookahead_ctx $alias_name $ctx ;# needed by container_helper and type_helper
         set nest [list with_ctx $ctx {*}$nest]
-        uplevel [list [namespace which "alias"] $alias_name $nest]
+        uplevel [list {alias} $alias_name $nest]
 
 
-        set cmd [list [namespace which {node}] $tag $name -x-mode {decl} -x-type $tag {*}$args]
+        set cmd [list {node} $tag $name -x-mode {decl} -x-type $tag {*}$args]
         set node [uplevel $cmd]
 
         #####
@@ -324,7 +324,7 @@ define_lang ::nest::lang {
             set decl_name $name
             set decl_type $tag
 
-            set cmd [list [namespace which {node}] $decl_type $decl_name -x-mode {decl} -x-type $decl_type {*}$args]
+            set cmd [list {node} $decl_type $decl_name -x-mode {decl} -x-type $decl_type {*}$args]
             set node [uplevel $cmd]
 
             # get full alias name and register the alias
@@ -334,7 +334,7 @@ define_lang ::nest::lang {
 
             set dotted_nest [list {inst} $decl_type $alias_name]
             set dotted_nest [list with_ctx $lookahead_ctx {*}$dotted_nest] 
-            set cmd [list [namespace which "alias"] $alias_name $dotted_nest]
+            set cmd [list {alias} $alias_name $dotted_nest]
             uplevel $cmd
 
             log "--->>> (type_helper - declaration done) decl_type=$decl_type decl_name=$decl_name alias_name=$alias_name stack_ctx=[list $::nest::lang::stack_ctx]"
@@ -357,7 +357,7 @@ define_lang ::nest::lang {
                     
                     set args [lassign $args arg0]
                     if { $args ne {} } { error "something wrong with instantiation statement" }
-                    set cmd [list [namespace which {node}] $ctx_tag $tag -x-mode {inst} -x-type $ctx_tag [list ::nest::lang::t $arg0]]
+                    set cmd [list {node} $ctx_tag $tag -x-mode {inst} -x-type $ctx_tag [list ::nest::lang::t $arg0]]
                     return [uplevel $cmd]
 
                 }
@@ -365,7 +365,7 @@ define_lang ::nest::lang {
 
             # case for composite or "unknown" types (e.g. pair<varchar,varint)
             # note that "unknown" types do not have a lookahead context
-            set cmd [list [namespace which {node}] $inst_type $inst_name -x-mode {inst} -x-type $inst_type {*}$args]
+            set cmd [list {node} $inst_type $inst_name -x-mode {inst} -x-type $inst_type {*}$args]
             return [uplevel $cmd]
 
         }
@@ -379,7 +379,7 @@ define_lang ::nest::lang {
 
         log "--->>> (inst_helper) inst_type=$inst_type inst_name=$inst_name stack_ctx=[list $::nest::lang::stack_ctx]"
         
-        set cmd [list [namespace which {node}] {inst} $inst_name -x-type $inst_type {*}$args]
+        set cmd [list {node} {inst} $inst_name -x-type $inst_type {*}$args]
         return [uplevel $cmd]
 
     }
@@ -469,7 +469,7 @@ define_lang ::nest::lang {
         foreach ctx $stack_ctx {
             lassign $ctx ctx_type ctx_tag ctx_name
             set redirect_name "${ctx_name}.$field_type"
-            set redirect_exists_p [[namespace which check_alias] $redirect_name]
+            set redirect_exists_p [check_alias $redirect_name]
 
             log "--->>> (unknown) checking context for \"${field_type}\" -> ${redirect_name} ($redirect_exists_p)"
 
@@ -483,7 +483,7 @@ define_lang ::nest::lang {
                 return
             } else {
                 set redirect_name "${ctx_tag}.${field_type}"
-                set redirect_exists_p [[namespace which check_alias] $redirect_name]
+                set redirect_exists_p [check_alias $redirect_name]
                 if { $redirect_exists_p } {
                     log "+++ $field_type $field_name $args -> redirect_name=$redirect_name"
                     set cmd [list $redirect_name $field_name {*}$args]
@@ -538,7 +538,7 @@ define_lang ::nest::lang {
         }
     }
 
-    alias "dtd" [namespace which "dtd_helper"]
+    alias {dtd} {dtd_helper}
 
     dtd {
         <!DOCTYPE nest [
