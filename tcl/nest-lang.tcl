@@ -198,6 +198,7 @@ define_lang ::nest::lang {
 
     # nest argument holds nested calls in the procs below
     proc nest {nest name args} {
+        puts args=$args
         set tag [top_fwd]
         keyword $name
 
@@ -221,20 +222,13 @@ define_lang ::nest::lang {
 
         if { $tag ni {base_type} } {
 
-            set decls [$node selectNodes {child::*[@x-mode="decl"]}]
             $node appendFromScript {
-                foreach decl $decls {
-                    log "!!! nest: instantiate empty slot ${name}.[$decl @x-name]"
-                    inst struct.slot [$decl @x-name]
-                }
                 struct.type $tag
                 struct.name $name
                 struct.nsp $nsp
             }
 
-            foreach inst [$node selectNodes {child::inst[@x-type="struct.slot"]}] {
-                $inst delete
-            }
+            set decls [$node selectNodes {child::*[@x-mode="decl"]}]
 
             $node appendFromScript {
                 foreach decl $decls {
@@ -627,13 +621,15 @@ define_lang ::nest::lang {
 
     }
 
-    alias {template} {lambda {alias_name params body nest args} {
-        {alias} ${alias_name} [list {lambda} [concat ${params} {name}] \
-            [concat {nest} ${nest} \${name} ${body}]]
+    alias {template} {lambda {alias_name params body nest} {
+        alias ${alias_name} \
+                [list {lambda} [lappend {params} {name}] \
+                    [concat {nest} [list ${nest}] "\${name}" \
+                        "\[subst -nocommands -nobackslashes [list ${body}]\]"]]
     }}
 
     template {pair} {typefirst typesecond} {
-        ${typefirst} {first} 
+        ${typefirst} {first}
         ${typesecond} {second}
     } {type_helper}
     ## 

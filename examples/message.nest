@@ -62,9 +62,6 @@ struct message {
     multiple word_count_pair wordcount_Z = {}
     multiple varchar words
 
-    pair varchar varint wordcount_pair_type
-    multiple wordcount_pair_type wordcount_W
-
     pair varchar varint wordcount_V
     
     pair<varchar,varint> wordcount_U
@@ -74,7 +71,7 @@ struct message {
 }
 
 # new version breakpoint
-return
+#return
 
 # CORRECT
 message msg4 {
@@ -130,19 +127,11 @@ message msg4 {
         first "V_the"
         second "V_123"
     }
-    
+
     wordcount_U {
         first "U_the"
         second "U_123"
     }
-
-    multiple wordcount_W {{
-        first "W_the"
-        second "W_123"
-    } {
-        first "W_and"
-        second "W_54"
-    }}
 
     multiple wordcount_T {{
         first "T_the"
