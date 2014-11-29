@@ -496,23 +496,13 @@ define_lang ::nest::lang {
         # check for types of the form pair<varchar,varint>
         # forced to do this to keep multiple ignorant of the
         # type it is given
-        set type_re {[_a-zA-Z][_a-zA-Z0-9]*}
 
-        set re {}
-        append re "(set|list)<(${type_re})>" "|"
-        append re "(pair)<(${type_re}),(${type_re})>"
-
-        set re "^(?:${re})\$"
-
-        if { [regexp -- $re $field_type _dummy_ sm1 sm2 sm3 sm4 sm5] } {
-
-            log "!!! regexp success: sm1=$sm1 sm2=$sm2 sm3=$sm3 sm4=$sm4 sm5=$sm5"
-
-            if { $sm1 ne {} && $sm2 ne {} } {
-                set redirect_name [list $sm1 $sm2]
-            } elseif { $sm3 ne {} && $sm4 ne {} && $sm5 ne {} } {
-                set redirect_name [list $sm3 $sm4 $sm5]
-            }
+        set last_char [string index $field_type end]
+        if { $last_char eq {>} } {
+            set index [string first {<} $field_type]
+            set type [string range $field_type 0 [expr { ${index} - 1 }]]
+            set rest [string range $field_type [expr { ${index} + 1 }] end-1]
+            set redirect_name [concat $type [split $rest {,}]]
 
             # be blind about it
             set cmd [list {*}$redirect_name $field_name {*}$args]
