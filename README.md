@@ -35,7 +35,7 @@ Dependencies:
 
 History:
 
-* nest-0.2 released (2014-11-28) - 367 non-blank, non-comment, non-debugging lines
+* nest-0.5 released (2014-11-28) - 383 non-blank, non-comment, non-debugging lines
 
 Notes:
 
@@ -62,8 +62,8 @@ Check out the definition of the struct construct in nest, I think it's very cool
 
 Before the chicken and the egg, it was the nest --- pairs, nest-style:
 
-    alias {pair} {lambda {typefirst typesecond name} {
-        nest {type_helper} $name [concat $typefirst {first} " ; " $typesecond {second}]
-    }}
-
+    template {pair} {typefirst typesecond} {
+        ${typefirst} {first}
+        ${typesecond} {second}
+    } {type_helper}
 
