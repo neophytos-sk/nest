@@ -584,6 +584,26 @@ define_lang ::nest::lang {
     # a 64-bit floating point number
     base_type "double"
 
+    alias {template} {lambda {alias_name params body nest} {
+        alias ${alias_name} \
+                [list {lambda} [lappend {params} {name}] \
+                    [concat {nest} [list ${nest}] "\${name}" \
+                        "\[subst -nocommands -nobackslashes [list ${body}]\]"]]
+    }}
+
+    template {pair} {typefirst typesecond} {
+        ${typefirst} {first}
+        ${typesecond} {second}
+    } {type_helper}
+
+    # => alias {pair} {lambda {typefirst typesecond name} {
+    #        nest {type_helper} ${name} [subst -nocommands -nobackslashes {
+    #            ${typefirst} {first} 
+    #            ${typesecond} {second}
+    #        }]
+    #    }}
+
+
     meta {nest} {nest {nest {type_helper}}} {struct} {
         varchar name
         varchar type
@@ -603,25 +623,6 @@ define_lang ::nest::lang {
 
     }
 
-    alias {template} {lambda {alias_name params body nest} {
-        alias ${alias_name} \
-                [list {lambda} [lappend {params} {name}] \
-                    [concat {nest} [list ${nest}] "\${name}" \
-                        "\[subst -nocommands -nobackslashes [list ${body}]\]"]]
-    }}
-
-    template {pair} {typefirst typesecond} {
-        ${typefirst} {first}
-        ${typesecond} {second}
-    } {type_helper}
-    ## 
-    ## => alias {pair} {lambda {typefirst typesecond name} {
-    ##        nest {type_helper} ${name} [subst -nocommands -nobackslashes {
-    ##            ${typefirst} {first} 
-    ##            ${typesecond} {second}
-    ##        }]
-    ##    }}
-    ##
 
     namespace export "struct" "varchar" "bool" "varint" "byte" "int16" "int32" "int64" "double" "multiple" "dtd" "lambda"
 
