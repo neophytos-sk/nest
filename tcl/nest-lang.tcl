@@ -212,14 +212,14 @@ define_lang ::nest::lang {
         log "!!! nest: $name -> $nest"
 
         set alias_name [get_eval_path $name]
-        if { ![exists_alias $alias_name] } {
-            # safeguard to protect declarations from struct.slot instantiation
-            # instantiation
-            set ctx [list {nest} $tag $name]
-            set_lookahead_ctx $alias_name $ctx ;# needed by container_helper and type_helper
-            set nest [list with_ctx $ctx {*}$nest]
-            uplevel [list {alias} $alias_name $nest]
+        if { [exists_alias $alias_name] } {
+            error "alias $alias_name already exists"
         }
+
+        set ctx [list {nest} $tag $name]
+        set_lookahead_ctx $alias_name $ctx ;# needed by container_helper and type_helper
+        set nest [list with_ctx $ctx {*}$nest]
+        uplevel [list {alias} $alias_name $nest]
 
         set mode [lsearch -not -inline [list [top_mode] {decl}] {}]
         set cmd [list {node} $mode $name -x-type $tag {*}$args]
@@ -228,8 +228,6 @@ define_lang ::nest::lang {
         #####
          
         # log [$node asXML]
-        set path $name
-
         set nsp [uplevel {namespace current}]
 
         if { $tag ni {base_type} } {
@@ -246,7 +244,7 @@ define_lang ::nest::lang {
 
                     log "!!! nest: instantiate full slot ${name}.[$decl @x-name]"
 
-                    with_mode {inst} struct.slot [$decl @x-name] [subst -nocommands -nobackslashes {
+                    with_mode {inst} struct.slot ${name}.__[$decl @x-name]__ [subst -nocommands -nobackslashes {
                         struct.slot.name [$decl @x-name]
                         struct.slot.type [$decl @x-type]
                         #struct.slot.parent [get_eval_path ""]
@@ -273,46 +271,6 @@ define_lang ::nest::lang {
 
     proc nt {text} { t -disableOutputEscaping ${text} }
 
-    proc inst_args {inst_type argsVar} {
-
-        upvar $argsVar args
-
-        # rewrite args of the form
-        #   varchar body = "this is a test"
-        # to
-        #   varchar body { t "this is a test" }
-
-        set llength_args [llength $args]
-        if { $llength_args == 2 } {
-            if { [lindex $args 0] eq {=} } {
-                set args [list [list ::nest::lang::t [lindex $args 1]]]
-            }
-        } elseif { $llength_args == 1 } {
-
-            # we don't know which of the following two cases we are in
-            # and the stack does not have the context info for this call
-            #
-            # message.subject "hello"
-            # message.from { ... }
-            #
-            # so we check the lookahead_context for the upcoming command
-            # we know already that inst_helper calls the given inst_type command
-
-            # note that "unknown" types (e.g. pair<varchar,varint> do not have a lookahead context
-            if { [exists_lookahead_ctx $inst_type] } {
-                set lookahead_ctx [get_lookahead_ctx $inst_type]
-                lassign $lookahead_ctx lookahead_ctx_type lookahead_ctx_tag lookahead_ctx_name
-
-                log "lookahead_ctx=$lookahead_ctx inst_type=$inst_type args=[list $args]"
-
-                if { $lookahead_ctx_tag eq {base_type} } {
-                    set args [list [list ::nest::lang::t [lindex $args 0]]]
-                }
-            }
-
-        }
-    }
-
     proc decl_mode_p {} {
         variable stack_mode
         variable stack_ctx
@@ -325,7 +283,7 @@ define_lang ::nest::lang {
     keyword {decl}
     keyword {inst}
 
-    proc type_helper {arg0 args} {
+    proc type_helper {args} {
 
         set tag [top_fwd]  ;# varchar nsp -> tag=varchar name=nsp
         lassign [top_ctx] ctx_type ctx_tag ctx_name
@@ -333,6 +291,7 @@ define_lang ::nest::lang {
         if { [decl_mode_p] } {
 
             # deal with args and create dom node
+            set args [lassign $args arg0]
             if { [lindex $args 0] eq {=} } {
                 set args [lreplace $args 0 0 "-x-default_value"]
             }
@@ -367,8 +326,7 @@ define_lang ::nest::lang {
                 # => inst_name=message.subject inst_type=base_type
                 
                 set inst_type $tag
-                set inst_name $arg0
-                set args [lassign $args inst_arg0]
+                set args [lassign $args inst_name inst_arg0]
 
                 if { $args ne {} } { 
                     error "something wrong with instantiation statement args=[list $args]"
@@ -376,6 +334,7 @@ define_lang ::nest::lang {
 
                 set inst_arg0 [list ::nest::lang::t $inst_arg0]
                 set cmd [list with_mode {inst} {node} {inst} $inst_name -x-type $inst_type -x-meta $ctx_tag $inst_arg0]
+
                 return [uplevel $cmd]
 
             } else {
@@ -391,20 +350,6 @@ define_lang ::nest::lang {
             }
 
         }
-
-    }
-
-    #alias {inst} {inst_helper}
-
-    proc inst_helper {inst_type inst_name args} {
-        set inst_tag [top_fwd]
-
-        inst_args $inst_type args
-
-        log "inst_type=$inst_type inst_name=$inst_name stack_ctx=[list $::nest::lang::stack_ctx]"
-        
-        set cmd [list with_mode {inst} {node} $inst_type $inst_name -x-type $inst_type {*}$args]
-        return [uplevel $cmd]
 
     }
 
@@ -627,7 +572,7 @@ define_lang ::nest::lang {
     #    }}
 
 
-    meta {nest} {nest {nest {type_helper}}} {struct} {
+    meta {nest} {nest {with_mode {inst} nest {type_helper}}} {struct} {
         varchar name
         varchar type
         varchar nsp
