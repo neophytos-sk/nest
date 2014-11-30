@@ -29,26 +29,29 @@ Dependencies:
 
 * tDOM (https://tdom.github.com)
 
-* libxml2 (http://www.xmlsoft.org) [xmllint needed for the read-nest.tcl example]
-
-
 History:
 
-* nest-0.8 released (2014-11-29) - template programming, pair construct, inst/decl mode
+* nest-0.9 (2014-11-30) - refactored code, alias/forward separation, class/object aliases
+* nest-0.8 (2014-11-29) - template programming, pair construct, inst/decl mode
 
 Notes:
 
 Check out the definition of the struct construct in nest, I think it's cool:
 
-    meta {nest} {nest {with_mode {inst} nest {type_helper}}} {struct} {
+    alias {object} with_mode {inst} nest {type_helper}
+
+    alias {class} with_mode {decl} nest
+
+    meta {class} {class {object}} {struct} {
         varchar name
         varchar type
         varchar nsp
+        varchar default_value = ""
 
         multiple struct slot = {} {
-            varchar parent
             varchar name
             varchar type
+            varchar meta
             varchar default_value = ""
             bool optional_p = false
             varchar container = ""

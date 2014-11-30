@@ -1,6 +1,6 @@
 package require tdom
 
-package provide nest 0.8
+package provide nest 0.9
 
 define_lang ::nest::lang {
 
@@ -10,52 +10,15 @@ define_lang ::nest::lang {
     variable stack_fwd [list]
     variable stack_mode [list]
 
-    array set lookahead_ctx [list]
     array set alias [list]
-
-    proc push_fwd {name} {
-        variable stack_fwd
-        set stack_fwd [linsert $stack_fwd 0 $name]
-    }
-    proc pop_fwd {} {
-        variable stack_fwd
-        set stack_fwd [lreplace $stack_fwd 0 0]
-    }
-    proc top_fwd {} {
-        variable stack_fwd
-        lindex $stack_fwd 0
-    }
-    proc with_fwd {name args} {
-        push_fwd $name
-        set result [uplevel $args]
-        pop_fwd
-        return $result
-    }
-
-    proc push_mode {name} {
-        variable stack_mode
-        set stack_mode [linsert $stack_mode 0 $name]
-    }
-    proc pop_mode {} {
-        variable stack_mode
-        set stack_mode [lreplace $stack_mode 0 0]
-    }
-    proc top_mode {} {
-        variable stack_mode
-        lindex $stack_mode 0
-    }
-    proc with_mode {name args} {
-        push_mode $name
-        set result [uplevel $args]
-        pop_mode
-        return $result
-    }
-
-
+    array set forward [list]
+    array set lookahead_ctx [list]
 
     # =========
     # stack_ctx
     # =========
+    #
+    # each context is a list that consists of ctx_type, ctx_tag, and ctx_name
     #
     # EXAMPLE 1:
     #
@@ -68,7 +31,7 @@ define_lang ::nest::lang {
     #     varchar subtype
     # }
     # 
-    # stack_ctx = {nest base_type bool} {eval struct slot} {nest meta struct} {eval meta struct}
+    # stack_ctx = {nest base_type bool} {eval decl slot} {nest meta struct} {eval decl struct}
     #
     # EXAMPLE 2:
     # 
@@ -77,26 +40,7 @@ define_lang ::nest::lang {
     #   -> varchar address
     # }
     #
-    # stack_ctx = {nest base_type varchar} {eval struct email} {nest meta struct}
-
-    proc push_ctx {ctx} {
-        variable stack_ctx
-        set stack_ctx [linsert $stack_ctx 0 $ctx]
-    }
-    proc pop_ctx {} {
-        variable stack_ctx
-        set stack_ctx [lreplace $stack_ctx 0 0]
-    }
-    proc top_ctx {} { 
-        variable stack_ctx
-        lindex $stack_ctx 0
-    }
-    proc with_ctx {context args} {
-        push_ctx $context
-        set result [uplevel $args]
-        pop_ctx
-        return $result
-    }
+    # stack_ctx = {nest base_type varchar} {eval decl email} {nest meta struct}
 
     proc get_context_path_of_type {context_type varname} {
         variable stack_ctx
@@ -110,27 +54,10 @@ define_lang ::nest::lang {
         return [string trimright $context_path "."]
     }
 
-    # used to get the full alias name
+    # used to get the full forward name
     proc get_eval_path {name} {
         join [concat [get_context_path_of_type {eval} {context_name}] ${name}] {.}
     }
-
-    # context := {context_type context_tag context_name}
-    proc set_lookahead_ctx {name context} {
-        variable lookahead_ctx
-        set lookahead_ctx($name) $context
-    }
-
-    proc get_lookahead_ctx {name} {
-        variable lookahead_ctx
-        set lookahead_ctx($name)
-    }
-
-    proc exists_lookahead_ctx {name} {
-        variable lookahead_ctx
-        info exists lookahead_ctx($name)
-    }
-
 
     proc lambda {params body args} {
 
@@ -173,56 +100,112 @@ define_lang ::nest::lang {
 
     } 
 
-    proc set_alias {name cmd} {
-        variable alias
-        set alias($name) "" ;# set alias($name) $cmd
+    proc array_setter {arrayname name value} {
+        variable ${arrayname}
+        set ${arrayname}(${name}) ${value}
     }
-    proc get_alias {name} {
-        variable alias
-        set alias($name)
+    proc array_getter {arrayname name} {
+        variable ${arrayname}
+        set ${arrayname}(${name})
     }
-    proc exists_alias {name} {
-        variable alias
-        info exists alias($name)
+    proc array_exister {arrayname name} {
+        variable ${arrayname}
+        info exists ${arrayname}(${name})
     }
+
+    proc stack_push {varname value} {
+        variable ${varname}
+        set ${varname} [linsert [set ${varname}] 0 ${value}]
+    }
+    proc stack_pop {varname} {
+        variable ${varname}
+        set ${varname} [lreplace [set ${varname}] 0 0]
+    }
+    proc stack_top {varname} { 
+        variable ${varname}
+        lindex [set ${varname}] 0
+    }
+    proc stack_with {varname value args} {
+        stack_push ${varname} ${value}
+        set result [uplevel ${args}]
+        stack_pop ${varname}
+        return ${result}
+    }
+
 
     # Wow!!!
-    set name "alias"
-    set cmd [list {lambda} {name cmd} {
-        set_alias $name $cmd
-        interp alias {} [namespace current]::${name} {} [namespace which "with_fwd"] ${name} {*}${cmd}
-        keyword ${name}
+    set {name} {::nest::lang::alias}
+    set {cmd} [list {::nest::lang::lambda} {name args} {
+        {interp} {alias} {} ${name} {} {*}${args}
+        {set_alias} ${name} ${args}
     }]
-    {*}${cmd} "keyword" {::dom::createNodeCmd elementNode}
-    {*}${cmd} ${name} ${cmd}
-    # with_fwd alias lambda {name cmd} {
-    #   set_alias $name $cmd
-    #   interp alias {} [namespace current]::${name} {} [namespace which "with_fwd"] ${name} {*}${cmd}
-    #   keyword ${name}
-    # }
+    {*}${cmd} {set_alias} ::nest::lang::array_setter alias
+    {*}${cmd} ${name} {*}${cmd}
 
+    foreach {name cmd} {
+        {get_alias} {getter alias}
+        {exists_alias} {array_exister alias}
 
-    alias {node} {lambda {tag name args} {with_ctx [list "eval" $tag $name] ::dom::execNodeCmd elementNode $tag -x-name $name {*}$args}}
+        {set_forward} {array_setter forward}
+        {get_forward} {array_getter forward}
+        {exists_forward} {array_exister forward}
+
+        {set_lookahead_ctx} {array_setter lookahead_ctx}
+        {get_lookahead_ctx} {array_getter lookahead_ctx}
+        {exists_lookahead_ctx} {array_exister lookahead_ctx}
+
+        {push_fwd} {stack_push stack_fwd}
+        {pop_fwd} {stack_pop stack_fwd}
+        {top_fwd} {stack_top stack_fwd}
+        {with_fwd} {stack_with stack_fwd}
+
+        {push_mode} {stack_push stack_mode}
+        {pop_mode} {stack_pop stack_mode}
+        {top_mode} {stack_top stack_mode}
+        {with_mode} {stack_with stack_mode}
+
+        {push_ctx} {stack_push stack_ctx}
+        {pop_ctx} {stack_pop stack_ctx}
+        {top_ctx} {stack_top stack_ctx}
+        {with_ctx} {stack_with stack_ctx}
+    } {
+        set name "[namespace current]::${name}"
+        set cmd "::nest::lang::${cmd}"
+        alias ${name} {*}[join ${cmd} { }]
+    }
+
+    # forward is an alias that pushes its name to stack_fwd
+    {alias} {forward} {::nest::lang::lambda} {name cmd} {
+        {set_forward} ${name} ${cmd}
+        {alias} ${name} {::nest::lang::with_fwd} ${name} {*}${cmd}
+    }
+
+    forward {keyword} {::dom::createNodeCmd elementNode}
+
+    keyword {decl}
+    keyword {inst}
+
+    forward {node} {lambda {tag name args} {with_ctx [list "eval" $tag $name] ::dom::execNodeCmd elementNode $tag -x-name $name {*}$args}}
 
     # nest argument holds nested calls in the procs below
     proc nest {nest name args} {
         set tag [top_fwd]
-        keyword $name
 
         log "!!! nest: $name -> $nest"
 
-        set alias_name [get_eval_path $name]
-        if { [exists_alias $alias_name] } {
-            error "alias $alias_name already exists"
+        if { $name ne {} } {
+            set forward_name [get_eval_path $name]
+            if { [exists_forward $forward_name] } {
+                error "forward $forward_name already exists"
+            }
+
+            set ctx [list {nest} $tag $name]
+            set_lookahead_ctx $forward_name $ctx ;# needed by container_helper and type_helper
+            set nest [list with_ctx $ctx {*}$nest]
+            uplevel [list {forward} $forward_name $nest]
         }
 
-        set ctx [list {nest} $tag $name]
-        set_lookahead_ctx $alias_name $ctx ;# needed by container_helper and type_helper
-        set nest [list with_ctx $ctx {*}$nest]
-        uplevel [list {alias} $alias_name $nest]
-
-        set mode [lsearch -not -inline [list [top_mode] {decl}] {}]
-        set cmd [list {node} $mode $name -x-type $tag {*}$args]
+        set cmd [list {node} [top_mode] $name -x-type $tag {*}$args]
         set node [uplevel $cmd]
 
         #####
@@ -232,40 +215,43 @@ define_lang ::nest::lang {
 
         if { $tag ni {base_type} } {
 
-            $node appendFromScript {
-                struct.type $tag
-                struct.name $name
-                struct.nsp $nsp
-            }
+            # $node appendFromScript {
+            #     struct.type [$node @x-type] ;# $tag
+            #     struct.name [$node @x-name] ;# $name
+            #     struct.nsp  [$node @x-nsp]  ;# $nsp
+            # }
+            init_slots $node {struct}
 
             set decls [$node selectNodes {child::decl}]
-            $node appendFromScript {
-                foreach decl $decls {
-
-                    log "!!! nest: instantiate full slot ${name}.[$decl @x-name]"
-
-                    with_mode {inst} struct.slot ${name}.__[$decl @x-name]__ [subst -nocommands -nobackslashes {
-                        struct.slot.name [$decl @x-name]
-                        struct.slot.type [$decl @x-type]
-                        #struct.slot.parent [get_eval_path ""]
-                        if { [$decl hasAttribute "x-default_value"] } {
-                            struct.slot.default_value [$decl @x-default_value ""]
-                        }
-                        if { [$decl hasAttribute "x-optional_p"] } {
-                            struct.slot.optional_p [$decl @x-optional_p ""]
-                        }
-                        if { [$decl hasAttribute "x-container"] } {
-                            struct.slot.container [$decl @x-container ""]
-                        }
-                    }]
+            foreach decl $decls {
+                $decl appendFromScript {
+                    # $decl appendFromScript {
+                    #     struct.slot.cons          [$decl @x-type]
+                    #     struct.slot.name          [$decl @x-name]
+                    #     struct.slot.default_value [$decl @x-default_value] (opt) 
+                    #     struct.slot.optional_p    [$decl @x-optional_p]    (opt)
+                    #     struct.slot.container     [$decl @x-container]     (opt)
+                    # }
+                    init_slots $decl {struct.slot}
                 }
-
+                $decl setAttribute x-meta {struct.slot}
             }
+
+            $node setAttribute x-meta {struct}
+
         }
 
         return $node
 
     }
+
+    proc init_slots {node struct} {
+        foreach attname [$node attributes] {
+            set identifier [string range [set attname] 2 end]
+            ${struct}.[set identifier] [$node @[set attname]]
+        }
+    }
+
 
     dom createNodeCmd textNode t
 
@@ -276,12 +262,8 @@ define_lang ::nest::lang {
         variable stack_ctx
         log "top_mode=[top_mode] stack_mode=[list $stack_mode] stack_ctx=[list $stack_ctx]"
 
-        set mode [top_mode]
-        return [expr { ${mode} ne {inst} }]
+        return [expr { [top_mode] ne {inst} }]
     }
-
-    keyword {decl}
-    keyword {inst}
 
     proc type_helper {args} {
 
@@ -299,20 +281,20 @@ define_lang ::nest::lang {
             set decl_type $tag
             set decl_name $arg0
 
-            set cmd [list with_mode {decl} {node} {decl} $decl_name -x-type $decl_type -x-meta $ctx_tag {*}$args]
+            set cmd [list with_mode {decl} {node} {decl} $decl_name -x-type $decl_type {*}$args]
             set node [uplevel $cmd]
 
-            # get full alias name and register the alias
-            set alias_name [get_eval_path $decl_name]
+            # get full forward name and register the forward
+            set forward_name [get_eval_path $decl_name]
             set lookahead_ctx [list {nest} $decl_type $decl_name]
-            set_lookahead_ctx $alias_name $lookahead_ctx
+            set_lookahead_ctx $forward_name $lookahead_ctx
 
-            set dotted_nest [list with_mode {inst} $decl_type $alias_name]
+            set dotted_nest [list with_mode {inst} $decl_type $forward_name]
             set dotted_nest [list with_ctx $lookahead_ctx {*}$dotted_nest] 
-            set cmd [list {alias} $alias_name $dotted_nest]
+            set cmd [list {forward} $forward_name $dotted_nest]
             uplevel $cmd
 
-            log "(declaration done) decl_type=$decl_type decl_name=$decl_name alias_name=$alias_name stack_ctx=[list $::nest::lang::stack_ctx]"
+            log "(declaration done) decl_type=$decl_type decl_name=$decl_name forward_name=$forward_name stack_ctx=[list $::nest::lang::stack_ctx]"
 
 
             return $node
@@ -333,7 +315,7 @@ define_lang ::nest::lang {
                 }
 
                 set inst_arg0 [list ::nest::lang::t $inst_arg0]
-                set cmd [list with_mode {inst} {node} {inst} $inst_name -x-type $inst_type -x-meta $ctx_tag $inst_arg0]
+                set cmd [list with_mode {inst} {node} {inst} $inst_name -x-type $inst_type $inst_arg0]
 
                 return [uplevel $cmd]
 
@@ -344,7 +326,7 @@ define_lang ::nest::lang {
 
                 set inst_type $ctx_tag
                 set inst_name $tag   ;# for inst_type=struct.slot => tag=struct.name => arg0=name
-                set cmd [list with_mode {inst} {node} {inst} $inst_name -x-type $inst_type -x-meta $ctx_tag {*}$args]
+                set cmd [list with_mode {inst} {node} {inst} $inst_name -x-type $inst_type {*}$args]
                 return [uplevel $cmd]
 
             }
@@ -404,13 +386,14 @@ define_lang ::nest::lang {
     #
 
     proc container_helper {arg0 args} {
+        set tag [top_fwd]
         if {[decl_mode_p]} {
             log "!!! container DECLARATION"
             set args [lassign $args name]
             if { [lindex $args 0] eq {=} } {
-                set args [lreplace $args 0 0 "-default_value"]
+                set args [lreplace $args 0 0 "-x-default_value"]
             }
-            [$arg0 $name {*}$args] setAttribute x-container [top_fwd]
+            [$arg0 $name {*}$args] setAttribute x-container $tag
         } else {
             log "!!! container INSTANTIATION"
             set args [lassign $args argvals]
@@ -419,10 +402,10 @@ define_lang ::nest::lang {
                 lassign $lookahead_ctx ctx_type ctx_tag ctx_name
                 if {$ctx_type eq {nest}} {
                     log "!!! container INSTANTIATION lookahead_ctx=[list $lookahead_ctx] arg0=${arg0} argval=[list ${argval}]"
-                    [with_fwd $arg0 $arg0 $argval] setAttribute x-container [top_fwd]
+                    [with_fwd $arg0 $arg0 $argval] setAttribute x-container $tag
                 } else {
                     log "!!! container INSTANTIATION lookahead_ctx_type={other} (not nest) arg0=${arg0} argval=[list ${argval}]"
-                    [with_fwd $arg0 type_helper {*}$argval] setAttribute x-container [top_fwd]
+                    [with_fwd $arg0 type_helper {*}$argval] setAttribute x-container $tag
                 }
             }
         }
@@ -438,7 +421,7 @@ define_lang ::nest::lang {
         foreach ctx $stack_ctx {
             lassign $ctx ctx_type ctx_tag ctx_name
             set redirect_name "${ctx_name}.$field_type"
-            set redirect_exists_p [exists_alias $redirect_name]
+            set redirect_exists_p [exists_forward $redirect_name]
 
             log "checking context for \"${field_type}\" -> ${redirect_name} ($redirect_exists_p)"
 
@@ -452,7 +435,7 @@ define_lang ::nest::lang {
                 return
             } else {
                 set redirect_name "${ctx_tag}.${field_type}"
-                set redirect_exists_p [exists_alias $redirect_name]
+                set redirect_exists_p [exists_forward $redirect_name]
                 if { $redirect_exists_p } {
                     log "+++ $field_type $field_name $args -> redirect_name=$redirect_name"
                     set cmd [list $redirect_name $field_name {*}$args]
@@ -497,7 +480,7 @@ define_lang ::nest::lang {
         }
     }
 
-    alias {dtd} {dtd_helper}
+    forward {dtd} {dtd_helper}
 
     dtd {
         <!DOCTYPE nest [
@@ -506,12 +489,14 @@ define_lang ::nest::lang {
             <!ELEMENT struct (struct | struct.slot | inst)*>
             <!ATTLIST struct x-name CDATA #IMPLIED
                            x-type CDATA #REQUIRED
+                           x-meta CDATA #REQUIRED
                            x-default_value CDATA #IMPLIED
                            x-container CDATA #IMPLIED>
 
             <!ELEMENT struct.slot (inst)*>
             <!ATTLIST struct.slot x-name CDATA #IMPLIED
-                           x-type CDATA #REQUIRED>
+                           x-type CDATA #REQUIRED
+                           x-meta CDATA #REQUIRED>
 
             <!ELEMENT inst ANY>
             <!ATTLIST inst x-name CDATA #REQUIRED
@@ -524,9 +509,12 @@ define_lang ::nest::lang {
         ]>
     }
 
-    alias {base_type} {nest {type_helper}}
-    alias {multiple} {container_helper}
-    alias {meta} {lambda {metaCmd args} {{*}$metaCmd {*}$args}}
+    alias ::nest::lang::object ::nest::lang::with_mode {inst} nest {type_helper}
+    alias ::nest::lang::class ::nest::lang::with_mode {decl} nest
+
+    forward {base_type} {object}
+    forward {multiple} {container_helper}
+    forward {meta} {lambda {metaCmd args} {{*}$metaCmd {*}$args}}
 
     # a varying-length text string encoded using UTF-8 encoding
     base_type "varchar"
@@ -552,8 +540,8 @@ define_lang ::nest::lang {
     # a 64-bit floating point number
     base_type "double"
 
-    alias {template} {lambda {alias_name params body nest} {
-        alias ${alias_name} \
+    forward {template} {lambda {forward_name params body nest} {
+        forward ${forward_name} \
                 [list {lambda} [lappend {params} {name}] \
                     [concat {nest} [list ${nest}] "\${name}" \
                         "\[subst -nocommands -nobackslashes [list ${body}]\]"]]
@@ -564,7 +552,7 @@ define_lang ::nest::lang {
         ${typesecond} {second}
     } {type_helper}
 
-    # => alias {pair} {lambda {typefirst typesecond name} {
+    # => forward {pair} {lambda {typefirst typesecond name} {
     #        nest {type_helper} ${name} [subst -nocommands -nobackslashes {
     #            ${typefirst} {first} 
     #            ${typesecond} {second}
@@ -572,14 +560,17 @@ define_lang ::nest::lang {
     #    }}
 
 
-    meta {nest} {nest {with_mode {inst} nest {type_helper}}} {struct} {
+    # meta {with_mode {decl} nest} {with_mode {decl} nest {type}} {struct}
+    meta {class} {class {object}} {struct} {
         varchar name
         varchar type
         varchar nsp
+        varchar default_value = ""
 
         multiple struct slot = {} {
             varchar name
             varchar type
+            varchar meta
             varchar default_value = ""
             bool optional_p = false
             varchar container = ""
