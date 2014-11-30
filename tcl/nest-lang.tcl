@@ -118,6 +118,23 @@ define_lang ::nest::lang {
         return ${result}
     }
 
+    proc {with_eval} {name args} {
+        variable eval_path
+        set old_eval_path ${eval_path}
+        set eval_path [join [concat ${eval_path} ${name}] {.}]
+        push_eval ${name}
+        set result [uplevel ${args}]
+        pop_eval
+        set eval_path ${old_eval_path}
+        return ${result}
+    }
+
+    proc {gen_eval_path} {name} {
+        variable {eval_path}
+        join [concat ${eval_path} ${name}] {.}
+    }
+
+
     # Wow!!!
     set {name} {::nest::lang::alias}
     set {cmd} [list {::nest::lang::lambda} {name args} {
@@ -161,22 +178,6 @@ define_lang ::nest::lang {
         set name "[namespace current]::${name}"
         set cmd "::nest::lang::${cmd}"
         alias ${name} {*}[join ${cmd} { }]
-    }
-
-    proc {with_eval} {name args} {
-        variable eval_path
-        set old_eval_path ${eval_path}
-        set eval_path [join [concat ${eval_path} ${name}] {.}]
-        push_eval ${name}
-        set result [uplevel ${args}]
-        pop_eval
-        set eval_path ${old_eval_path}
-        return ${result}
-    }
-
-    proc {gen_eval_path} {name} {
-        variable {eval_path}
-        join [concat ${eval_path} ${name}] {.}
     }
 
     # forward is an alias that pushes its name to stack_fwd
@@ -261,79 +262,77 @@ define_lang ::nest::lang {
 
     proc nt {text} { t -disableOutputEscaping ${text} }
 
-    proc decl_mode_p {} {
-        return [expr { [top_mode] ne {inst} }]
+    proc typedecl {args} {
+        
+        set tag [top_fwd]  ;# varchar nsp -> tag=varchar name=nsp
+
+        # deal with args and create dom node
+        set args [lassign $args arg0]
+        if { [lindex $args 0] eq {=} } {
+            set args [lreplace $args 0 0 "-x-default_value"]
+        }
+
+        set decl_type $tag
+        set decl_name $arg0
+
+        set cmd [list with_mode {decl} {node} {decl} $decl_name -x-type $decl_type {*}$args]
+        set node [uplevel $cmd]
+
+        # get full forward name and register the forward
+        set forward_name [gen_eval_path $decl_name]
+        set lookahead_ctx [list {nest} $decl_type $decl_name]
+        set_lookahead_ctx $forward_name $lookahead_ctx
+
+        set dotted_nest [list with_mode {inst} $decl_type $forward_name]
+        set dotted_nest [list with_ctx $lookahead_ctx {*}$dotted_nest] 
+        set cmd [list {forward} $forward_name $dotted_nest]
+        uplevel $cmd
+
+        log "(declaration done) decl_type=$decl_type decl_name=$decl_name forward_name=$forward_name stack_ctx=[list $::nest::lang::stack_ctx]"
+
+        return $node
+
     }
 
-    proc type_helper {args} {
+    proc typeinst {args} {
 
         set tag [top_fwd]  ;# varchar nsp -> tag=varchar name=nsp
         lassign [top_ctx] ctx_type ctx_tag ctx_name
 
-        if { [decl_mode_p] } {
+        if { $ctx_tag eq {base_type} } {
 
-            # deal with args and create dom node
-            set args [lassign $args arg0]
-            if { [lindex $args 0] eq {=} } {
-                set args [lreplace $args 0 0 "-x-default_value"]
+            # message.subject "hello" 
+            # => inst_name=message.subject args={{hello}} 
+            # => inst_name=message.subject inst_type=base_type
+            
+            set inst_type $tag
+            set args [lassign $args inst_name inst_arg0]
+
+            if { $args ne {} } { 
+                error "something wrong with instantiation statement args=[list $args]"
             }
 
-            set decl_type $tag
-            set decl_name $arg0
+            set inst_arg0 [list ::nest::lang::t $inst_arg0]
+            set cmd [list with_mode {inst} {node} {inst} $inst_name -x-type $inst_type $inst_arg0]
 
-            set cmd [list with_mode {decl} {node} {decl} $decl_name -x-type $decl_type {*}$args]
-            set node [uplevel $cmd]
-
-            # get full forward name and register the forward
-            set forward_name [gen_eval_path $decl_name]
-            set lookahead_ctx [list {nest} $decl_type $decl_name]
-            set_lookahead_ctx $forward_name $lookahead_ctx
-
-            set dotted_nest [list with_mode {inst} $decl_type $forward_name]
-            set dotted_nest [list with_ctx $lookahead_ctx {*}$dotted_nest] 
-            set cmd [list {forward} $forward_name $dotted_nest]
-            uplevel $cmd
-
-            log "(declaration done) decl_type=$decl_type decl_name=$decl_name forward_name=$forward_name stack_ctx=[list $::nest::lang::stack_ctx]"
-
-
-            return $node
+            return [uplevel $cmd]
 
         } else {
 
-            if { $ctx_tag eq {base_type} } {
+            # case for composite or "unknown" types (e.g. pair<varchar,varint)
+            # note that "unknown" types do not have a lookahead context
 
-                # message.subject "hello" 
-                # => inst_name=message.subject args={{hello}} 
-                # => inst_name=message.subject inst_type=base_type
-                
-                set inst_type $tag
-                set args [lassign $args inst_name inst_arg0]
-
-                if { $args ne {} } { 
-                    error "something wrong with instantiation statement args=[list $args]"
-                }
-
-                set inst_arg0 [list ::nest::lang::t $inst_arg0]
-                set cmd [list with_mode {inst} {node} {inst} $inst_name -x-type $inst_type $inst_arg0]
-
-                return [uplevel $cmd]
-
-            } else {
-
-                # case for composite or "unknown" types (e.g. pair<varchar,varint)
-                # note that "unknown" types do not have a lookahead context
-
-                set inst_type $ctx_tag
-                set inst_name $tag   ;# for inst_type=struct.slot => tag=struct.name => arg0=name
-                set cmd [list with_mode {inst} {node} {inst} $inst_name -x-type $inst_type {*}$args]
-                return [uplevel $cmd]
-
-            }
+            set inst_type $ctx_tag
+            set inst_name $tag   ;# for inst_type=struct.slot => tag=struct.name => arg0=name
+            set cmd [list with_mode {inst} {node} {inst} $inst_name -x-type $inst_type {*}$args]
+            return [uplevel $cmd]
 
         }
 
     }
+
+    proc {type_helper} {args} {::nest::lang::type[top_mode] {*}${args}}
+
 
     # container_helper
     #
@@ -385,35 +384,48 @@ define_lang ::nest::lang {
     #   }
     #
 
-    proc container_helper {arg0 args} {
+
+    proc containerdecl {arg0 args} {
         set tag [top_fwd]
-        if {[decl_mode_p]} {
-            log "!!! container DECLARATION"
-            set args [lassign $args name]
-            if { [lindex $args 0] eq {=} } {
-                set args [lreplace $args 0 0 "-x-default_value"]
-            }
-            [$arg0 $name {*}$args] setAttribute x-container $tag
-        } else {
 
-            log "!!! container INSTANTIATION"
+        log "!!! container DECLARATION"
 
-            set args [lassign $args argvals]
-
-            set arg0 [which $arg0]
-            lassign [get_lookahead_ctx $arg0] ctx_type ctx_tag ctx_name
-
-            foreach argval $argvals {
-                if {$ctx_type eq {nest}} {
-                    log "!!! container INSTANTIATION (ctx_type=nest) arg0=${arg0} argval=[list ${argval}]"
-                    [with_fwd $arg0 $arg0 $argval] setAttribute x-container $tag
-                } else {
-                    log "!!! container INSTANTIATION (ctx_type=other i.e. not nest) arg0=${arg0} argval=[list ${argval}]"
-                    [with_fwd $arg0 type_helper {*}$argval] setAttribute x-container $tag
-                }
-            }
+        set args [lassign $args name]
+        if { [lindex $args 0] eq {=} } {
+            set args [lreplace $args 0 0 "-x-default_value"]
         }
+
+        set node [$arg0 $name {*}$args]
+        ${node} setAttribute x-container $tag
+        return ${node}
     }
+
+    proc containerinst {arg0 args} {
+        set tag [top_fwd]
+
+        log "!!! container INSTANTIATION"
+
+        set args [lassign $args argvals]
+        set arg0 [which $arg0]
+
+        set nodes [list]
+        lassign [get_lookahead_ctx $arg0] ctx_type ctx_tag ctx_name
+        foreach argval $argvals {
+            if {$ctx_type eq {nest}} {
+                log "!!! container INSTANTIATION (ctx_type=nest) arg0=${arg0} argval=[list ${argval}]"
+                set node [with_fwd $arg0 $arg0 $argval]
+                ${node} setAttribute x-container $tag
+            } else {
+                log "!!! container INSTANTIATION (ctx_type=other i.e. not nest) arg0=${arg0} argval=[list ${argval}]"
+                set node [with_fwd $arg0 type_helper {*}$argval]
+                ${node} setAttribute x-container $tag
+            }
+            lappend nodes ${node}
+        }
+        return ${nodes}
+    }
+
+    proc {container_helper} {args} {::nest::lang::container[top_mode] {*}${args}}
 
     proc which {name} {
 
