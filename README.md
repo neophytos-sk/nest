@@ -9,7 +9,7 @@ You may find my templating presentation in EuroTCL 2013 relevant:
 http://www.tcl.tk/community/tcl2013/EuroTcl/presentations/EuroTcl2013-Demetriou-WebTemplating.pdf
 
 You can find the "nest" package here:
-http://www.openacs.org/file/4205606/nest.tar.bz2.bz2
+http://www.openacs.org/file/4205606/nest-latest.tar.bz2
 
 
 cd examples
