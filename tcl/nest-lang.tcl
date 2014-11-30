@@ -552,7 +552,6 @@ define_lang ::nest::lang {
     #    }}
 
 
-    # meta {with_mode {decl} nest} {with_mode {decl} nest {type}} {struct}
     meta {class} {class {object}} {struct} {
         varchar name
         varchar type
@@ -582,7 +581,7 @@ puts [$lang_doc asXML]
 
 define_lang ::nest::data {
     namespace import ::nest::lang::*
-    namespace path [list ::nest::data ::nest::lang ::]
+    namespace path [list ::nest::data ::nest::lang]
     namespace unknown ::nest::lang::unknown
 
 
