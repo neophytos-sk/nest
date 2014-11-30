@@ -25,6 +25,8 @@ namespace eval ::nest::debug {
         variable ::nest::lang::stack_ctx
         variable ::nest::lang::stack_fwd
         variable ::nest::lang::stack_mode
+        variable ::nest::lang::stack_eval
+        variable ::nest::lang::eval_path
         
         set vars [list]
         foreach varname [uplevel {info vars}] {
@@ -42,10 +44,17 @@ namespace eval ::nest::debug {
         append msg $nl $sp "stack_ctx=[list $stack_ctx]"
         append msg $nl $sp "stack_fwd=[list $stack_fwd]"
         append msg $nl $sp "stack_mode=[list $stack_mode]"
+        append msg $nl $sp "stack_eval=[list $stack_eval]"
+        append msg $nl $sp "eval_path=${eval_path}"
         append msg $nl $sp "vars${nl}${sp}${sp}[join $vars "\n${sp}${sp}"]"
 
         log $msg true
 
+    }
+
+    proc error {msg {info ""} {code ""}} {
+        dump
+        ::error ${msg} {*}${info} {*}${code}
     }
 
 }
