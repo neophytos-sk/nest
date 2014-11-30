@@ -31,8 +31,7 @@ Dependencies:
 
 History:
 
-* nest-0.9 (2014-11-30) - refactored code, alias/forward separation, class/object aliases
-* nest-0.8 (2014-11-29) - template programming, pair construct, inst/decl mode
+* nest-1.0 (2014-11-30) - alias/forward, inst/decl mode, class/object aliases, struct/slot, template/pair
 
 Notes:
 
