@@ -8,7 +8,7 @@ define_lang ::nest::lang {
 
     variable stack_ctx [list]
     variable stack_fwd [list]
-    variable stack_mode [list]
+    variable stack_mode [list {decl}]  ;# default mode is {decl}
     variable stack_eval [list]
 
     variable eval_path ""
