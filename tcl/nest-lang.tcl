@@ -95,18 +95,37 @@ define_lang ::nest::lang {
     #   * interp eval __safe_interp__ namespace eval ::nest::lang {...}
 
     array set alias_compile_map {
-        {lambda} {::proc} 
+        {::nest::lang::lambda} {::proc} 
     }
 
-    proc interp_alias {name arg0 args} {
+    proc interp_alias {name index args} {
         variable alias_compile_map
-        if { [info exists alias_compile_map(${arg0})] } {
-            return [$alias_compile_map(${arg0}) ${name} {*}${args}]
+        set arg [lindex ${args} ${index}]
+        if { [info exists alias_compile_map(${arg})] } {
+            set args [lreplace $args ${index} ${index} $alias_compile_map($arg) ${name}]
+            log "alias compiled to proc: ${name}"
+            {*}${args}
+            return
         }
-        {interp} {alias} {} ${name} {} ${arg0} {*}${args}
+        {interp} {alias} {} ${name} {} {*}${args}
+
+
     }
 
-
+    proc interp_noop {args} {}
+    proc interp_if {condition_expr cmd args} {
+        if {[{*}${condition_expr}]} {
+            {*}${cmd} {*}${args}
+        }
+    }
+    proc interp_if_else {condition_expr if_cmd else_cmd args} {
+        if {[{*}${condition_expr}]} {
+            {*}${if_cmd} {*}${args}
+        } else {
+            {*}${if_cmd} {*}${args}
+        }
+    }
+        
     proc array_setter {arrayname name value} {
         variable ${arrayname}
         set ${arrayname}(${name}) ${value}
@@ -157,13 +176,19 @@ define_lang ::nest::lang {
 
 
     # Wow!!!
-    set {name} {alias}
-    set {cmd} {lambda {name args} {
-        {interp_alias} ${name} {*}${args}
-        {set_alias} ${name} ${args}
+    set {nspAliasCmd} {lambda {name arg0 args} {
+        set nsp [uplevel {namespace current}]
+        set compile_arg_index "0"
+        interp_alias ${nsp}::${name} ${compile_arg_index} ${nsp}::${arg0} {*}${args}
+        set_alias ${name} ${args}
     }}
-    {*}${cmd} {set_alias} ::nest::lang::array_setter alias
-    {*}${cmd} ${name} {*}${cmd}
+    {*}${nspAliasCmd} {set_alias} array_setter alias
+    {*}${nspAliasCmd} {nsp_alias} {*}${nspAliasCmd}
+        
+    nsp_alias {alias} {lambda} {name args} {
+        interp alias {} ${name} {} {*}${args}
+        set_alias ${name} ${args}
+    }
 
     foreach {name cmd} {
 
@@ -202,12 +227,11 @@ define_lang ::nest::lang {
         {top_eval} {stack_top stack_eval}
 
     } {
-        set cmd "::nest::lang::${cmd}"
-        alias ::nest::lang::${name} {*}[join ${cmd} { }]
+        nsp_alias ${name} {*}[join ${cmd} { }]
     }
 
     # forward is an alias that pushes its name to stack_fwd
-    alias {forward} {lambda} {name cmd} {
+    nsp_alias {forward} {lambda} {name cmd} {
         {set_forward} ${name} ${cmd}
         {alias} ${name} {::nest::lang::with_fwd} ${name} {*}${cmd}
     }
@@ -218,21 +242,13 @@ define_lang ::nest::lang {
     keyword {decl}
     keyword {inst}
 
-
     dom createNodeCmd textNode t
 
     proc nt {text} { t -disableOutputEscaping ${text} }
 
-    proc interp_noop {args} {}
-    alias {::nest::lang::interp_t} {lambda} {text} {
-        if { [dom_p] } {
-            ::nest::lang::t ${text}
-        } else {
-            # do nothing
-        }
-    }
+    nsp_alias {interp_t} interp_if dom_p t
 
-    alias {::nest::lang::interp_execNodeCmd} {lambda} {tag name args} {
+    nsp_alias {interp_execNodeCmd} {lambda} {tag name args} {
         if { [dom_p] } {
             ::dom::execNodeCmd elementNode ${tag} -x-name ${name} {*}${args}
         } else {
@@ -246,8 +262,11 @@ define_lang ::nest::lang {
         }
     }
 
-    alias {node} {lambda} {tag name args} \
+    nsp_alias {node} {lambda} {tag name args} \
         {with_eval ${name} interp_execNodeCmd ${tag} ${name} {*}${args}}
+
+
+
 
 
     # nest argument holds nested calls in the procs below
@@ -275,7 +294,7 @@ define_lang ::nest::lang {
 
         {dispatcher} ${id}
 
-        set node [{node} [top_mode] $name -x-type $tag {*}$args]
+        set node [{node} [top_mode] $name -x-id ${id} -x-type $tag {*}$args]
 
         ###
 
@@ -308,10 +327,10 @@ define_lang ::nest::lang {
                     # }
                     init_slots $decl {struct.slot}
                 }
-                $decl setAttribute x-meta {struct.slot}
+                #$decl setAttribute x-meta {struct.slot}
             }
 
-            $node setAttribute x-meta ${name}
+            #$node setAttribute x-meta ${name}
 
         }
 
@@ -572,16 +591,16 @@ define_lang ::nest::lang {
 
     # basis of class/object methods
 
-    alias {@} ::nest::lang::with_eval
+    nsp_alias {@} with_eval
 
-    alias {dispatcher} {lambda} {id} {
+    nsp_alias {dispatcher} {lambda} {id} {
         set_dispatcher ${id} "@${id}"
-        alias "@${id}" {@} ${id}
+        alias "@${id}" {::nest::lang::@} ${id}
     }
 
     # class/object aliases, used in def of base_type and struct
-    alias object ::nest::lang::nest {type_helper}
-    alias class ::nest::lang::with_mode {decl} nest
+    nsp_alias object nest {type_helper}
+    nsp_alias class with_mode {decl} nest
 
     forward {base_type} {with_mode {inst} nest {type_helper}}
 
@@ -636,15 +655,16 @@ define_lang ::nest::lang {
     } {type_helper}
 
     meta {class} {class {nest type_helper}} {struct} {
+        varchar id
         varchar name
         varchar type
         varchar nsp
         varchar default_value = ""
 
         multiple struct slot = {} {
+            varchar id
             varchar name
             varchar type
-            varchar meta
             varchar default_value = ""
             bool optional_p = false
             varchar container = ""
@@ -661,12 +681,14 @@ define_lang ::nest::lang {
         varchar body
     }
 
-    alias {fun} {lambda} {name params body} { 
+    nsp_alias {fun} {lambda} {name params body} { 
 
-        alias [gen_eval_path ${name}] {lambda} ${params} ${body}
+        # overwrites the alias created by method
+        alias [gen_eval_path ${name}] {::nest::lang::lambda} ${params} ${body}
 
-        method ${name} \
+        method __${name}__ \
             [concat name ${name} { ; } multiple param [list ${params}] { ; } body [list $body]]
+
 
     }
 
