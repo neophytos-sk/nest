@@ -7,10 +7,10 @@ define_lang ::nest::lang {
     namespace import ::nest::debug::* 
 
     # =========
-    # stack_ctx
+    # stack_nest
     # =========
     #
-    # each context is a list that consists of ctx_type, ctx_tag, and ctx_name
+    # each context is a pair of ctx_tag, and ctx_name
     #
     # EXAMPLE 1:
     #
@@ -23,7 +23,7 @@ define_lang ::nest::lang {
     #     varchar subtype
     # }
     # 
-    # stack_ctx = {nest base_type bool} {nest meta struct}
+    # stack_nest = {nest base_type bool} {nest meta struct}
     #
     # EXAMPLE 2:
     # 
@@ -32,9 +32,9 @@ define_lang ::nest::lang {
     #   -> varchar address
     # }
     #
-    # stack_ctx = {nest base_type varchar} {nest meta struct}
+    # stack_nest = {nest base_type varchar} {nest meta struct}
 
-    variable stack_ctx [list]
+    variable stack_nest [list]
     variable stack_fwd [list]
     variable stack_mode [list {inst}]  ;# default mode is {inst}
     variable stack_eval [list]
@@ -44,8 +44,7 @@ define_lang ::nest::lang {
     array set alias [list]
     array set forward [list]
     array set dispatcher [list]
-    array set lookahead_ctx [list]
-
+    array set nest [list]
 
     proc lambda {params body args} {
 
@@ -196,16 +195,10 @@ define_lang ::nest::lang {
         {exists_alias} {array_exister alias}
 
         {set_forward} {array_setter forward}
-        {get_forward} {array_getter forward}
         {exists_forward} {array_exister forward}
 
         {set_dispatcher} {array_setter dispatcher}
-        {get_dispatcher} {array_getter dispatcher}
         {exists_dispatcher} {array_exister dispatcher}
-
-        {set_lookahead_ctx} {array_setter lookahead_ctx}
-        {get_lookahead_ctx} {array_getter lookahead_ctx}
-        {exists_lookahead_ctx} {array_exister lookahead_ctx}
 
         {push_fwd} {stack_push stack_fwd}
         {pop_fwd} {stack_pop stack_fwd}
@@ -217,10 +210,10 @@ define_lang ::nest::lang {
         {top_mode} {stack_top stack_mode}
         {with_mode} {stack_with stack_mode}
 
-        {push_ctx} {stack_push stack_ctx}
-        {pop_ctx} {stack_pop stack_ctx}
-        {top_ctx} {stack_top stack_ctx}
-        {with_ctx} {stack_with stack_ctx}
+        {push_ctx} {stack_push stack_nest}
+        {pop_ctx} {stack_pop stack_nest}
+        {top_ctx} {stack_top stack_nest}
+        {with_ctx} {stack_with stack_nest}
         
         {push_eval} {stack_push stack_eval}
         {pop_eval} {stack_pop stack_eval}
@@ -265,27 +258,17 @@ define_lang ::nest::lang {
     nsp_alias {node} {lambda} {tag name args} \
         {with_eval ${name} interp_execNodeCmd ${tag} ${name} {*}${args}}
 
-
-
-
-
     # nest argument holds nested calls in the procs below
     proc nest {nest name args} {
         set tag [top_fwd]
-
-        log "!!! nest: $name -> $nest"
-
         set id [gen_eval_path $name]
 
-        #if { [exists_alias $id] } {
-        #    error "alias for $id already exists"
-        #}
+        # TODO: unify to use just one dispatcher for everything
+        # forward ${id} [list @ ${id} ${nest}]
+        if { [top_mode] eq {decl} || ${tag} eq {base_type} } {
 
-        if { [top_mode] eq {decl} || $tag eq {base_type} } {
-
-            set ctx [list {nest} $tag $id]
-            set_lookahead_ctx $id $ctx ;# needed by container_helper and type_helper
-            set nest [list with_ctx $ctx {*}$nest]
+            set ctx [list ${tag} ${id}]
+            set nest [list with_ctx ${ctx} {*}${nest}]
             {forward} ${id} ${nest}
 
         } else {
@@ -370,15 +353,13 @@ define_lang ::nest::lang {
 
         # get full forward name and register the forward
         set forward_name [gen_eval_path $decl_name]
-        set lookahead_ctx [list {nest} $decl_type $decl_name]
-        set_lookahead_ctx $forward_name $lookahead_ctx
-
+        set ctx [list $decl_type $decl_name]
         set dotted_nest [list with_mode {inst} $decl_type $forward_name]
-        set dotted_nest [list with_ctx $lookahead_ctx {*}$dotted_nest] 
+        set dotted_nest [list with_ctx $ctx {*}$dotted_nest] 
         set cmd [list {forward} $forward_name $dotted_nest]
         {*}${cmd} ;# uplevel $cmd
 
-        log "(declaration done) decl_type=$decl_type decl_name=$decl_name forward_name=$forward_name stack_ctx=[list $::nest::lang::stack_ctx]"
+        log "(declaration done) decl_type=$decl_type decl_name=$decl_name forward_name=$forward_name"
 
         return $node
 
@@ -387,7 +368,7 @@ define_lang ::nest::lang {
     proc typeinst {args} {
 
         set tag [top_fwd]  ;# varchar nsp -> tag=varchar name=nsp
-        lassign [top_ctx] ctx_type ctx_tag ctx_name
+        lassign [top_ctx] ctx_tag ctx_name
 
         if { $ctx_tag eq {base_type} } {
 
@@ -410,7 +391,6 @@ define_lang ::nest::lang {
         } else {
 
             # case for composite or "unknown" types (e.g. pair<varchar,varint)
-            # note that "unknown" types do not have a lookahead context
 
             set inst_type $ctx_tag
             set inst_name $tag   ;# for inst_type=struct.slot => tag=struct.name => arg0=name
@@ -499,17 +479,9 @@ define_lang ::nest::lang {
         set arg0 [which $arg0]
 
         set nodes [list]
-        lassign [get_lookahead_ctx $arg0] ctx_type ctx_tag ctx_name
         foreach argval $argvals {
-            if {$ctx_type eq {nest}} {
-                log "!!! container INSTANTIATION (ctx_type=nest) arg0=${arg0} argval=[list ${argval}]"
-                set node [with_fwd $arg0 $arg0 $argval]
-                ${node} setAttribute x-container $tag
-            } else {
-                log "!!! container INSTANTIATION (ctx_type=other i.e. not nest) arg0=${arg0} argval=[list ${argval}]"
-                set node [with_fwd $arg0 type_helper {*}$argval]
-                ${node} setAttribute x-container $tag
-            }
+            set node [with_fwd $arg0 $arg0 $argval]
+            ${node} setAttribute x-container $tag
             lappend nodes ${node}
         }
         return ${nodes}
@@ -527,9 +499,9 @@ define_lang ::nest::lang {
         if { $redirect_exists_p } {
             return $redirect_name
         } else {
-            variable stack_ctx
-            foreach ctx $stack_ctx {
-                lassign $ctx ctx_type ctx_tag ctx_name
+            variable stack_nest
+            foreach ctx $stack_nest {
+                lassign $ctx ctx_tag ctx_name
                 set redirect_name "${ctx_name}.${name}"
                 set redirect_exists_p [exists_alias $redirect_name]
 

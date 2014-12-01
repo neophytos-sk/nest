@@ -149,14 +149,23 @@ message msg4 {
     #      <inst x-name="method.body" x-type="varchar"> puts "hello ${what} \n" </inst>
     #    </inst>
 
-}
+    # object method with three params
+    fun num_between_p {num from to} { expr { $num >= $from && $num < $to } }
 
-if { ![debug_p] } {
-    time_cps {set node [message obj] ; $node delete} 10000
+    fun do_nothing {} {}
 }
-
 
 # calling object method sayhi,
 # equivalent to => @ msg4 sayhi "world"
 
 $(msg4) sayhi "world"
+puts "num_between_p 3 7 9 = [$(msg4) num_between_p 3 7 9]"
+puts "num_between_p 15 7 27 = [$(msg4) num_between_p 15 7 27]"
+
+if { ![debug_p] } {
+    time_cps {set node [message obj] ; $node delete} 10000
+    time_cps [list $(msg4) do_nothing] 10000
+}
+
+
+
