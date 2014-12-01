@@ -139,12 +139,16 @@ message msg4 {
         second "T_54"
     }}
 
-    # TODO: must produce dom node as below (or with multiple param / node for body)
-    # <inst x-name="sayhi" x-type="fun" x-meta="alias">
-    #   <inst x-name="params" x-type="varchar">what</inst>
-    #   <inst x-name="body" x-type="varchar"> puts "hello ${what} \n" </inst>
-    # </inst>
     fun sayhi {what} { puts "hello ${what} \n" }
+    # 
+    # produces a dom node of the following form:
+    #
+    # => <inst x-name="sayhi" x-type="method">
+    #      <inst x-name="method.name" x-type="varchar">sayhi</inst>
+    #      <inst x-name="method.param" x-type="varchar" x-container="multiple">what</inst>
+    #      <inst x-name="method.body" x-type="varchar"> puts "hello ${what} \n" </inst>
+    #    </inst>
+
 }
 
 if { ![debug_p] } {

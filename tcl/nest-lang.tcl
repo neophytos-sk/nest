@@ -554,11 +554,6 @@ define_lang ::nest::lang {
         alias "@${id}" {@} ${id}
     }
 
-    alias {fun} {lambda} {name params body} { 
-        alias [gen_eval_path ${name}] {lambda} ${params} ${body}
-        # node {inst} ${name} -x-type fun
-    }
-
     # class/object aliases, used in def of base_type and struct
     alias object ::nest::lang::nest {type_helper}
     alias class ::nest::lang::with_mode {decl} nest
@@ -594,7 +589,7 @@ define_lang ::nest::lang {
     # timestamp/date
     # base_type "date"
 
-    forward {template} {lambda {forward_name params body nest} {
+    forward {generic_type} {lambda {forward_name params body nest} {
         forward ${forward_name} \
                 [list {lambda} [lappend {params} {name}] \
                     [concat {nest} [list ${nest}] "\${name}" \
@@ -610,7 +605,7 @@ define_lang ::nest::lang {
     #        }]
     #    }}
 
-    template {pair} {typefirst typesecond} {
+    generic_type {pair} {typefirst typesecond} {
         ${typefirst} {first}
         ${typesecond} {second}
     } {type_helper}
@@ -634,6 +629,23 @@ define_lang ::nest::lang {
         bool is_final_if_no_scope
 
     }
+
+    struct {method} {
+        varchar name
+        multiple varchar param = {}
+        varchar body
+    }
+
+    alias {fun} {lambda} {name params body} { 
+
+        alias [gen_eval_path ${name}] {lambda} ${params} ${body}
+
+        method ${name} \
+            [concat name ${name} { ; } multiple param [list ${params}] { ; } body [list $body]]
+
+    }
+
+
 
     namespace export "struct" "varchar" "bool" "varint" "byte" "int16" "int32" "int64" "double" "multiple"
 
