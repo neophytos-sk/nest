@@ -281,18 +281,24 @@ define_lang ::nest::lang {
         #    error "alias for $id already exists"
         #}
 
-        set ctx [list {nest} $tag $id]
-        set_lookahead_ctx $id $ctx ;# needed by container_helper and type_helper
-        set nest [list with_ctx $ctx {*}$nest]
-        {forward} ${id} ${nest}
+        if { [top_mode] eq {decl} || $tag eq {base_type} } {
 
-        # creates dispatcher alias
-        #
-        # @${id}
-        # => @ ${id}
-        # => with_eval ${id}
+            set ctx [list {nest} $tag $id]
+            set_lookahead_ctx $id $ctx ;# needed by container_helper and type_helper
+            set nest [list with_ctx $ctx {*}$nest]
+            {forward} ${id} ${nest}
 
-        {dispatcher} ${id}
+        } else {
+
+            # creates dispatcher alias for object/instance methods
+            #
+            # @${id}
+            # => @ ${id}
+            # => with_eval ${id}
+
+            {dispatcher} ${id}
+
+        }
 
         set node [{node} [top_mode] $name -x-id ${id} -x-type $tag {*}$args]
 
@@ -686,7 +692,7 @@ define_lang ::nest::lang {
         # overwrites the alias created by method
         alias [gen_eval_path ${name}] {::nest::lang::lambda} ${params} ${body}
 
-        method __${name}__ \
+        method ${name} \
             [concat name ${name} { ; } multiple param [list ${params}] { ; } body [list $body]]
 
 
