@@ -36,7 +36,7 @@ define_lang ::nest::lang {
 
     variable stack_ctx [list]
     variable stack_fwd [list]
-    variable stack_mode [list {decl}]  ;# default mode is {decl}
+    variable stack_mode [list {inst}]  ;# default mode is {inst}
     variable stack_eval [list]
 
     variable eval_path ""
@@ -219,7 +219,7 @@ define_lang ::nest::lang {
     keyword {inst}
 
     alias {node} {lambda} {tag name args} \
-        {with_eval ${name} ::dom::execNodeCmd elementNode $tag -x-name $name {*}$args}
+        {if { $name eq {from} && $tag eq {inst} && [incr ::__counter] == 1 } { error args=$args } ; with_eval ${name} ::dom::execNodeCmd elementNode $tag -x-name $name {*}$args}
 
     # nest argument holds nested calls in the procs below
     proc nest {nest name args} {
@@ -556,13 +556,15 @@ define_lang ::nest::lang {
 
     alias {fun} {lambda} {name params body} { 
         alias [gen_eval_path ${name}] {lambda} ${params} ${body}
+        # node {inst} ${name} -x-type fun
     }
 
     # class/object aliases, used in def of base_type and struct
-    alias object ::nest::lang::with_mode {inst} nest {type_helper}
+    alias object ::nest::lang::nest {type_helper}
     alias class ::nest::lang::with_mode {decl} nest
 
-    forward {base_type} {object}
+    forward {base_type} {with_mode {inst} nest {type_helper}}
+
     forward {multiple} {container_helper}
 
     # a varying-length text string encoded using UTF-8 encoding
@@ -589,6 +591,9 @@ define_lang ::nest::lang {
     # a 64-bit floating point number
     base_type "double"
 
+    # timestamp/date
+    # base_type "date"
+
     forward {template} {lambda {forward_name params body nest} {
         forward ${forward_name} \
                 [list {lambda} [lappend {params} {name}] \
@@ -610,7 +615,7 @@ define_lang ::nest::lang {
         ${typesecond} {second}
     } {type_helper}
 
-    meta {class} {class {object}} {struct} {
+    meta {class} {class {nest type_helper}} {struct} {
         varchar name
         varchar type
         varchar nsp
