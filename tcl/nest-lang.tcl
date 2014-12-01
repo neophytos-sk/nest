@@ -218,8 +218,37 @@ define_lang ::nest::lang {
     keyword {decl}
     keyword {inst}
 
+
+    dom createNodeCmd textNode t
+
+    proc nt {text} { t -disableOutputEscaping ${text} }
+
+    proc interp_noop {args} {}
+    alias {::nest::lang::interp_t} {lambda} {text} {
+        if { [dom_p] } {
+            ::nest::lang::t ${text}
+        } else {
+            # do nothing
+        }
+    }
+
+    alias {::nest::lang::interp_execNodeCmd} {lambda} {tag name args} {
+        if { [dom_p] } {
+            ::dom::execNodeCmd elementNode ${tag} -x-name ${name} {*}${args}
+        } else {
+            # TODO: remove -x-attributes from args, one way or another
+            if { [llength $args] % 2 == 1 } {
+                eval [lindex ${args} end]
+            } else {
+                # do nothing, dom node attributes only in args
+            }
+            return {::nest::lang::interp_noop}
+        }
+    }
+
     alias {node} {lambda} {tag name args} \
-        {with_eval ${name} ::dom::execNodeCmd elementNode $tag -x-name $name {*}$args}
+        {with_eval ${name} interp_execNodeCmd ${tag} ${name} {*}${args}}
+
 
     # nest argument holds nested calls in the procs below
     proc nest {nest name args} {
@@ -298,10 +327,6 @@ define_lang ::nest::lang {
     }
 
 
-    dom createNodeCmd textNode t
-
-    proc nt {text} { t -disableOutputEscaping ${text} }
-
     proc typedecl {args} {
         
         set tag [top_fwd]  ;# varchar nsp -> tag=varchar name=nsp
@@ -352,7 +377,7 @@ define_lang ::nest::lang {
                 error "something wrong with instantiation statement args=[list $args]"
             }
 
-            set inst_arg0 [list ::nest::lang::t $inst_arg0]
+            set inst_arg0 [list ::nest::lang::interp_t $inst_arg0]
             set cmd [list with_mode {inst} {node} {inst} $inst_name -x-type $inst_type $inst_arg0]
 
             return [{*}${cmd}]  ;# uplevel ${cmd}
@@ -651,7 +676,10 @@ define_lang ::nest::lang {
 
 } lang_doc
 
-puts [$lang_doc asXML]
+if { [::nest::debug::dom_p] } {
+    puts [$lang_doc asXML]
+}
+
 
 define_lang ::nest::data {
 
@@ -660,6 +688,7 @@ define_lang ::nest::data {
     namespace import ::nest::lang::*
     namespace path [list ::nest::data ::nest::lang]
     namespace unknown ::nest::lang::unknown
+
 }
 
 

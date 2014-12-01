@@ -3,10 +3,16 @@ namespace eval ::nest::debug {
     namespace export *
 
     variable debug_p 0
+    variable dom_p 1
 
     proc debug_p {} {
         variable debug_p
         return $debug_p
+    }
+
+    proc dom_p {} {
+        variable dom_p
+        return $dom_p
     }
     
     proc caller {} {

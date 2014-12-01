@@ -28,6 +28,7 @@ proc ::dom::createDocumentFromScript {rootname script} {
 
 namespace eval ::dom::scripting {
     namespace export *
+
 }
 
 proc ::dom::scripting::define_lang {nsp script {docVar ""}} {
@@ -129,6 +130,8 @@ namespace import -force \
     ::dom::scripting::define_lang \
     ::dom::scripting::require_lang \
     ::dom::scripting::source_inscope \
-    ::dom::scripting::source_tdom
+    ::dom::scripting::source_tdom \
+    ::dom::scripting::t \
+    ::dom::scripting::nt
 
 
