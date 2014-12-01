@@ -630,7 +630,7 @@ define_lang ::nest::lang {
 
     }
 
-    namespace export "struct" "varchar" "bool" "varint" "byte" "int16" "int32" "int64" "double" "multiple" "lambda"
+    namespace export "struct" "varchar" "bool" "varint" "byte" "int16" "int32" "int64" "double" "multiple"
 
 } lang_doc
 
