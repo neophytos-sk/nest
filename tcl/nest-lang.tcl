@@ -159,7 +159,7 @@ define_lang ::nest::lang {
     # Wow!!!
     set {name} {alias}
     set {cmd} {lambda {name args} {
-        {interp_alias} ${name} {*}${args}
+        {interp_alias} [uplevel {namespace current}]::${name} {*}${args}
         {set_alias} ${name} ${args}
     }}
     {*}${cmd} {set_alias} ::nest::lang::array_setter alias
@@ -559,8 +559,8 @@ define_lang ::nest::lang {
     }
 
     # class/object aliases, used in def of base_type and struct
-    alias object ::nest::lang::with_mode {inst} nest {type_helper}
-    alias class ::nest::lang::with_mode {decl} nest
+    alias object with_mode {inst} nest {type_helper}
+    alias class with_mode {decl} nest
 
     forward {base_type} {object}
     forward {multiple} {container_helper}
