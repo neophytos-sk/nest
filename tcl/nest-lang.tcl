@@ -98,8 +98,7 @@ define_lang ::nest::lang {
     # Wow!!!
     set {nspAliasCmd} {lambda {name arg0 args} {
         set nsp [uplevel {namespace current}]
-        set compile_arg_index "0"
-        interp_alias ${nsp}::${name} ${compile_arg_index} ${nsp}::${arg0} {*}${args}
+        interp_alias ${nsp}::${name} ${nsp}::${arg0} {*}${args}
         set_alias ${name} ${args}
     }}
     {*}${nspAliasCmd} {set_alias} array_setter alias

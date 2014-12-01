@@ -56,8 +56,9 @@ namespace eval ::nest::lang {
         {::nest::lang::lambda} {::proc} 
     }
 
-    proc interp_alias {name index args} {
+    proc interp_alias {name args} {
         variable alias_compile_map
+        set index 0  ;# compile_arg_index
         set arg [lindex ${args} ${index}]
         if { [info exists alias_compile_map(${arg})] } {
             set args [lreplace $args ${index} ${index} $alias_compile_map($arg) ${name}]
