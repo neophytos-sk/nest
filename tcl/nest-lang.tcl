@@ -45,6 +45,25 @@ define_lang ::nest::lang {
     #
     # stack_ctx = {nest base_type varchar} {nest meta struct}
 
+    # interp alias:
+    # * no string parsing at run time
+    # * can experiment with interp:
+    #   * interp create -safe -- __safe_interp__
+    #   * interp eval __safe_interp__ namespace eval ::nest::lang {...}
+
+    array set alias_compile_map {
+        {lambda} {proc} 
+        {::nest::lang::lambda} {proc}
+    }
+
+    proc interp_alias {name arg0 args} {
+        variable alias_compile_map
+        if { [info exists alias_compile_map(${arg0})] } {
+            return [$alias_compile_map(${arg0}) ${name} {*}${args}]
+        }
+        {interp} {alias} {} ${name} {} ${arg0} {*}${args}
+    }
+
     proc lambda {params body args} {
 
         set {llength_params} [llength ${params}]
@@ -113,7 +132,7 @@ define_lang ::nest::lang {
     }
     proc stack_with {varname value args} {
         stack_push ${varname} ${value}
-        set result [uplevel ${args}]
+        set result [{*}${args}] ;# uplevel ${args}
         stack_pop ${varname}
         return ${result}
     }
@@ -123,7 +142,7 @@ define_lang ::nest::lang {
         set old_eval_path ${eval_path}
         set eval_path [join [concat ${eval_path} ${name}] {.}]
         push_eval ${name}
-        set result [uplevel ${args}]
+        set result [{*}${args}] ;# uplevel ${args}
         pop_eval
         set eval_path ${old_eval_path}
         return ${result}
@@ -134,18 +153,18 @@ define_lang ::nest::lang {
         join [concat ${eval_path} ${name}] {.}
     }
 
-
     # Wow!!!
     set {name} {::nest::lang::alias}
-    set {cmd} [list {::nest::lang::lambda} {name args} {
-        {interp} {alias} {} ${name} {} {*}${args}
+    set {cmd} {{::nest::lang::lambda} {name args} {
+        {interp_alias} ${name} {*}${args}
         {set_alias} ${name} ${args}
-    }]
+    }}
     {*}${cmd} {set_alias} ::nest::lang::array_setter alias
     {*}${cmd} ${name} {*}${cmd}
 
     foreach {name cmd} {
-        {get_alias} {getter alias}
+
+        {get_alias} {array_getter alias}
         {exists_alias} {array_exister alias}
 
         {set_forward} {array_setter forward}
@@ -174,6 +193,7 @@ define_lang ::nest::lang {
         {push_eval} {stack_push stack_eval}
         {pop_eval} {stack_pop stack_eval}
         {top_eval} {stack_top stack_eval}
+
     } {
         set name "[namespace current]::${name}"
         set cmd "::nest::lang::${cmd}"
@@ -199,33 +219,37 @@ define_lang ::nest::lang {
 
         log "!!! nest: $name -> $nest"
 
-        if { $name ne {} } {
-            set forward_name [gen_eval_path $name]
-            if { [exists_forward $forward_name] } {
-                error "forward $forward_name already exists"
-            }
+        set forward_name [gen_eval_path $name]
 
-            set ctx [list {nest} $tag $forward_name]
-            set_lookahead_ctx $forward_name $ctx ;# needed by container_helper and type_helper
-            set nest [list with_ctx $ctx {*}$nest]
-            uplevel [list {forward} $forward_name $nest]
-        }
+        #if { [exists_forward $forward_name] } {
+        #    error "forward $forward_name already exists"
+        #}
 
-        set cmd [list {node} [top_mode] $name -x-type $tag {*}$args]
-        set node [uplevel $cmd]
+        set ctx [list {nest} $tag $forward_name]
+        set_lookahead_ctx $forward_name $ctx ;# needed by container_helper and type_helper
+        set nest [list with_ctx $ctx {*}$nest]
+        {forward} ${forward_name} ${nest}
+
+        set node [{node} [top_mode] $name -x-type $tag {*}$args]
 
         ###
-         
+
+        if { ![debug_p] } {
+            return $node
+        }
+
         set nsp [uplevel {namespace current}]
 
-        if { $tag ni {base_type} } {
+        if {  $tag ne {base_type} } {
 
             # $node appendFromScript {
             #     struct.type [$node @x-type] ;# $tag
             #     struct.name [$node @x-name] ;# $name
             #     struct.nsp  [$node @x-nsp]  ;# $nsp
             # }
-            init_slots $node {struct}
+            ${node} appendFromScript {
+                init_slots $node {struct}
+            }
 
             set decls [$node selectNodes {child::decl}]
             foreach decl $decls {
@@ -276,7 +300,7 @@ define_lang ::nest::lang {
         set decl_name $arg0
 
         set cmd [list with_mode {decl} {node} {decl} $decl_name -x-type $decl_type {*}$args]
-        set node [uplevel $cmd]
+        set node [{*}${cmd}]  ;# uplevel $cmd
 
         # get full forward name and register the forward
         set forward_name [gen_eval_path $decl_name]
@@ -286,7 +310,7 @@ define_lang ::nest::lang {
         set dotted_nest [list with_mode {inst} $decl_type $forward_name]
         set dotted_nest [list with_ctx $lookahead_ctx {*}$dotted_nest] 
         set cmd [list {forward} $forward_name $dotted_nest]
-        uplevel $cmd
+        {*}${cmd} ;# uplevel $cmd
 
         log "(declaration done) decl_type=$decl_type decl_name=$decl_name forward_name=$forward_name stack_ctx=[list $::nest::lang::stack_ctx]"
 
@@ -315,7 +339,7 @@ define_lang ::nest::lang {
             set inst_arg0 [list ::nest::lang::t $inst_arg0]
             set cmd [list with_mode {inst} {node} {inst} $inst_name -x-type $inst_type $inst_arg0]
 
-            return [uplevel $cmd]
+            return [{*}${cmd}]  ;# uplevel ${cmd}
 
         } else {
 
@@ -325,7 +349,7 @@ define_lang ::nest::lang {
             set inst_type $ctx_tag
             set inst_name $tag   ;# for inst_type=struct.slot => tag=struct.name => arg0=name
             set cmd [list with_mode {inst} {node} {inst} $inst_name -x-type $inst_type {*}$args]
-            return [uplevel $cmd]
+            return [{*}${cmd}]  ;# uplevel $cmd
 
         }
 
@@ -473,7 +497,7 @@ define_lang ::nest::lang {
             log "+++ $arg0 $arg1 $args -> redirect_name=${redirect_name}"
             set unknown_ctx [list {unknown} ${arg0} $redirect_name]
             set cmd [list ${redirect_name} ${arg1} {*}${args}]
-            return [with_ctx $unknown_ctx uplevel ${cmd}]
+            return [with_ctx $unknown_ctx {*}${cmd}]  ;# uplevel ${cmd}
         }
 
         # check for types of the form pair<varchar,varint>
@@ -489,7 +513,7 @@ define_lang ::nest::lang {
 
             # be blind about it
             set cmd [list {*}${redirect_name} ${arg1} {*}${args}]
-            set node [with_ctx [list {unknown} ${arg0} ${redirect_name}] uplevel ${cmd}]
+            set node [with_ctx [list {unknown} ${arg0} ${redirect_name}] {*}${cmd}]  ;# uplevel ${cmd}
             return $node
         }
 
@@ -572,6 +596,8 @@ define_lang ::nest::lang {
 
     }
 
+    # example/basis of class/object methods
+    # proc {fun} {name params body} { proc [gen_eval_path ${name}] ${params} ${body} }
 
     namespace export "struct" "varchar" "bool" "varint" "byte" "int16" "int32" "int64" "double" "multiple" "lambda"
 
@@ -583,9 +609,6 @@ define_lang ::nest::data {
     namespace import ::nest::lang::*
     namespace path [list ::nest::data ::nest::lang]
     namespace unknown ::nest::lang::unknown
-
-
-
 }
 
 

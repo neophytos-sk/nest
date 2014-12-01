@@ -2,23 +2,24 @@ namespace eval ::nest::debug {
     
     namespace export *
 
-    variable debug 0
+    variable debug_p 0
 
     proc debug_p {} {
-        variable debug
-        return $debug
+        variable debug_p
+        return $debug_p
     }
-
+    
     proc caller {} {
         array set frame [info frame [expr { [info frame] - 2 }]]
         return $frame(proc)
     }
 
-    proc log {msg {force_p false}} {
-        variable debug
-        if {[debug_p] || $force_p } {
+    if { [debug_p] } {
+        proc log {msg} {
             puts [format "%-25s %s" [caller] ${msg}]
         }
+    } else {
+        proc log {msg} {}
     }
 
     proc dump {} {
@@ -56,5 +57,12 @@ namespace eval ::nest::debug {
         dump
         ::error ${msg} {*}${info} {*}${code}
     }
+
+    proc time_cps {script {iters "10000"}} {
+        set s [time $script $iters]
+        set cps [expr {round(1/([lindex $s 0]/1e6))}]
+        puts "$cps calls per second of: $script \n"
+    }
+
 
 }

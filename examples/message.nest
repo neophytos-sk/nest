@@ -140,3 +140,5 @@ message msg4 {
     }}
 
 }
+
+time_cps {set node [message obj] ; $node delete} 10000
