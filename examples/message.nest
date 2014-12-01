@@ -79,6 +79,9 @@ message msg4 {
     from {
         name "zena wow"
         address "zena@example.com"
+
+        # TODO: fun must produce a node
+        # fun saysomething {} { puts "what do you want?" }
     }
 
     to {
@@ -150,3 +153,4 @@ time_cps {set node [message obj] ; $node delete} 10000
 # equivalent to => @ msg4 sayhi "world"
 
 $(msg4) sayhi "world"
+# $(msg4.from) saysomething

@@ -1,22 +1,10 @@
 package require tdom
 
-package provide nest 1.1
+package provide nest 1.2
 
 define_lang ::nest::lang {
 
     namespace import ::nest::debug::* 
-
-    variable stack_ctx [list]
-    variable stack_fwd [list]
-    variable stack_mode [list {decl}]  ;# default mode is {decl}
-    variable stack_eval [list]
-
-    variable eval_path ""
-
-    array set alias [list]
-    array set forward [list]
-    array set dispatcher [list]
-    array set lookahead_ctx [list]
 
     # =========
     # stack_ctx
@@ -45,6 +33,19 @@ define_lang ::nest::lang {
     # }
     #
     # stack_ctx = {nest base_type varchar} {nest meta struct}
+
+    variable stack_ctx [list]
+    variable stack_fwd [list]
+    variable stack_mode [list {decl}]  ;# default mode is {decl}
+    variable stack_eval [list]
+
+    variable eval_path ""
+
+    array set alias [list]
+    array set forward [list]
+    array set dispatcher [list]
+    array set lookahead_ctx [list]
+
 
     proc lambda {params body args} {
 
@@ -86,6 +87,25 @@ define_lang ::nest::lang {
         }
 
     } 
+
+    # interp alias:
+    # * no string parsing at run time
+    # * can experiment with interp:
+    #   * interp create -safe -- __safe_interp__
+    #   * interp eval __safe_interp__ namespace eval ::nest::lang {...}
+
+    array set alias_compile_map {
+        {lambda} {::proc} 
+    }
+
+    proc interp_alias {name arg0 args} {
+        variable alias_compile_map
+        if { [info exists alias_compile_map(${arg0})] } {
+            return [$alias_compile_map(${arg0}) ${name} {*}${args}]
+        }
+        {interp} {alias} {} ${name} {} ${arg0} {*}${args}
+    }
+
 
     proc array_setter {arrayname name value} {
         variable ${arrayname}
@@ -136,30 +156,9 @@ define_lang ::nest::lang {
     }
 
 
-    # interp alias:
-    # * no string parsing at run time
-    # * can experiment with interp:
-    #   * interp create -safe -- __safe_interp__
-    #   * interp eval __safe_interp__ namespace eval ::nest::lang {...}
-
-    array set alias_compile_map {
-        {lambda} {proc} 
-        {::nest::lang::lambda} {proc}
-    }
-
-    proc interp_alias {name arg0 args} {
-        variable alias_compile_map
-        if { [info exists alias_compile_map(${arg0})] } {
-            log "compiling $arg0 alias (=${name}) to proc"
-            return [$alias_compile_map(${arg0}) ${name} {*}${args}]
-        }
-        {interp} {alias} {} ${name} {} ${arg0} {*}${args}
-    }
-
-
     # Wow!!!
-    set {name} {::nest::lang::alias}
-    set {cmd} {{::nest::lang::lambda} {name args} {
+    set {name} {alias}
+    set {cmd} {lambda {name args} {
         {interp_alias} ${name} {*}${args}
         {set_alias} ${name} ${args}
     }}
@@ -203,13 +202,12 @@ define_lang ::nest::lang {
         {top_eval} {stack_top stack_eval}
 
     } {
-        set name "[namespace current]::${name}"
         set cmd "::nest::lang::${cmd}"
-        alias ${name} {*}[join ${cmd} { }]
+        alias ::nest::lang::${name} {*}[join ${cmd} { }]
     }
 
     # forward is an alias that pushes its name to stack_fwd
-    {alias} {forward} {::nest::lang::lambda} {name cmd} {
+    alias {forward} {lambda} {name cmd} {
         {set_forward} ${name} ${cmd}
         {alias} ${name} {::nest::lang::with_fwd} ${name} {*}${cmd}
     }
@@ -220,7 +218,7 @@ define_lang ::nest::lang {
     keyword {decl}
     keyword {inst}
 
-    alias {node} {::nest::lang::lambda} {tag name args} \
+    alias {node} {lambda} {tag name args} \
         {with_eval ${name} ::dom::execNodeCmd elementNode $tag -x-name $name {*}$args}
 
     # nest argument holds nested calls in the procs below
@@ -551,18 +549,18 @@ define_lang ::nest::lang {
 
     alias {@} ::nest::lang::with_eval
 
-    alias {dispatcher} {::nest::lang::lambda} {id} {
+    alias {dispatcher} {lambda} {id} {
         set_dispatcher ${id} "@${id}"
         alias "@${id}" {@} ${id}
     }
 
-    alias {fun} {::nest::lang::lambda} {name params body} { 
-        alias [gen_eval_path ${name}] {::nest::lang::lambda} ${params} ${body}
+    alias {fun} {lambda} {name params body} { 
+        alias [gen_eval_path ${name}] {lambda} ${params} ${body}
     }
 
     # class/object aliases, used in def of base_type and struct
-    alias ::nest::lang::object ::nest::lang::with_mode {inst} nest {type_helper}
-    alias ::nest::lang::class ::nest::lang::with_mode {decl} nest
+    alias object ::nest::lang::with_mode {inst} nest {type_helper}
+    alias class ::nest::lang::with_mode {decl} nest
 
     forward {base_type} {object}
     forward {multiple} {container_helper}
