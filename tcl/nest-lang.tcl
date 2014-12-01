@@ -219,7 +219,7 @@ define_lang ::nest::lang {
     keyword {inst}
 
     alias {node} {lambda} {tag name args} \
-        {if { $name eq {from} && $tag eq {inst} && [incr ::__counter] == 1 } { error args=$args } ; with_eval ${name} ::dom::execNodeCmd elementNode $tag -x-name $name {*}$args}
+        {with_eval ${name} ::dom::execNodeCmd elementNode $tag -x-name $name {*}$args}
 
     # nest argument holds nested calls in the procs below
     proc nest {nest name args} {
