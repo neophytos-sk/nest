@@ -1,6 +1,6 @@
 package require tdom
 
-package provide nest 1.0
+package provide nest 1.1
 
 define_lang ::nest::lang {
 
@@ -15,6 +15,7 @@ define_lang ::nest::lang {
 
     array set alias [list]
     array set forward [list]
+    array set dispatcher [list]
     array set lookahead_ctx [list]
 
     # =========
@@ -44,25 +45,6 @@ define_lang ::nest::lang {
     # }
     #
     # stack_ctx = {nest base_type varchar} {nest meta struct}
-
-    # interp alias:
-    # * no string parsing at run time
-    # * can experiment with interp:
-    #   * interp create -safe -- __safe_interp__
-    #   * interp eval __safe_interp__ namespace eval ::nest::lang {...}
-
-    array set alias_compile_map {
-        {lambda} {proc} 
-        {::nest::lang::lambda} {proc}
-    }
-
-    proc interp_alias {name arg0 args} {
-        variable alias_compile_map
-        if { [info exists alias_compile_map(${arg0})] } {
-            return [$alias_compile_map(${arg0}) ${name} {*}${args}]
-        }
-        {interp} {alias} {} ${name} {} ${arg0} {*}${args}
-    }
 
     proc lambda {params body args} {
 
@@ -153,6 +135,28 @@ define_lang ::nest::lang {
         join [concat ${eval_path} ${name}] {.}
     }
 
+
+    # interp alias:
+    # * no string parsing at run time
+    # * can experiment with interp:
+    #   * interp create -safe -- __safe_interp__
+    #   * interp eval __safe_interp__ namespace eval ::nest::lang {...}
+
+    array set alias_compile_map {
+        {lambda} {proc} 
+        {::nest::lang::lambda} {proc}
+    }
+
+    proc interp_alias {name arg0 args} {
+        variable alias_compile_map
+        if { [info exists alias_compile_map(${arg0})] } {
+            log "compiling $arg0 alias (=${name}) to proc"
+            return [$alias_compile_map(${arg0}) ${name} {*}${args}]
+        }
+        {interp} {alias} {} ${name} {} ${arg0} {*}${args}
+    }
+
+
     # Wow!!!
     set {name} {::nest::lang::alias}
     set {cmd} {{::nest::lang::lambda} {name args} {
@@ -170,6 +174,10 @@ define_lang ::nest::lang {
         {set_forward} {array_setter forward}
         {get_forward} {array_getter forward}
         {exists_forward} {array_exister forward}
+
+        {set_dispatcher} {array_setter dispatcher}
+        {get_dispatcher} {array_getter dispatcher}
+        {exists_dispatcher} {array_exister dispatcher}
 
         {set_lookahead_ctx} {array_setter lookahead_ctx}
         {get_lookahead_ctx} {array_getter lookahead_ctx}
@@ -206,12 +214,14 @@ define_lang ::nest::lang {
         {alias} ${name} {::nest::lang::with_fwd} ${name} {*}${cmd}
     }
 
+    forward {meta} {lambda {metaCmd args} {{*}$metaCmd {*}$args}}
     forward {keyword} {::dom::createNodeCmd elementNode}
 
     keyword {decl}
     keyword {inst}
 
-    alias {node} {::nest::lang::lambda} {tag name args} {with_eval ${name} ::dom::execNodeCmd elementNode $tag -x-name $name {*}$args}
+    alias {node} {::nest::lang::lambda} {tag name args} \
+        {with_eval ${name} ::dom::execNodeCmd elementNode $tag -x-name $name {*}$args}
 
     # nest argument holds nested calls in the procs below
     proc nest {nest name args} {
@@ -219,16 +229,24 @@ define_lang ::nest::lang {
 
         log "!!! nest: $name -> $nest"
 
-        set forward_name [gen_eval_path $name]
+        set id [gen_eval_path $name]
 
-        #if { [exists_forward $forward_name] } {
-        #    error "forward $forward_name already exists"
+        #if { [exists_alias $id] } {
+        #    error "alias for $id already exists"
         #}
 
-        set ctx [list {nest} $tag $forward_name]
-        set_lookahead_ctx $forward_name $ctx ;# needed by container_helper and type_helper
+        set ctx [list {nest} $tag $id]
+        set_lookahead_ctx $id $ctx ;# needed by container_helper and type_helper
         set nest [list with_ctx $ctx {*}$nest]
-        {forward} ${forward_name} ${nest}
+        {forward} ${id} ${nest}
+
+        # creates dispatcher alias
+        #
+        # @${id}
+        # => @ ${id}
+        # => with_eval ${id}
+
+        {dispatcher} ${id}
 
         set node [{node} [top_mode] $name -x-type $tag {*}$args]
 
@@ -454,7 +472,7 @@ define_lang ::nest::lang {
     proc which {name} {
 
         set redirect_name [gen_eval_path ${name}]
-        set redirect_exists_p [exists_forward $redirect_name]
+        set redirect_exists_p [exists_alias $redirect_name]
 
         log "checking eval path for \"${name}\" -> ${redirect_name} ($redirect_exists_p)"
 
@@ -465,7 +483,7 @@ define_lang ::nest::lang {
             foreach ctx $stack_ctx {
                 lassign $ctx ctx_type ctx_tag ctx_name
                 set redirect_name "${ctx_name}.${name}"
-                set redirect_exists_p [exists_forward $redirect_name]
+                set redirect_exists_p [exists_alias $redirect_name]
 
                 log "checking nest context name for \"${name}\" -> ${redirect_name} ($redirect_exists_p)"
 
@@ -473,7 +491,7 @@ define_lang ::nest::lang {
                     return $redirect_name
                 } else {
                     set redirect_name "${ctx_tag}.${name}"
-                    set redirect_exists_p [exists_forward $redirect_name]
+                    set redirect_exists_p [exists_alias $redirect_name]
 
                     log "checking nest context tag for \"${name}\" -> ${redirect_name} ($redirect_exists_p)"
 
@@ -489,15 +507,19 @@ define_lang ::nest::lang {
 
     }
 
-    proc unknown {arg0 arg1 args} {
+    proc unknown {arg0 args} {
 
         set redirect_name [which ${arg0}]
 
         if { $redirect_name ne {} } {
-            log "+++ $arg0 $arg1 $args -> redirect_name=${redirect_name}"
-            set unknown_ctx [list {unknown} ${arg0} $redirect_name]
-            set cmd [list ${redirect_name} ${arg1} {*}${args}]
-            return [with_ctx $unknown_ctx {*}${cmd}]  ;# uplevel ${cmd}
+
+            log "+++ $arg0 $args -> redirect_name=${redirect_name}"
+
+            if { ![exists_forward ${redirect_name}] } {
+                log "redirect (=${redirect_name}) is an alias, i.e. no forward info"
+            }
+
+            return [${redirect_name} {*}${args}]  ;# uplevel
         }
 
         # check for types of the form pair<varchar,varint>
@@ -512,25 +534,38 @@ define_lang ::nest::lang {
             set redirect_name [concat ${type} [split ${rest} {,}]]
 
             # be blind about it
-            set cmd [list {*}${redirect_name} ${arg1} {*}${args}]
-            set node [with_ctx [list {unknown} ${arg0} ${redirect_name}] {*}${cmd}]  ;# uplevel ${cmd}
+            set node [{*}${redirect_name} {*}${args}]  ;# uplevel
             return $node
         }
 
 
-        error "no redirect found for [list $arg0 $arg1] args=[list $args])"
+        error "no redirect found for [list $arg0] args=[list $args])"
 
 
     }
 
     namespace unknown unknown
 
+
+    # basis of class/object methods
+
+    alias {@} ::nest::lang::with_eval
+
+    alias {dispatcher} {::nest::lang::lambda} {id} {
+        set_dispatcher ${id} "@${id}"
+        alias "@${id}" {@} ${id}
+    }
+
+    alias {fun} {::nest::lang::lambda} {name params body} { 
+        alias [gen_eval_path ${name}] {::nest::lang::lambda} ${params} ${body}
+    }
+
+    # class/object aliases, used in def of base_type and struct
     alias ::nest::lang::object ::nest::lang::with_mode {inst} nest {type_helper}
     alias ::nest::lang::class ::nest::lang::with_mode {decl} nest
 
     forward {base_type} {object}
     forward {multiple} {container_helper}
-    forward {meta} {lambda {metaCmd args} {{*}$metaCmd {*}$args}}
 
     # a varying-length text string encoded using UTF-8 encoding
     base_type "varchar"
@@ -563,11 +598,8 @@ define_lang ::nest::lang {
                         "\[subst -nocommands -nobackslashes [list ${body}]\]"]]
     }}
 
-    template {pair} {typefirst typesecond} {
-        ${typefirst} {first}
-        ${typesecond} {second}
-    } {type_helper}
-
+    # pair construct, equivalent to:
+    #
     # => forward {pair} {lambda {typefirst typesecond name} {
     #        nest {type_helper} ${name} [subst -nocommands -nobackslashes {
     #            ${typefirst} {first} 
@@ -575,6 +607,10 @@ define_lang ::nest::lang {
     #        }]
     #    }}
 
+    template {pair} {typefirst typesecond} {
+        ${typefirst} {first}
+        ${typesecond} {second}
+    } {type_helper}
 
     meta {class} {class {object}} {struct} {
         varchar name
@@ -596,9 +632,6 @@ define_lang ::nest::lang {
 
     }
 
-    # example/basis of class/object methods
-    # proc {fun} {name params body} { proc [gen_eval_path ${name}] ${params} ${body} }
-
     namespace export "struct" "varchar" "bool" "varint" "byte" "int16" "int32" "int64" "double" "multiple" "lambda"
 
 } lang_doc
@@ -606,6 +639,9 @@ define_lang ::nest::lang {
 puts [$lang_doc asXML]
 
 define_lang ::nest::data {
+
+    upvar ::nest::lang::dispatcher {}
+
     namespace import ::nest::lang::*
     namespace path [list ::nest::data ::nest::lang]
     namespace unknown ::nest::lang::unknown

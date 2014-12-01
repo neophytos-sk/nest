@@ -49,7 +49,7 @@ namespace eval ::nest::debug {
         append msg $nl $sp "eval_path=${eval_path}"
         append msg $nl $sp "vars${nl}${sp}${sp}[join $vars "\n${sp}${sp}"]"
 
-        log $msg true
+        log $msg
 
     }
 

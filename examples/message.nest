@@ -139,6 +139,14 @@ message msg4 {
         second "T_54"
     }}
 
+    fun sayhi {what} { puts "hello ${what} \n" }
 }
 
 time_cps {set node [message obj] ; $node delete} 10000
+
+
+
+# calling object method sayhi,
+# equivalent to => @ msg4 sayhi "world"
+
+$(msg4) sayhi "world"
