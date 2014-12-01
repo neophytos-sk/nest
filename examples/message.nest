@@ -81,7 +81,7 @@ message msg4 {
         address "zena@example.com"
 
         # TODO: fun must produce a node
-        # fun saysomething {} { puts "what do you want?" }
+        fun saysomething {} { puts "what do you want?" }
     }
 
     to {
