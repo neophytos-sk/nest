@@ -162,9 +162,9 @@ define_lang ::nest::lang {
 
     nsp_alias {interp_t} interp_if dom_p t
 
-    nsp_alias {interp_execNodeCmd} {lambda} {tag name args} {
+    nsp_alias {interp_execNodeCmd} {lambda} {tag name type args} {
         if { [dom_p] } {
-            ::dom::execNodeCmd elementNode ${tag} -x-name ${name} {*}${args}
+            ::dom::execNodeCmd elementNode ${tag} -x-name ${name} -x-type ${type} {*}${args}
         } else {
             # TODO: remove -x-attributes from args, one way or another
             if { [llength $args] % 2 == 1 } {
@@ -176,8 +176,8 @@ define_lang ::nest::lang {
         }
     }
 
-    nsp_alias {node} {lambda} {tag name args} \
-        {with_eval ${name} interp_execNodeCmd ${tag} ${name} {*}${args}}
+    nsp_alias {node} {lambda} {tag name type args} \
+        {with_eval ${name} interp_execNodeCmd ${tag} ${name} ${type} {*}${args}}
 
     # nest argument holds nested calls in the procs below
     proc nest {nest name args} {
@@ -204,7 +204,7 @@ define_lang ::nest::lang {
 
         }
 
-        set node [{node} [top_mode] $name -x-id ${id} -x-type $tag {*}$args]
+        set node [{node} [top_mode] $name $tag -x-id ${id} {*}$args]
 
         ###
 
@@ -269,7 +269,7 @@ define_lang ::nest::lang {
         set decl_type $tag
         set decl_name $arg0
 
-        set cmd [list with_mode {decl} {node} {decl} $decl_name -x-type $decl_type {*}$args]
+        set cmd [list with_mode {decl} {node} {decl} $decl_name $decl_type {*}$args]
         set node [{*}${cmd}]  ;# uplevel $cmd
 
         # get full forward name and register the forward
@@ -305,7 +305,7 @@ define_lang ::nest::lang {
             }
 
             set inst_arg0 [list ::nest::lang::interp_t $inst_arg0]
-            set cmd [list with_mode {inst} {node} {inst} $inst_name -x-type $inst_type $inst_arg0]
+            set cmd [list with_mode {inst} {node} {inst} ${inst_name} ${inst_type} ${inst_arg0}]
 
             return [{*}${cmd}]  ;# uplevel ${cmd}
 
@@ -315,7 +315,7 @@ define_lang ::nest::lang {
 
             set inst_type $ctx_tag
             set inst_name $tag   ;# for inst_type=struct.slot => tag=struct.name => arg0=name
-            set cmd [list with_mode {inst} {node} {inst} $inst_name -x-type $inst_type {*}$args]
+            set cmd [list with_mode {inst} {node} {inst} ${inst_name} ${inst_type} {*}$args]
             return [{*}${cmd}]  ;# uplevel $cmd
 
         }
@@ -499,9 +499,9 @@ define_lang ::nest::lang {
 
     # class/object aliases, used in def of base_type and struct
     nsp_alias object nest {type_helper}
-    nsp_alias class with_mode {decl} nest
+    nsp_alias class with_mode {decl} {nest}
 
-    forward {base_type} {with_mode {inst} nest {type_helper}}
+    forward {base_type} {with_mode {inst} {nest} {type_helper}}
 
     forward {multiple} {container_helper}
 
