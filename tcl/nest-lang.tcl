@@ -186,7 +186,7 @@ define_lang ::nest::lang {
 
         # TODO: unify to use just one dispatcher for everything
         # forward ${id} [list @ ${id} ${nest}]
-        if { [top_mode] eq {decl} || ${tag} eq {base_type} } {
+        if { [top_mode] eq {decl} } {
 
             set ctx [list ${tag} ${id}]
             set nest [list with_ctx ${ctx} {*}${nest}]
@@ -287,42 +287,38 @@ define_lang ::nest::lang {
     }
 
     proc typeinst {args} {
-
         set tag [top_fwd]  ;# varchar nsp -> tag=varchar name=nsp
-        lassign [top_ctx] ctx_tag ctx_name
 
-        if { $ctx_tag eq {base_type} } {
-
-            # message.subject "hello" 
-            # => inst_name=message.subject args={{hello}} 
-            # => inst_name=message.subject inst_type=base_type
-            
-            set inst_type $tag
-            set args [lassign $args inst_name inst_arg0]
-
-            if { $args ne {} } { 
-                error "something wrong with instantiation statement args=[list $args]"
-            }
-
-            set inst_arg0 [list ::nest::lang::interp_t $inst_arg0]
-            set cmd [list with_mode {inst} {node} {inst} ${inst_name} ${inst_type} ${inst_arg0}]
-
-            return [uplevel ${cmd}]
-
-        } else {
-
-            # case for composite or "unknown" types (e.g. pair<varchar,varint)
-
-            set inst_type $ctx_tag
-            set inst_name $tag   ;# for inst_type=struct.slot => tag=struct.name => arg0=name
-            set cmd [list with_mode {inst} {node} {inst} ${inst_name} ${inst_type} {*}$args]
-            return [uplevel ${cmd}]
-
+        # message.subject "hello" 
+        # => inst_name=message.subject args={{hello}} 
+        # => inst_name=message.subject inst_type=base_type
+        
+        set inst_type $tag
+        set args [lassign $args inst_name inst_arg0]
+        if { $args ne {} } { 
+            error "something wrong with instantiation statement args=[list $args]"
         }
-
+        set inst_arg0 [list ::nest::lang::interp_t $inst_arg0]
+        set cmd [list with_mode {inst} {node} {inst} ${inst_name} ${inst_type} ${inst_arg0}]
+        return [uplevel ${cmd}]
     }
 
+    # case for composite or "unknown" types (e.g. pair<varchar,varint)
+    proc {objectinst} {args} {
+        set tag [top_fwd]
+        lassign [top_ctx] ctx_tag ctx_name
+        set inst_type $ctx_tag
+        set inst_name $tag   ;# for inst_type=struct.slot => tag=struct.name => arg0=name
+        set cmd [list with_mode {inst} {node} {inst} ${inst_name} ${inst_type} {*}$args]
+        return [uplevel ${cmd}]
+    }
+
+
+    nsp_alias {objectdecl} {typedecl}
+    # nsp_route {type} eval top_mode
+    # nsp_route {object} eval top_mode
     proc {type_helper} {args} {::nest::lang::type[top_mode] {*}${args}}
+    proc {object_helper} {args} {::nest::lang::object[top_mode] {*}${args}}
 
 
     # container_helper
@@ -498,12 +494,11 @@ define_lang ::nest::lang {
     }
 
     # class/object aliases, used in def of base_type and struct
-    nsp_alias object nest {type_helper}
+    nsp_alias object nest {object_helper}
     nsp_alias class with_mode {decl} {nest}
 
     forward {multiple} container_helper
-    forward {base_type} with_mode {inst} {nest} {type_helper}
-
+    meta {class} {class {type_helper}} base_type
 
     # a varying-length text string encoded using UTF-8 encoding
     base_type "varchar"
@@ -550,10 +545,10 @@ define_lang ::nest::lang {
     generic_type {pair} {typefirst typesecond} {
         ${typefirst} {first}
         ${typesecond} {second}
-    } {type_helper}
+    } {object_helper}
 
 
-    meta {class} {class {nest type_helper}} {struct} {
+    meta {class} {class {object}} {struct} {
         varchar id
         varchar name
         varchar type

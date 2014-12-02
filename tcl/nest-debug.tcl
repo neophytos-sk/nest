@@ -30,8 +30,8 @@ namespace eval ::nest::debug {
         return $frame(proc)
     }
 
-    proc log {msg} {
-        if {[debug_p]} {
+    proc log {msg {force_p 0}} {
+        if {[debug_p] || ${force_p} } {
             puts [format "%-25s %s" [caller] ${msg}]
         }
     }
@@ -63,7 +63,7 @@ namespace eval ::nest::debug {
         append msg $nl $sp "eval_path=${eval_path}"
         append msg $nl $sp "vars${nl}${sp}${sp}[join $vars "\n${sp}${sp}"]"
 
-        log $msg
+        log $msg true
 
     }
 

@@ -1,3 +1,7 @@
-multiple varchar words
+with_mode decl eval {
+    multiple varchar words
+    varint count
+}
 
-
+multiple words {abc def ghi}
+count 123
