@@ -31,7 +31,7 @@ Dependencies:
 
 History:
 
-* nest-1.4 (2014-12-02) - premature optimization is the root of all evil, reinstated uplevel
+* nest-1.5 (2014-12-02) - simpler examples, added tests dir
 * nest-1.1 (2014-12-01) - dispatcher construct, object methods e.g. "$(msg4) sayhi world"
 * nest-1.0 (2014-11-30) - alias/forward, inst/decl mode, class/object aliases, struct/slot, template/pair
 
@@ -39,7 +39,7 @@ Notes:
 
 Check out the definition of the struct construct in nest, I think it's cool:
 
-    alias {object} nest {type_helper}
+    alias {object} nest {object_helper}
 
     alias {class} with_mode {decl} nest
 
@@ -68,5 +68,5 @@ Before the chicken and the egg, it was the nest --- pairs, nest-style:
     generic_type {pair} {typefirst typesecond} {
         ${typefirst} {first}
         ${typesecond} {second}
-    } {type_helper}
+    } {object_helper}
 
