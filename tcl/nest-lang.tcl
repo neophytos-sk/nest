@@ -192,17 +192,15 @@ define_lang ::nest::lang {
             set nest [list with_ctx ${ctx} {*}${nest}]
             {forward} ${id} {*}${nest}
 
-        } else {
-
-            # creates dispatcher alias for object/instance methods
-            #
-            # @${id}
-            # => @ ${id}
-            # => with_eval ${id}
-
-            {dispatcher} ${id}
-
         }
+
+        # creates dispatcher alias for object/instance methods
+        #
+        # @${id}
+        # => @ ${id}
+        # => with_eval ${id}
+
+        {dispatcher} ${id}
 
         set cmd [list {node} [top_mode] $name $tag -x-id ${id} {*}$args]
         set node [uplevel ${cmd}]
@@ -590,7 +588,7 @@ define_lang ::nest::lang {
 
     shadow_alias {fun} {lambda} {fun_name fun_params fun_body} {
 
-        shadow fun ${fun_name} {
+        with_mode {inst} shadow fun ${fun_name} {
             name ${fun_name}
             multiple param ${fun_params}
             body ${fun_body}

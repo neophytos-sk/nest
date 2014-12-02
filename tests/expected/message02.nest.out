@@ -1,0 +1,102 @@
+<lang x-nsp="::nest::lang">
+    <decl x-name="base_type" x-type="meta" x-id="base_type"/>
+    <decl x-name="varchar" x-type="base_type" x-id="varchar"/>
+    <decl x-name="bool" x-type="base_type" x-id="bool"/>
+    <decl x-name="varint" x-type="base_type" x-id="varint"/>
+    <decl x-name="byte" x-type="base_type" x-id="byte"/>
+    <decl x-name="int16" x-type="base_type" x-id="int16"/>
+    <decl x-name="int32" x-type="base_type" x-id="int32"/>
+    <decl x-name="int64" x-type="base_type" x-id="int64"/>
+    <decl x-name="double" x-type="base_type" x-id="double"/>
+    <decl x-name="struct" x-type="meta" x-id="struct">
+        <decl x-name="id" x-type="varchar"/>
+        <decl x-name="name" x-type="varchar"/>
+        <decl x-name="type" x-type="varchar"/>
+        <decl x-name="nsp" x-type="varchar"/>
+        <decl x-name="default_value" x-type="varchar" x-default_value=""/>
+        <decl x-name="slot" x-type="struct" x-id="struct.slot" x-default_value="" x-container="multiple">
+            <decl x-name="id" x-type="varchar"/>
+            <decl x-name="name" x-type="varchar"/>
+            <decl x-name="type" x-type="varchar"/>
+            <decl x-name="default_value" x-type="varchar" x-default_value=""/>
+            <decl x-name="optional_p" x-type="bool" x-default_value="false"/>
+            <decl x-name="container" x-type="varchar" x-default_value=""/>
+        </decl>
+        <decl x-name="pk" x-type="varchar"/>
+        <decl x-name="is_final_if_no_scope" x-type="bool"/>
+    </decl>
+    <decl x-name="fun" x-type="struct" x-id="fun">
+        <decl x-name="name" x-type="varchar"/>
+        <decl x-name="param" x-type="varchar" x-default_value="" x-container="multiple"/>
+        <decl x-name="body" x-type="varchar"/>
+    </decl>
+</lang>
+
+hello world
+<nest>
+    <decl x-name="email" x-type="struct" x-id="email">
+        <decl x-name="name" x-type="varchar" x-default_value=""/>
+        <decl x-name="address" x-type="varchar"/>
+    </decl>
+    <decl x-name="message" x-type="struct" x-id="message">
+        <decl x-name="subject" x-type="varchar"/>
+        <decl x-name="body" x-type="varchar"/>
+        <decl x-name="from" x-type="email" x-id="message.from"/>
+        <decl x-name="to" x-type="email" x-id="message.to" x-container="multiple"/>
+        <decl x-name="cc" x-type="email" x-id="message.cc" x-container="multiple"/>
+        <decl x-name="bcc" x-type="email" x-id="message.bcc" x-container="multiple"/>
+        <decl x-name="wordcount" x-type="pair" x-id="message.wordcount" x-container="multiple">
+            <decl x-name="first" x-type="varchar"/>
+            <decl x-name="second" x-type="varint"/>
+        </decl>
+        <decl x-name="tag" x-type="varchar" x-container="multiple"/>
+        <inst x-name="sayhi" x-type="fun" x-id="message.sayhi">
+            <inst x-name="fun.name" x-type="varchar">sayhi</inst>
+            <inst x-name="fun.param" x-type="varchar" x-container="multiple">what</inst>
+            <inst x-name="fun.body" x-type="varchar"> puts "hello $what" </inst>
+        </inst>
+    </decl>
+    <inst x-name="msg1" x-type="message" x-id="msg1">
+        <inst x-name="message.subject" x-type="varchar">hello world</inst>
+        <inst x-name="message.body" x-type="varchar">this is a test</inst>
+        <inst x-name="message.from" x-type="email">
+            <inst x-name="email.name" x-type="varchar">Zena Wow</inst>
+            <inst x-name="email.address" x-type="varchar">zena@example.com</inst>
+        </inst>
+        <inst x-name="message.to" x-type="email">
+            <inst x-name="email.name" x-type="varchar">Jane Awesome</inst>
+            <inst x-name="email.address" x-type="varchar">jane@example.com</inst>
+        </inst>
+        <inst x-name="message.bcc" x-type="email" x-container="multiple">
+            <inst x-name="email.name" x-type="varchar">Someone Great</inst>
+            <inst x-name="email.address" x-type="varchar">someone@example.com</inst>
+        </inst>
+        <inst x-name="message.bcc" x-type="email" x-container="multiple">
+            <inst x-name="email.name" x-type="varchar">Vera Cool</inst>
+            <inst x-name="email.address" x-type="varchar">vera@example.com</inst>
+        </inst>
+        <inst x-name="message.bcc" x-type="email" x-container="multiple">
+            <inst x-name="email.name" x-type="varchar">Paris Love</inst>
+            <inst x-name="email.address" x-type="varchar">paris@example.com</inst>
+        </inst>
+        <inst x-name="message.wordcount" x-type="pair" x-container="multiple">
+            <inst x-name="message.wordcount.first" x-type="varchar">hello</inst>
+            <inst x-name="message.wordcount.second" x-type="varint">123</inst>
+        </inst>
+        <inst x-name="message.wordcount" x-type="pair" x-container="multiple">
+            <inst x-name="message.wordcount.first" x-type="varchar">world</inst>
+            <inst x-name="message.wordcount.second" x-type="varint">45</inst>
+        </inst>
+        <inst x-name="message.wordcount" x-type="pair" x-container="multiple">
+            <inst x-name="message.wordcount.first" x-type="varchar">test</inst>
+            <inst x-name="message.wordcount.second" x-type="varint">789</inst>
+        </inst>
+        <inst x-name="message.wordcount" x-type="pair" x-container="multiple">
+            <inst x-name="message.wordcount.first" x-type="varchar">this</inst>
+            <inst x-name="message.wordcount.second" x-type="varint">1</inst>
+        </inst>
+        <inst x-name="message.tag" x-type="varchar">sports</inst>
+        <inst x-name="message.tag" x-type="varchar">entertainment</inst>
+    </inst>
+</nest>
+
