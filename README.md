@@ -31,6 +31,7 @@ Dependencies:
 
 History:
 
+* nest-1.4 (2014-12-02) - premature optimization is the root of all evil, reinstated uplevel, shadow aliases
 * nest-1.1 (2014-12-01) - dispatcher construct, object methods e.g. "$(msg4) sayhi world"
 * nest-1.0 (2014-11-30) - alias/forward, inst/decl mode, class/object aliases, struct/slot, template/pair
 
