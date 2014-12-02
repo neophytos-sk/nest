@@ -607,8 +607,6 @@ define_lang ::nest::lang {
 
     namespace export "struct" "varchar" "bool" "varint" "byte" "int16" "int32" "int64" "double" "multiple"
 
-    # namespace export "nest" "with_ctx" "node" "with_eval" "interp_execNodeCmd"
-
 } lang_doc
 
 if { [::nest::debug::dom_p] } {
