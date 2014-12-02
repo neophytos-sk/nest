@@ -1,0 +1,173 @@
+struct email {
+    varchar name = ""
+    varchar address
+    struct.pk "address"
+}
+
+struct file {
+    varchar name
+    varchar mime_type
+    int32 size
+}
+
+struct folder {
+    varchar name
+    int32 num_items
+}
+
+struct category {
+    varchar category_name
+    varchar parent_category
+}
+
+struct word_count_pair {
+    varchar word
+    varint count
+}
+
+struct message {
+
+    # typeinst section
+    # new version breakpoint
+    pk "message_id"
+    is_final_if_no_scope "yes"
+
+    # typedecl section
+ 
+    varint message_id
+    varchar device = "sms"
+    int16 num_comments = 0
+    varchar subject
+    varchar body
+    email from
+
+    multiple email to
+    multiple email cc = {}
+    multiple email bcc = {}
+
+    bool public_p = false
+
+    multiple category categories = {}
+    multiple folder folders = {}
+    multiple varchar tags = {}
+    multiple file attachment = {}
+
+    struct _wordcount_X {
+        varchar word
+        int32 count
+    }
+
+    # with slot instantiation: multiple message._wordcount_X wordcount_X
+    multiple _wordcount_X wordcount_X
+
+    multiple word_count_pair wordcount_Y
+    multiple word_count_pair wordcount_Z = {}
+    multiple varchar words
+
+    pair varchar varint wordcount_V
+    
+    pair<varchar,varint> wordcount_U
+
+    multiple pair<varchar,varint> wordcount_T
+
+}
+
+message msg4 {
+    subject "hello"
+    body "this is a test"
+
+    from {
+        name "zena wow"
+        address "zena@example.com"
+    }
+
+    to {
+        name "paris love"
+        address "bff@example.com"
+    }
+    cc { 
+        name "jane awesome"
+        address "jane@example.com"
+    }
+    cc { 
+        name "someone great" 
+        address "someone@example.com" 
+    }
+
+    multiple bcc {{
+        name "vera cool"
+        address "vera@example.com"
+    } {
+        name "greg wise"
+        address "greg@example.com"
+    } {
+        name "max loyal"
+        address "max@example.com"
+    }}
+
+    multiple wordcount_X {{
+        word "X_the"
+        count "X_123"
+    } {
+        word "X_and"
+        count "X_54"
+    }}
+
+    multiple wordcount_Y {{
+        word "Y_the"
+        count "Y_123"
+    } {
+        word "Y_and"
+        count "Y_54"
+    }}
+
+    wordcount_V {
+        first "V_the"
+        second "V_123"
+    }
+
+    wordcount_U {
+        first "U_the"
+        second "U_123"
+    }
+
+    multiple wordcount_T {{
+        first "T_the"
+        second "T_123"
+    } {
+        first "T_and"
+        second "T_54"
+    }}
+
+    fun sayhi {what} { puts "hello ${what} \n" }
+    # 
+    # produces a dom node of the following form:
+    #
+    # => <inst x-name="sayhi" x-type="method">
+    #      <inst x-name="method.name" x-type="varchar">sayhi</inst>
+    #      <inst x-name="method.param" x-type="varchar" x-container="multiple">what</inst>
+    #      <inst x-name="method.body" x-type="varchar"> puts "hello ${what} \n" </inst>
+    #    </inst>
+
+    # object method with three params
+    fun num_between_p {num from to} { expr { $num >= $from && $num < $to } }
+
+    fun do_nothing {} {}
+
+}
+
+# calling object method sayhi,
+# equivalent to => @ msg4 sayhi "world"
+$(msg4) sayhi "people"
+
+@ msg4 sayhi "world"
+puts "num_between_p 3 7 9 = [$(msg4) num_between_p 3 7 9]"
+puts "num_between_p 15 7 27 = [$(msg4) num_between_p 15 7 27]"
+
+if { ![debug_p] } {
+    time_cps {set node [namespace inscope ::nest::lang message obj] ; $node delete} 10000
+    time_cps [list namespace inscope ::nest::lang $(msg4) do_nothing] 10000
+}
+
+
+

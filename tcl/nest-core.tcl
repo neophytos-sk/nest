@@ -5,6 +5,12 @@ namespace eval ::nest::lang {
 
     namespace import ::nest::debug::* 
 
+    # slightly slower than pure tcl version below
+    proc TCL_lambda {params body args} {
+        set cmd [list apply [list ${params} ${body} ::nest::lang] {*}${args}]
+        uplevel ${cmd}
+    }
+
     proc lambda {params body args} {
 
         set {llength_params} [llength ${params}]
