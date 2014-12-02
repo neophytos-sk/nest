@@ -23,7 +23,7 @@ define_lang ::nest::lang {
     #     varchar subtype
     # }
     # 
-    # stack_nest = {nest base_type bool} {nest meta struct}
+    # stack_nest = {base_type bool} {meta struct}
     #
     # EXAMPLE 2:
     # 
@@ -32,7 +32,7 @@ define_lang ::nest::lang {
     #   -> varchar address
     # }
     #
-    # stack_nest = {nest base_type varchar} {nest meta struct}
+    # stack_nest = {base_type varchar} {meta struct}
 
     variable stack_nest [list]
     variable stack_fwd [list]
@@ -96,61 +96,61 @@ define_lang ::nest::lang {
 
 
     # Wow!!!
-    set {nspAliasCmd} {lambda {name arg0 args} {
-        set nsp [uplevel {namespace current}]
+    set nsp [namespace current]
+    set {aliasCmd} {lambda {nsp name arg0 args} {
         interp_alias ${nsp}::${name} ${nsp}::${arg0} {*}${args}
         set_alias ${name} ${args}
     }}
-    {*}${nspAliasCmd} {set_alias} array_setter alias
-    {*}${nspAliasCmd} {nsp_alias} {*}${nspAliasCmd}
+    {*}${aliasCmd} ${nsp} {set_alias} array_setter alias
+    {*}${aliasCmd} ${nsp} {alias} {*}${aliasCmd}
         
-    nsp_alias {alias} {lambda} {name args} {
-        interp alias {} ${name} {} {*}${args}
-        set_alias ${name} ${args}
-    }
+    # binds nsp argument to current namespace
+    alias ${nsp} {nsp_alias} alias ${nsp}
 
     foreach {name cmd} {
 
-        {get_alias} {array_getter alias}
-        {exists_alias} {array_exister alias}
+        {get_alias}         {array_getter alias}
+        {exists_alias}      {array_exister alias}
 
-        {set_forward} {array_setter forward}
-        {exists_forward} {array_exister forward}
+        {set_forward}       {array_setter forward}
+        {get_forward}       {array_getter forward}
+        {exists_forward}    {array_exister forward}
 
-        {set_dispatcher} {array_setter dispatcher}
+        {set_dispatcher}    {array_setter dispatcher}
+        {get_dispatcher}    {array_getter dispatcher}
         {exists_dispatcher} {array_exister dispatcher}
 
-        {push_fwd} {stack_push stack_fwd}
-        {pop_fwd} {stack_pop stack_fwd}
-        {top_fwd} {stack_top stack_fwd}
-        {with_fwd} {stack_with stack_fwd}
+        {push_fwd}          {stack_push stack_fwd}
+        {pop_fwd}           {stack_pop stack_fwd}
+        {top_fwd}           {stack_top stack_fwd}
+        {with_fwd}          {stack_with stack_fwd}
 
-        {push_mode} {stack_push stack_mode}
-        {pop_mode} {stack_pop stack_mode}
-        {top_mode} {stack_top stack_mode}
-        {with_mode} {stack_with stack_mode}
+        {push_mode}         {stack_push stack_mode}
+        {pop_mode}          {stack_pop stack_mode}
+        {top_mode}          {stack_top stack_mode}
+        {with_mode}         {stack_with stack_mode}
 
-        {push_ctx} {stack_push stack_nest}
-        {pop_ctx} {stack_pop stack_nest}
-        {top_ctx} {stack_top stack_nest}
-        {with_ctx} {stack_with stack_nest}
+        {push_ctx}          {stack_push stack_nest}
+        {pop_ctx}           {stack_pop stack_nest}
+        {top_ctx}           {stack_top stack_nest}
+        {with_ctx}          {stack_with stack_nest}
         
-        {push_eval} {stack_push stack_eval}
-        {pop_eval} {stack_pop stack_eval}
-        {top_eval} {stack_top stack_eval}
+        {push_eval}         {stack_push stack_eval}
+        {pop_eval}          {stack_pop stack_eval}
+        {top_eval}          {stack_top stack_eval}
 
     } {
-        nsp_alias ${name} {*}[join ${cmd} { }]
+        nsp_alias ${name} {*}${cmd}
     }
 
     # forward is an alias that pushes its name to stack_fwd
-    nsp_alias {forward} {lambda} {name cmd} {
-        {set_forward} ${name} ${cmd}
-        {alias} ${name} {::nest::lang::with_fwd} ${name} {*}${cmd}
+    nsp_alias {forward} {lambda} {name args} {
+        {set_forward} ${name} ${args}
+        {nsp_alias} ${name} {with_fwd} ${name} {*}${args}
     }
 
-    forward {meta} {lambda {metaCmd args} {{*}$metaCmd {*}$args}}
-    forward {keyword} {::dom::createNodeCmd elementNode}
+    forward {meta} {lambda} {metaCmd args} {{*}$metaCmd {*}$args}
+    forward {keyword} ::dom::createNodeCmd elementNode
 
     keyword {decl}
     keyword {inst}
@@ -190,7 +190,7 @@ define_lang ::nest::lang {
 
             set ctx [list ${tag} ${id}]
             set nest [list with_ctx ${ctx} {*}${nest}]
-            {forward} ${id} ${nest}
+            {forward} ${id} {*}${nest}
 
         } else {
 
@@ -278,8 +278,7 @@ define_lang ::nest::lang {
         set ctx [list $decl_type $decl_name]
         set dotted_nest [list with_mode {inst} $decl_type $forward_name]
         set dotted_nest [list with_ctx $ctx {*}$dotted_nest] 
-        set cmd [list {forward} $forward_name $dotted_nest]
-        {*}${cmd} ;# uplevel $cmd
+        {forward} $forward_name {*}$dotted_nest
 
         log "(declaration done) decl_type=$decl_type decl_name=$decl_name forward_name=$forward_name"
 
@@ -495,16 +494,16 @@ define_lang ::nest::lang {
 
     nsp_alias {dispatcher} {lambda} {id} {
         set_dispatcher ${id} "@${id}"
-        alias "@${id}" {::nest::lang::@} ${id}
+        nsp_alias "@${id}" {@} ${id}
     }
 
     # class/object aliases, used in def of base_type and struct
     nsp_alias object nest {type_helper}
     nsp_alias class with_mode {decl} {nest}
 
-    forward {base_type} {with_mode {inst} {nest} {type_helper}}
+    forward {multiple} container_helper
+    forward {base_type} with_mode {inst} {nest} {type_helper}
 
-    forward {multiple} {container_helper}
 
     # a varying-length text string encoded using UTF-8 encoding
     base_type "varchar"
@@ -533,11 +532,11 @@ define_lang ::nest::lang {
     # timestamp/date
     # base_type "date"
 
-    forward {generic_type} {lambda {forward_name params body nest} {
-        forward ${forward_name} \
-                [list {lambda} [lappend {params} {name}] \
-                    [concat {nest} [list ${nest}] "\${name}" [list ${body}]]]
-    }}
+    forward {generic_type} {lambda} {forward_name params body nest} {
+        forward ${forward_name} {lambda} \
+            [lappend {params} {name}] \
+                [concat {nest} [list ${nest}] "\${name}" [list ${body}]]
+    }
 
     # pair construct, equivalent to:
     #
@@ -602,7 +601,7 @@ define_lang ::nest::lang {
             body ${method_body}
         }
 
-        alias [gen_eval_path ${method_name}] {::nest::lang::lambda} ${method_params} ${method_body}
+        nsp_alias [gen_eval_path ${method_name}] {lambda} ${method_params} ${method_body}
 
     }
 

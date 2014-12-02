@@ -153,12 +153,14 @@ message msg4 {
     fun num_between_p {num from to} { expr { $num >= $from && $num < $to } }
 
     fun do_nothing {} {}
+
 }
 
 # calling object method sayhi,
 # equivalent to => @ msg4 sayhi "world"
+$(msg4) sayhi "people"
 
-$(msg4) sayhi "world"
+@ msg4 sayhi "world"
 puts "num_between_p 3 7 9 = [$(msg4) num_between_p 3 7 9]"
 puts "num_between_p 15 7 27 = [$(msg4) num_between_p 15 7 27]"
 
