@@ -32,6 +32,12 @@
     </decl>
 </lang>
 
+hello people 
+
+hello world 
+
+num_between_p 3 7 9 = 0
+num_between_p 15 7 27 = 1
 <nest>
     <decl x-name="email" x-type="struct" x-id="email">
         <decl x-name="name" x-type="varchar" x-default_value=""/>
