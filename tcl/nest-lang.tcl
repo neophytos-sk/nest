@@ -593,15 +593,15 @@ define_lang ::nest::lang {
         uplevel ${cmd}
     }
 
-    shadow_alias {fun} {lambda} {method_name method_params method_body} {
+    shadow_alias {fun} {lambda} {fun_name fun_params fun_body} {
 
-        shadow fun ${method_name} {
-            name ${method_name}
-            multiple param ${method_params}
-            body ${method_body}
+        shadow fun ${fun_name} {
+            name ${fun_name}
+            multiple param ${fun_params}
+            body ${fun_body}
         }
 
-        nsp_alias [gen_eval_path ${method_name}] {lambda} ${method_params} ${method_body}
+        nsp_alias [gen_eval_path ${fun_name}] {lambda} ${fun_params} ${fun_body}
 
     }
 
