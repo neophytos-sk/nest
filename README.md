@@ -65,7 +65,7 @@ Check out the definition of the struct construct in nest, I think it's cool:
 
 Before the chicken and the egg, it was the nest --- pairs, nest-style:
 
-    template {pair} {typefirst typesecond} {
+    generic_type {pair} {typefirst typesecond} {
         ${typefirst} {first}
         ${typesecond} {second}
     } {type_helper}
