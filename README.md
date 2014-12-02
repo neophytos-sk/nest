@@ -39,7 +39,7 @@ Notes:
 
 Check out the definition of the struct construct in nest, I think it's cool:
 
-    alias {object} with_mode {inst} nest {type_helper}
+    alias {object} nest {type_helper}
 
     alias {class} with_mode {decl} nest
 
