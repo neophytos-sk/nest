@@ -1,6 +1,6 @@
 package require tdom
 
-package provide nest 1.3
+package provide nest 1.4
 
 define_lang ::nest::lang {
 
@@ -73,7 +73,7 @@ define_lang ::nest::lang {
     }
     proc stack_with {varname value args} {
         stack_push ${varname} ${value}
-        set result [{*}${args}] ;# uplevel ${args}
+        set result [uplevel ${args}]
         stack_pop ${varname}
         return ${result}
     }
@@ -83,7 +83,7 @@ define_lang ::nest::lang {
         set old_eval_path ${eval_path}
         set eval_path [join [concat ${eval_path} ${name}] {.}]
         push_eval ${name}
-        set result [{*}${args}] ;# uplevel ${args}
+        set result [uplevel ${args}]
         pop_eval
         set eval_path ${old_eval_path}
         return ${result}
@@ -163,11 +163,12 @@ define_lang ::nest::lang {
 
     nsp_alias {interp_execNodeCmd} {lambda} {tag name type args} {
         if { [dom_p] } {
-            ::dom::execNodeCmd elementNode ${tag} -x-name ${name} -x-type ${type} {*}${args}
+            set cmd [list ::dom::execNodeCmd elementNode ${tag} -x-name ${name} -x-type ${type} {*}${args}]
+            uplevel ${cmd}
         } else {
             # TODO: remove -x-attributes from args, one way or another
             if { [llength $args] % 2 == 1 } {
-                eval [lindex ${args} end]
+                uplevel [lindex ${args} end]
             } else {
                 # do nothing, dom node attributes only in args
             }
@@ -176,7 +177,7 @@ define_lang ::nest::lang {
     }
 
     nsp_alias {node} {lambda} {tag name type args} \
-        {with_eval ${name} interp_execNodeCmd ${tag} ${name} ${type} {*}${args}}
+        {uplevel [list with_eval ${name} interp_execNodeCmd ${tag} ${name} ${type} {*}${args}]}
 
     # nest argument holds nested calls in the procs below
     proc nest {nest name args} {
@@ -203,7 +204,8 @@ define_lang ::nest::lang {
 
         }
 
-        set node [{node} [top_mode] $name $tag -x-id ${id} {*}$args]
+        set cmd [list {node} [top_mode] $name $tag -x-id ${id} {*}$args]
+        set node [uplevel ${cmd}]
 
         ###
 
@@ -306,7 +308,7 @@ define_lang ::nest::lang {
             set inst_arg0 [list ::nest::lang::interp_t $inst_arg0]
             set cmd [list with_mode {inst} {node} {inst} ${inst_name} ${inst_type} ${inst_arg0}]
 
-            return [{*}${cmd}]  ;# uplevel ${cmd}
+            return [uplevel ${cmd}]
 
         } else {
 
@@ -315,7 +317,7 @@ define_lang ::nest::lang {
             set inst_type $ctx_tag
             set inst_name $tag   ;# for inst_type=struct.slot => tag=struct.name => arg0=name
             set cmd [list with_mode {inst} {node} {inst} ${inst_name} ${inst_type} {*}$args]
-            return [{*}${cmd}]  ;# uplevel $cmd
+            return [uplevel ${cmd}]
 
         }
 
@@ -534,23 +536,23 @@ define_lang ::nest::lang {
     forward {generic_type} {lambda {forward_name params body nest} {
         forward ${forward_name} \
                 [list {lambda} [lappend {params} {name}] \
-                    [concat {nest} [list ${nest}] "\${name}" \
-                        "\[subst -nocommands -nobackslashes [list ${body}]\]"]]
+                    [concat {nest} [list ${nest}] "\${name}" [list ${body}]]]
     }}
 
     # pair construct, equivalent to:
     #
     # => forward {pair} {lambda {typefirst typesecond name} {
-    #        nest {type_helper} ${name} [subst -nocommands -nobackslashes {
+    #        nest {type_helper} ${name} {
     #            ${typefirst} {first} 
     #            ${typesecond} {second}
-    #        }]
+    #        }
     #    }}
 
     generic_type {pair} {typefirst typesecond} {
         ${typefirst} {first}
         ${typesecond} {second}
     } {type_helper}
+
 
     meta {class} {class {nest type_helper}} {struct} {
         varchar id
@@ -573,26 +575,40 @@ define_lang ::nest::lang {
 
     }
 
-    struct {method} {
+    struct {fun} {
         varchar name
         multiple varchar param = {}
         varchar body
     }
 
-    nsp_alias {fun} {lambda} {name params body} { 
+    proc gen_shadow_name {name} { return _${name} }
 
-        # overwrites the alias created by method
-        alias [gen_eval_path ${name}] {::nest::lang::lambda} ${params} ${body}
+    nsp_alias {shadow_alias} {lambda} {name args} {
+        rename ${name} [gen_shadow_name ${name}]
+        set cmd [list nsp_alias ${name} {*}${args}]
+        uplevel ${cmd}
+    }
 
-        method ${name} \
-            [concat name ${name} { ; } multiple param [list ${params}] { ; } body [list $body]]
+    nsp_alias {shadow} {lambda} {name args} {
+        set cmd [list [gen_shadow_name ${name}] {*}${args}]
+        uplevel ${cmd}
+    }
 
+    shadow_alias {fun} {lambda} {method_name method_params method_body} {
+
+        shadow fun ${method_name} {
+            name ${method_name}
+            multiple param ${method_params}
+            body ${method_body}
+        }
+
+        alias [gen_eval_path ${method_name}] {::nest::lang::lambda} ${method_params} ${method_body}
 
     }
 
-
-
     namespace export "struct" "varchar" "bool" "varint" "byte" "int16" "int32" "int64" "double" "multiple"
+
+    # namespace export "nest" "with_ctx" "node" "with_eval" "interp_execNodeCmd"
 
 } lang_doc
 

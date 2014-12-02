@@ -163,8 +163,9 @@ puts "num_between_p 3 7 9 = [$(msg4) num_between_p 3 7 9]"
 puts "num_between_p 15 7 27 = [$(msg4) num_between_p 15 7 27]"
 
 if { ![debug_p] } {
-    time_cps {set node [message obj] ; $node delete} 10000
-    time_cps [list $(msg4) do_nothing] 10000
+    #namespace eval :: { namespace import ::nest::lang::* }
+    #time_cps {set node [message obj] ; $node delete} 10000
+    #time_cps [list $(msg4) do_nothing] 10000
 }
 
 

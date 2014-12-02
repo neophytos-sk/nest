@@ -10,6 +10,16 @@ namespace eval ::nest::debug {
         return $debug_p
     }
 
+    proc debug_on {} {
+        variable debug_p
+        set debug_p 1
+    }
+
+    proc debug_off {} {
+        variable debug_p
+        set debug_p 0
+    }
+
     proc dom_p {} {
         variable dom_p
         return $dom_p
@@ -20,16 +30,14 @@ namespace eval ::nest::debug {
         return $frame(proc)
     }
 
-    if { [debug_p] } {
-        proc log {msg} {
+    proc log {msg} {
+        if {[debug_p]} {
             puts [format "%-25s %s" [caller] ${msg}]
         }
-    } else {
-        proc log {msg} {}
     }
 
     proc dump {} {
-        variable ::nest::lang::stack_ctx
+        variable ::nest::lang::stack_nest
         variable ::nest::lang::stack_fwd
         variable ::nest::lang::stack_mode
         variable ::nest::lang::stack_eval
@@ -48,7 +56,7 @@ namespace eval ::nest::debug {
         set nl "\n"
         set sp "  "
         set msg ""
-        append msg $nl $sp "stack_ctx=[list $stack_ctx]"
+        append msg $nl $sp "stack_nest=[list $stack_nest]"
         append msg $nl $sp "stack_fwd=[list $stack_fwd]"
         append msg $nl $sp "stack_mode=[list $stack_mode]"
         append msg $nl $sp "stack_eval=[list $stack_eval]"
