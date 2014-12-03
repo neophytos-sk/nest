@@ -4,7 +4,7 @@ struct email_t {
     pk address
 }
 
-struct user {
+struct user_t {
     varint user_id
     email_t email
 }
@@ -15,7 +15,7 @@ struct forum_t {
         varchar title
         varchar body
         date date
-        user author
+        user_t author
     }
     multiple post_t post
 }
