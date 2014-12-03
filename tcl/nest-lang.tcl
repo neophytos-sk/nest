@@ -538,8 +538,7 @@ define_lang ::nest::lang {
     base_type "double"
 
     # timestamp/date
-    # base_type "date"
-
+    base_type "date"
 
 
     ## Generic Types

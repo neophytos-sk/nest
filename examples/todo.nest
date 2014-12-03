@@ -1,0 +1,22 @@
+struct todotask {
+    varchar description
+    bool done
+    date due
+}
+
+struct todolist {
+    multiple todotask task
+}
+
+todolist worktodo {
+    task {
+        description "finish user interface for X"
+        done false
+        due "tomorrow"
+    }
+    task {
+        description "xmas party 2014"
+        due "2014-12-23"
+        done false
+    }
+}

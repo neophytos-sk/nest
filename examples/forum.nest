@@ -1,0 +1,20 @@
+struct email {
+    varchar name = ""
+    varchar address
+    pk address
+}
+
+struct user {
+    varint user_id
+    email email
+}
+
+struct forum {
+    varchar name
+    multiple struct post {
+        varchar title
+        varchar body
+        date date
+        user author
+    }
+}
