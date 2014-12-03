@@ -34,11 +34,25 @@
 </lang>
 
 <nest>
-    <decl x-name="words" x-type="varchar" x-container="multiple"/>
-    <decl x-name="count" x-type="varint"/>
-    <inst x-name="words" x-type="varchar" x-container="multiple">abc</inst>
-    <inst x-name="words" x-type="varchar" x-container="multiple">def</inst>
-    <inst x-name="words" x-type="varchar" x-container="multiple">ghi</inst>
-    <inst x-name="count" x-type="varint">123</inst>
+    <decl x-name="todotask_t" x-type="struct" x-id="todotask_t">
+        <decl x-name="description" x-type="varchar"/>
+        <decl x-name="done" x-type="bool"/>
+        <decl x-name="due" x-type="date"/>
+    </decl>
+    <decl x-name="todolist_t" x-type="struct" x-id="todolist_t">
+        <decl x-name="task" x-type="todotask_t" x-id="todolist_t.task" x-container="multiple"/>
+    </decl>
+    <inst x-name="worktodo" x-type="todolist_t" x-id="worktodo">
+        <inst x-name="todolist_t.task" x-type="todotask_t">
+            <inst x-name="todotask_t.description" x-type="varchar">finish user interface for X</inst>
+            <inst x-name="todotask_t.done" x-type="bool">false</inst>
+            <inst x-name="todotask_t.due" x-type="date">tomorrow</inst>
+        </inst>
+        <inst x-name="todolist_t.task" x-type="todotask_t">
+            <inst x-name="todotask_t.description" x-type="varchar">xmas party 2014</inst>
+            <inst x-name="todotask_t.due" x-type="date">2014-12-23</inst>
+            <inst x-name="todotask_t.done" x-type="bool">false</inst>
+        </inst>
+    </inst>
 </nest>
 

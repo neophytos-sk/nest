@@ -16,6 +16,7 @@ for infile in *.nest; do
       echo "OK"
   else
       echo "FAILED"
+      echo $DIFF
   fi
 
   rm ${OUTFILE}

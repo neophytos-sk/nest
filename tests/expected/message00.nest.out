@@ -8,6 +8,7 @@
     <decl x-name="int32" x-type="base_type" x-id="int32"/>
     <decl x-name="int64" x-type="base_type" x-id="int64"/>
     <decl x-name="double" x-type="base_type" x-id="double"/>
+    <decl x-name="date" x-type="base_type" x-id="date"/>
     <decl x-name="struct" x-type="meta" x-id="struct">
         <decl x-name="id" x-type="varchar"/>
         <decl x-name="name" x-type="varchar"/>

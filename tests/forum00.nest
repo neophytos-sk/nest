@@ -1,0 +1,52 @@
+struct email_t {
+    varchar name = ""
+    varchar address
+    pk address
+}
+
+struct user_t {
+    varint user_id
+    email_t email
+}
+
+struct forum_t {
+    varchar name
+    struct post_t {
+        varchar title
+        varchar body
+        date date
+        user_t author
+    }
+    multiple post_t post
+}
+
+forum_t f1 {
+    name "OpenACS Q&A"
+    multiple post {{
+        title "nest tcl package"
+        body {
+            language in the making, solves chicken and egg problems
+        }
+        date "last tuesday"
+        author {
+            user_id "123"
+            email {
+                name "someone great"
+                address "someone@example.com"
+            }
+        }
+    } {
+        title "upcoming nest-2.0"
+        body {
+            nest to postgresql is coming soon
+        }
+        date "sunday before xmas"
+        author {
+            user_id "45"
+            email {
+                name "zena wow"
+                address "zena@example.com"
+            }
+        }
+    }}
+}
