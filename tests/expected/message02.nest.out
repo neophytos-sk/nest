@@ -32,7 +32,6 @@
     </decl>
 </lang>
 
-hello world
 <nest>
     <decl x-name="email" x-type="struct" x-id="email">
         <decl x-name="name" x-type="varchar" x-default_value=""/>
@@ -40,7 +39,7 @@ hello world
     </decl>
     <decl x-name="message" x-type="struct" x-id="message">
         <decl x-name="subject" x-type="varchar"/>
-        <decl x-name="body" x-type="varchar"/>
+        <decl x-name="body" x-type="varchar" x-default_value="" x-optional_p="true"/>
         <decl x-name="from" x-type="email" x-id="message.from"/>
         <decl x-name="to" x-type="email" x-id="message.to" x-container="multiple"/>
         <decl x-name="cc" x-type="email" x-id="message.cc" x-container="multiple"/>
@@ -49,12 +48,7 @@ hello world
             <decl x-name="first" x-type="varchar"/>
             <decl x-name="second" x-type="varint"/>
         </decl>
-        <decl x-name="tag" x-type="varchar" x-container="multiple"/>
-        <inst x-name="sayhi" x-type="fun" x-id="message.sayhi">
-            <inst x-name="fun.name" x-type="varchar">sayhi</inst>
-            <inst x-name="fun.param" x-type="varchar" x-container="multiple">what</inst>
-            <inst x-name="fun.body" x-type="varchar"> puts "hello $what" </inst>
-        </inst>
+        <decl x-name="tag" x-type="varchar" x-container="multiple" x-optional_p="true"/>
     </decl>
     <inst x-name="msg1" x-type="message" x-id="msg1">
         <inst x-name="message.subject" x-type="varchar">hello world</inst>

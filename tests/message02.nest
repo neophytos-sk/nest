@@ -5,15 +5,13 @@ struct email {
 
 struct message {
     varchar subject
-    varchar body
+    optional varchar body = {}
     email from
     multiple email to
     multiple email cc
     multiple email bcc
     multiple pair<varchar,varint> wordcount
-    multiple varchar tag
-
-    fun sayhi {what} { puts "hello $what" }
+    optional multiple varchar tag
 }
 
 message msg1 {
@@ -60,5 +58,3 @@ message msg1 {
   tag "entertainment"
 
 }
-
-$(message) sayhi world

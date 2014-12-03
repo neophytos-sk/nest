@@ -319,7 +319,7 @@ define_lang ::nest::lang {
     proc {object_helper} {args} {::nest::lang::object[top_mode] {*}${args}}
 
 
-    # container_helper
+    # qualifier_helper
     #
     # INSTANTIATION EXAMPLE 1:
     # 
@@ -370,10 +370,9 @@ define_lang ::nest::lang {
     #
 
 
-    proc containerdecl {arg0 args} {
-        set tag [top_fwd]
+    proc qualifierdecl {attname attvalue arg0 args} {
 
-        log "!!! container DECLARATION"
+        log "!!! qualifier DECLARATION"
 
         set args [lassign $args name]
         if { [lindex $args 0] eq {=} } {
@@ -381,14 +380,13 @@ define_lang ::nest::lang {
         }
 
         set node [$arg0 $name {*}$args]
-        ${node} setAttribute x-container $tag
+        ${node} setAttribute x-$attname $attvalue
         return ${node}
     }
 
-    proc containerinst {arg0 args} {
-        set tag [top_fwd]
+    proc qualifierinst {attname attvalue arg0 args} {
 
-        log "!!! container INSTANTIATION"
+        log "!!! qualifier INSTANTIATION"
 
         set args [lassign $args argvals]
         set arg0 [which $arg0]
@@ -396,13 +394,13 @@ define_lang ::nest::lang {
         set nodes [list]
         foreach argval $argvals {
             set node [with_fwd $arg0 $arg0 $argval]
-            ${node} setAttribute x-container $tag
+            ${node} setAttribute x-$attname $attvalue
             lappend nodes ${node}
         }
         return ${nodes}
     }
 
-    proc {container_helper} {args} {::nest::lang::container[top_mode] {*}${args}}
+    proc {qualifier_helper} {args} {::nest::lang::qualifier[top_mode] {*}${args}}
 
     proc which {name} {
 
@@ -495,7 +493,9 @@ define_lang ::nest::lang {
     nsp_alias object nest {object_helper}
     nsp_alias class with_mode {decl} {nest}
 
-    forward {multiple} container_helper
+    forward {multiple} qualifier_helper container multiple
+    forward {optional} qualifier_helper optional_p true
+
     meta {class} {class {type_helper}} base_type
 
     # a varying-length text string encoded using UTF-8 encoding
@@ -544,7 +544,6 @@ define_lang ::nest::lang {
         ${typefirst} {first}
         ${typesecond} {second}
     } {object_helper}
-
 
     meta {class} {class {object}} {struct} {
         varchar id

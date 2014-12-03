@@ -5,13 +5,13 @@ struct email {
 
 struct message {
     varchar subject
-    varchar body
+    optional varchar body = {}
     email from
     multiple email to
     multiple email cc
     multiple email bcc
     multiple pair<varchar,varint> wordcount
-    multiple varchar tag
+    optional multiple varchar tag
 }
 
 message msg1 {
