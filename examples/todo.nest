@@ -1,14 +1,14 @@
-struct todotask {
+struct todotask_t {
     varchar description
     bool done
     date due
 }
 
-struct todolist {
-    multiple todotask task
+struct todolist_t {
+    multiple todotask_t task
 }
 
-todolist worktodo {
+todolist_t worktodo {
     task {
         description "finish user interface for X"
         done false
