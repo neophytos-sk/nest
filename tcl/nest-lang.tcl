@@ -255,153 +255,6 @@ define_lang ::nest::lang {
     }
 
 
-    proc typedecl {args} {
-        
-        set tag [top_fwd]  ;# varchar nsp -> tag=varchar name=nsp
-
-        # deal with args and create dom node
-        set args [lassign $args arg0]
-        if { [lindex $args 0] eq {=} } {
-            set args [lreplace $args 0 0 "-x-default_value"]
-        }
-
-        set decl_type $tag
-        set decl_name $arg0
-
-        set cmd [list with_mode {decl} {node} {decl} $decl_name $decl_type {*}$args]
-        set node [{*}${cmd}]  ;# uplevel $cmd
-
-        # get full forward name and register the forward
-        set forward_name [gen_eval_path $decl_name]
-        set ctx [list $decl_type $decl_name]
-        set dotted_nest [list with_mode {inst} $decl_type $forward_name]
-        set dotted_nest [list with_ctx $ctx {*}$dotted_nest] 
-        {forward} $forward_name {*}$dotted_nest
-
-        log "(declaration done) decl_type=$decl_type decl_name=$decl_name forward_name=$forward_name"
-
-        return $node
-
-    }
-
-    proc typeinst {args} {
-        set tag [top_fwd]  ;# varchar nsp -> tag=varchar name=nsp
-
-        # message.subject "hello" 
-        # => inst_name=message.subject args={{hello}} 
-        # => inst_name=message.subject inst_type=base_type
-        
-        set inst_type $tag
-        set args [lassign $args inst_name inst_arg0]
-        if { $args ne {} } { 
-            error "something wrong with instantiation statement args=[list $args]"
-        }
-        set inst_arg0 [list ::nest::lang::interp_t $inst_arg0]
-        set cmd [list with_mode {inst} {node} {inst} ${inst_name} ${inst_type} ${inst_arg0}]
-        return [uplevel ${cmd}]
-    }
-
-    # case for composite or "unknown" types (e.g. pair<varchar,varint)
-    proc {objectinst} {args} {
-        set tag [top_fwd]
-        lassign [top_ctx] ctx_tag ctx_name
-        set inst_type $ctx_tag
-        set inst_name $tag   ;# for inst_type=struct.slot => tag=struct.name => arg0=name
-        set cmd [list with_mode {inst} {node} {inst} ${inst_name} ${inst_type} {*}$args]
-        return [uplevel ${cmd}]
-    }
-
-
-    nsp_alias {objectdecl} {typedecl}
-    # nsp_route {type} eval top_mode
-    # nsp_route {object} eval top_mode
-    proc {type_helper} {args} {::nest::lang::type[top_mode] {*}${args}}
-    proc {object_helper} {args} {::nest::lang::object[top_mode] {*}${args}}
-
-
-    # qualifier_helper
-    #
-    # INSTANTIATION EXAMPLE 1:
-    # 
-    #   multiple wordcount {{ 
-    #       word "the"
-    #       count "123"
-    #   } {
-    #   } { 
-    #       word "and" 
-    #       count "54" 
-    #   }}
-    #
-    #
-    # DECLARATION EXAMPLE 1 ( llength_args==1 && arg0 ne {struct} ):
-    #   struct message {
-    #     ...
-    #     multiple word_count_pair wordcount
-    #     ...
-    #   }
-    #
-    # DECLARATION EXAMPLE 2 ( llength_args==2 && arg0 eq {struct} ):
-    #   struct message {
-    #     ...
-    #     multiple struct wordcount { 
-    #       varchar word
-    #       varint count
-    #     }
-    #     ...
-    #   }
-    #
-    #
-    # DECLARATION EXAMPLE 3 ( llength_args==3 && arg0 ne {struct} ):
-    #   struct message {
-    #     ...
-    #     multiple word_count_pair wordcount = {}
-    #     ...
-    #   }
-    #
-    # DECLARATION EXAMPLE 4 ( llength_args==4 && arg0 eq {struct} ):
-    #   struct message {
-    #     ...
-    #     multiple struct wordcount = {} { 
-    #       varchar word
-    #       varint count
-    #     }
-    #     ...
-    #   }
-    #
-
-
-    proc qualifierdecl {attname attvalue arg0 args} {
-
-        log "!!! qualifier DECLARATION"
-
-        set args [lassign $args name]
-        if { [lindex $args 0] eq {=} } {
-            set args [lreplace $args 0 0 "-x-default_value"]
-        }
-
-        set node [$arg0 $name {*}$args]
-        ${node} setAttribute x-$attname $attvalue
-        return ${node}
-    }
-
-    proc qualifierinst {attname attvalue arg0 args} {
-
-        log "!!! qualifier INSTANTIATION"
-
-        set args [lassign $args argvals]
-        set arg0 [which $arg0]
-
-        set nodes [list]
-        foreach argval $argvals {
-            set node [with_fwd $arg0 $arg0 $argval]
-            ${node} setAttribute x-$attname $attvalue
-            lappend nodes ${node}
-        }
-        return ${nodes}
-    }
-
-    proc {qualifier_helper} {args} {::nest::lang::qualifier[top_mode] {*}${args}}
-
     proc which {name} {
 
         set redirect_name [gen_eval_path ${name}]
@@ -479,8 +332,167 @@ define_lang ::nest::lang {
 
     namespace unknown unknown
 
+    ### HELPERS
+ 
+    proc typedecl {args} {
+        
+        set tag [top_fwd]  ;# varchar nsp -> tag=varchar name=nsp
 
-    # basis of class/object methods
+        # deal with args and create dom node
+        set args [lassign $args arg0]
+        if { [lindex $args 0] eq {=} } {
+            set args [lreplace $args 0 0 "-x-default_value"]
+        }
+
+        set decl_type $tag
+        set decl_name $arg0
+
+        set cmd [list with_mode {decl} {node} {decl} $decl_name $decl_type {*}$args]
+        set node [{*}${cmd}]  ;# uplevel $cmd
+
+        # get full forward name and register the forward
+        set forward_name [gen_eval_path $decl_name]
+        set ctx [list $decl_type $decl_name]
+        set dotted_nest [list with_mode {inst} $decl_type $forward_name]
+        set dotted_nest [list with_ctx $ctx {*}$dotted_nest] 
+        {forward} $forward_name {*}$dotted_nest
+
+        log "(declaration done) decl_type=$decl_type decl_name=$decl_name forward_name=$forward_name"
+
+        return $node
+
+    }
+
+    proc typeinst {args} {
+        set tag [top_fwd]  ;# varchar nsp -> tag=varchar name=nsp
+
+        # message.subject "hello" 
+        # => inst_name=message.subject args={{hello}} 
+        # => inst_name=message.subject inst_type=base_type
+        
+        set inst_type $tag
+        set args [lassign $args inst_name inst_arg0]
+        if { $args ne {} } { 
+            error "something wrong with instantiation statement args=[list $args]"
+        }
+        set inst_arg0 [list ::nest::lang::interp_t $inst_arg0]
+        set cmd [list with_mode {inst} {node} {inst} ${inst_name} ${inst_type} ${inst_arg0}]
+        return [uplevel ${cmd}]
+    }
+
+    # case for composite or "unknown" types (e.g. pair<varchar,varint)
+    proc {objectinst} {args} {
+        set tag [top_fwd]
+        lassign [top_ctx] ctx_tag ctx_name
+        set inst_type $ctx_tag
+        set inst_name $tag   ;# for inst_type=struct.slot => tag=struct.name => arg0=name
+        set cmd [list with_mode {inst} {node} {inst} ${inst_name} ${inst_type} {*}$args]
+        return [uplevel ${cmd}]
+    }
+
+
+    nsp_alias {objectdecl} {typedecl}
+    # nsp_route {type} eval top_mode
+    # nsp_route {object} eval top_mode
+    proc {type_helper} {args} {::nest::lang::type[top_mode] {*}${args}}
+    proc {object_helper} {args} {::nest::lang::object[top_mode] {*}${args}}
+
+
+
+    # qualifier_helper
+    #
+    # DECLARATION EXAMPLE 1 ( llength_args==1 && arg0 ne {struct} ):
+    #   struct message {
+    #     ...
+    #     multiple word_count_pair wordcount
+    #     ...
+    #   }
+    #
+    # DECLARATION EXAMPLE 2 ( llength_args==2 && arg0 eq {struct} ):
+    #   struct message {
+    #     ...
+    #     multiple struct wordcount { 
+    #       varchar word
+    #       varint count
+    #     }
+    #     ...
+    #   }
+    #
+    #
+    # DECLARATION EXAMPLE 3 ( llength_args==3 && arg0 ne {struct} ):
+    #   struct message {
+    #     ...
+    #     multiple word_count_pair wordcount = {}
+    #     ...
+    #   }
+    #
+    # DECLARATION EXAMPLE 4 ( llength_args==4 && arg0 eq {struct} ):
+    #   struct message {
+    #     ...
+    #     multiple struct wordcount = {} { 
+    #       varchar word
+    #       varint count
+    #     }
+    #     ...
+    #   }
+    #
+
+
+    proc qualifierdecl {attname attvalue arg0 args} {
+        set args [lassign $args name]
+        if { [lindex $args 0] eq {=} } {
+            set args [lreplace $args 0 0 "-x-default_value"]
+        }
+
+        set node [$arg0 $name {*}$args]
+        ${node} setAttribute x-$attname $attvalue
+        return ${node}
+    }
+
+    proc qualifierinst {attname attvalue args} {
+        set node [uplevel $args]
+        ${node} setAttribute x-$attname $attvalue
+        return ${node}
+    }
+
+    proc {qualifier_helper} {args} {::nest::lang::qualifier[top_mode] {*}${args}}
+
+
+    # Containers
+    #
+    # INSTANTIATION EXAMPLE 1:
+    # 
+    #   multiple wordcount {{ 
+    #       word "the"
+    #       count "123"
+    #   } {
+    #   } { 
+    #       word "and" 
+    #       count "54" 
+    #   }}
+    #
+    #
+
+    proc {containerinst} {attname attvalue arg0 args} {
+        set args [lassign $args argvals]
+        set arg0 [which $arg0]
+
+        set nodes [list]
+        foreach argval $argvals {
+            set node [uplevel \
+                [list {qualifierinst} ${attname} ${attvalue} ${arg0} ${argval}]]
+            lappend nodes ${node}
+        }
+        return ${nodes}
+    }
+
+    nsp_alias {containerdecl} {qualifierdecl}
+
+    proc {container_helper} {args} {::nest::lang::container[top_mode] {*}${args}}
+
+    ### THE LANGUAGE
+
+    ## basis of class/object methods
 
     nsp_alias {@} with_eval
 
@@ -489,13 +501,16 @@ define_lang ::nest::lang {
         nsp_alias "@${id}" {@} ${id}
     }
 
-    # class/object aliases, used in def of base_type and struct
+    ## class/object aliases, used in def of base_type and struct
     nsp_alias object nest {object_helper}
     nsp_alias class with_mode {decl} {nest}
 
-    forward {multiple} qualifier_helper container multiple
+    ## qualifiers
+    forward {multiple} container_helper container multiple
     forward {optional} qualifier_helper optional_p true
+    forward {required} qualifier_helper optional_p false
 
+    ## data types
     meta {class} {class {type_helper}} base_type
 
     # a varying-length text string encoded using UTF-8 encoding
@@ -525,6 +540,10 @@ define_lang ::nest::lang {
     # timestamp/date
     # base_type "date"
 
+
+
+    ## Generic Types
+
     forward {generic_type} {lambda} {forward_name params body nest} {
         forward ${forward_name} {lambda} \
             [lappend {params} {name}] \
@@ -544,6 +563,10 @@ define_lang ::nest::lang {
         ${typefirst} {first}
         ${typesecond} {second}
     } {object_helper}
+
+
+
+    ## Metaclass struct
 
     meta {class} {class {object}} {struct} {
         varchar id
@@ -566,6 +589,8 @@ define_lang ::nest::lang {
 
     }
 
+    ## self procs
+
     struct {fun} {
         varchar name
         multiple varchar param = {}
@@ -587,13 +612,17 @@ define_lang ::nest::lang {
 
     shadow_alias {fun} {lambda} {fun_name fun_params fun_body} {
 
+        nsp_alias [gen_eval_path ${fun_name}] {lambda} ${fun_params} ${fun_body}
+
+        # must be last so that it returns the dom node
+        # otherwise, we would have to keep the resulting 
+        # node in a variable and return it at the end
+
         with_mode {inst} shadow fun ${fun_name} {
             name ${fun_name}
             multiple param ${fun_params}
             body ${fun_body}
         }
-
-        nsp_alias [gen_eval_path ${fun_name}] {lambda} ${fun_params} ${fun_body}
 
     }
 
