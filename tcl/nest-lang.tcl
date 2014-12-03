@@ -44,7 +44,7 @@ define_lang ::nest::lang {
     array set alias [list]
     array set forward [list]
     array set dispatcher [list]
-    array set nest [list]
+    array set typeof [list]
  
     proc array_setter {arrayname name value} {
         variable ${arrayname}
@@ -89,6 +89,11 @@ define_lang ::nest::lang {
         return ${result}
     }
 
+    proc {eval_path} {} {
+        variable {eval_path}
+        return ${eval_path}
+    }
+
     proc {gen_eval_path} {name} {
         variable {eval_path}
         join [concat ${eval_path} ${name}] {.}
@@ -111,6 +116,10 @@ define_lang ::nest::lang {
 
         {get_alias}         {array_getter alias}
         {exists_alias}      {array_exister alias}
+
+        {set_typeof}        {array_setter typeof}
+        {get_typeof}        {array_getter typeof}
+        {exists_typeof}     {array_exister typeof}
 
         {set_forward}       {array_setter forward}
         {get_forward}       {array_getter forward}
@@ -183,6 +192,7 @@ define_lang ::nest::lang {
     proc nest {nest name args} {
         set tag [top_fwd]
         set id [gen_eval_path $name]
+        set_typeof ${id} ${tag}
 
         # TODO: unify to use just one dispatcher for everything
         # forward ${id} [list @ ${id} ${nest}]
@@ -257,36 +267,122 @@ define_lang ::nest::lang {
 
     proc which {name} {
 
+        # check self
         set redirect_name [gen_eval_path ${name}]
-        set redirect_exists_p [exists_alias $redirect_name]
+        set redirect_exists_p [exists_alias ${redirect_name}] 
+        log "checking whether ${name} is $redirect_name (${redirect_exists_p})"
+        if { ${redirect_exists_p} } {
 
-        log "checking eval path for \"${name}\" -> ${redirect_name} ($redirect_exists_p)"
+            # CASE 1 (self)
+            #
+            # message msg1 {
+            #     ...
+            #     fun self(sayhi) {what} { ... }
+            #     ...
+            # }
+            #
+            # -> @ msg1 sayhi "world"
 
-        if { $redirect_exists_p } {
-            return $redirect_name
-        } else {
-            variable stack_nest
-            foreach ctx $stack_nest {
-                lassign $ctx ctx_tag ctx_name
-                set redirect_name "${ctx_name}.${name}"
-                set redirect_exists_p [exists_alias $redirect_name]
+            return ${redirect_name}
+        }
 
-                log "checking nest context name for \"${name}\" -> ${redirect_name} ($redirect_exists_p)"
+        # check type/tag of top eval
+        if { [exists_typeof [eval_path]] } {
+            set eval_ctx_name [eval_path]
+            set eval_ctx_tag [get_typeof [eval_path]]
+            set redirect_name ${eval_ctx_tag}.${name}
+            set redirect_exists_p [exists_alias ${redirect_name}] 
+            log "checking in ctx tag (=${eval_ctx_tag}) of top eval (=${eval_ctx_name})... $redirect_name (${redirect_exists_p})"
+            if { ${redirect_exists_p} } {
 
-                if { $redirect_exists_p } {
-                    return $redirect_name
-                } else {
-                    set redirect_name "${ctx_tag}.${name}"
-                    set redirect_exists_p [exists_alias $redirect_name]
+                # CASE 2 (context of top eval)
+                #
+                # struct message {
+                #     varchar subject
+                #     ...
+                # }
+                #
+                # message msg1 {
+                # --> subject "hello world"
+                #     ...
+                # }
+                #
+                # => redirects to message.subject (see log notices below)
+                #
+                # (case 1) checking whether subject is msg1.subject (0)
+                # (case 2) checking in ctx tag (=message) of top eval (=msg1)... message.subject (1)
 
-                    log "checking nest context tag for \"${name}\" -> ${redirect_name} ($redirect_exists_p)"
-
-                    if { $redirect_exists_p } {
-                        return $redirect_name
-                    }
-                }
-
+                return ${redirect_name}
             }
+        } else {
+            log "did not check top eval (=[eval_path]) - no context info"
+        }
+
+        # check nest context
+        lassign [top_ctx] ctx_tag ctx_name
+        set redirect_name "${ctx_tag}.${name}"
+        set redirect_exists_p [exists_alias ${redirect_name}] 
+        log "checking in ctx tag (=${ctx_tag}) of parent nest (=${ctx_name})... $redirect_name (${redirect_exists_p})"
+        if { [exists_alias ${redirect_name}] } {
+
+            # CASE 3 (context of top nest)
+            #
+            # struct message {
+            #     ...
+            #     email from
+            #     ...
+            # }
+            #
+            # message msg1 {
+            #     ...
+            #     from {
+            #        name "zena wow"
+            #     -> address "zena@example.com"
+            #     }
+            #     ...
+            # }
+            #
+            # => redirects to email.address (see log notices below)
+            #
+            # (case 1) checking whether address is msg1.message.from.address (0)
+            # (case 2) did not check top eval (=msg1.message.from) - no context info
+            # (case 3) checking in ctx tag (=email) of parent nest (=message.from)... email.address (1)
+
+            return ${redirect_name}
+
+        }
+
+        # check for an embedded structure in parent nest, like the one that generic types produce
+        set redirect_name ${ctx_name}.${name}
+        set redirect_exists_p [exists_alias ${redirect_name}] 
+        log "checking in parent nest (=${ctx_name})... $redirect_name (${redirect_exists_p})"
+        if { ${redirect_exists_p} } {
+
+            # CASE 4 (unknown types like pair<varchar,varint> embed a dom structure in ctx_name):
+            #
+            # struct message {
+            #     ...
+            #     multiple pair<varchar,varint> wordcount
+            #     ...
+            # }
+            #
+            # message msg1 {
+            #     ...
+            #     multiple wordcount {{
+            # ----> first "hello"
+            #       second "123"
+            #     } { ... }}
+            #     ...
+            # }
+            #
+            # => redirects to message.wordcount.first (see log notices below)
+            #
+            # (case 1) checking whether second is msg1.message.wordcount.second (0)
+            # (case 2) did not check top eval (=msg1.message.wordcount) - no context info
+            # (case 3) checking in ctx tag (=pair) of parent nest (=message.wordcount)... pair.second (0)
+            # (case 4) checking in parent nest (=message.wordcount)... message.wordcount.second (1)
+
+            return ${redirect_name}
         }
 
         return

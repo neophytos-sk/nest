@@ -13,6 +13,7 @@ struct message {
     multiple pair<varchar,varint> wordcount
     multiple varchar tag
 
+    # static fun
     fun send_msg {prio} { puts "sending msg with priority $prio" }
 }
 
@@ -64,6 +65,4 @@ message msg1 {
 }
 
 $(msg1) sayhi world
-
-$(message) send_msg 90
-
+$(msg1) send_msg 90

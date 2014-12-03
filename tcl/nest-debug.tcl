@@ -68,7 +68,7 @@ namespace eval ::nest::debug {
     }
 
     proc error {msg {info ""} {code ""}} {
-        dump
+        uplevel dump
         ::error ${msg} {*}${info} {*}${code}
     }
 
