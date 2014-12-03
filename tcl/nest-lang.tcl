@@ -369,13 +369,13 @@ define_lang ::nest::lang {
             # message msg1 {
             #     ...
             #     multiple wordcount {{
-            # ----> first "hello"
-            #       second "123"
+            #       first "hello"
+            # ----> second "123"
             #     } { ... }}
             #     ...
             # }
             #
-            # => redirects to message.wordcount.first (see log notices below)
+            # => redirects to message.wordcount.second (see log notices below)
             #
             # (case 1) checking whether second is msg1.message.wordcount.second (0)
             # (case 2) did not check top eval (=msg1.message.wordcount) - no context info
