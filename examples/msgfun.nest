@@ -1,0 +1,69 @@
+struct email {
+    varchar name = ""
+    varchar address
+}
+
+struct message {
+    varchar subject
+    optional varchar body = {}
+    email from
+    multiple email to
+    multiple email cc
+    multiple email bcc
+    multiple pair<varchar,varint> wordcount
+    multiple varchar tag
+
+    fun send_msg {prio} { puts "sending msg with priority $prio" }
+}
+
+message msg1 {
+
+    subject "hello world"
+
+    body "this is a test"
+
+    from {
+        name "Zena Wow"
+        address "zena@example.com"
+    }
+    to {
+        name "Jane Awesome"
+        address "jane@example.com"
+    }
+
+    multiple bcc {{
+        name "Someone Great"
+        address "someone@example.com"
+    } {
+        name "Vera Cool"
+        address "vera@example.com"
+    } {
+        name "Paris Love"
+        address "paris@example.com"
+    }}
+
+    multiple wordcount {{
+        first "hello"
+        second "123"
+    } {
+        first "world"
+        second "45"
+    } {
+        first "test"
+        second "789"
+    } {
+        first "this"
+        second "1"
+    }}
+
+    tag "sports"
+    tag "entertainment"
+
+    fun sayhi {what} { puts "hello $what \n" }
+
+}
+
+$(msg1) sayhi world
+
+$(message) send_msg 90
+
