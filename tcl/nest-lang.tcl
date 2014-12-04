@@ -94,7 +94,7 @@ define_lang ::nest::lang {
         return ${eval_path}
     }
 
-    proc {gen_eval_path} {name} {
+    proc {gen_eval_name} {name} {
         variable {eval_path}
         join [concat ${eval_path} ${name}] {.}
     }
@@ -191,12 +191,14 @@ define_lang ::nest::lang {
     # nest argument holds nested calls in the procs below
     proc nest {nest name args} {
         set tag [top_fwd]
-        set id [gen_eval_path $name]
+        set id [gen_eval_name $name]
         set_typeof ${id} ${tag}
 
         # TODO: unify to use just one dispatcher for everything
         # forward ${id} [list @ ${id} ${nest}]
         if { [top_mode] eq {decl} } {
+
+            set ::__nest($id) ${nest}
 
             set ctx [list ${tag} ${id}]
             set nest [list with_ctx ${ctx} {*}${nest}]
@@ -268,7 +270,7 @@ define_lang ::nest::lang {
     proc which {name} {
 
         # check self
-        set redirect_name [gen_eval_path ${name}]
+        set redirect_name [gen_eval_name ${name}]
         set redirect_exists_p [exists_alias ${redirect_name}] 
         log "checking whether ${name} is $redirect_name (${redirect_exists_p})"
         if { ${redirect_exists_p} } {
@@ -447,7 +449,7 @@ define_lang ::nest::lang {
         set node [{*}${cmd}]  ;# uplevel $cmd
 
         # get full forward name and register the forward
-        set forward_name [gen_eval_path $decl_name]
+        set forward_name [gen_eval_name $decl_name]
         set ctx [list $decl_type $decl_name]
         set dotted_nest [list with_mode {inst} $decl_type $forward_name]
         set dotted_nest [list with_ctx $ctx {*}$dotted_nest] 
@@ -707,7 +709,7 @@ define_lang ::nest::lang {
 
     shadow_alias {fun} {lambda} {fun_name fun_params fun_body} {
 
-        nsp_alias [gen_eval_path ${fun_name}] {lambda} ${fun_params} ${fun_body}
+        nsp_alias [gen_eval_name ${fun_name}] {lambda} ${fun_params} ${fun_body}
 
         # must be last so that it returns the dom node
         # otherwise, we would have to keep the resulting 
