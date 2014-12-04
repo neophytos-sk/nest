@@ -18,9 +18,9 @@ struct sql {
         varchar table
         proxy sql subquery
         struct inner_join {
-            proxy sql lhs
-            proxy sql rhs
-            proxy sql.mk_condition_t on
+            required proxy sql lhs
+            required proxy sql rhs
+            required proxy sql.mk_condition_t on
         }
     }
 
