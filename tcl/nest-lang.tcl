@@ -613,6 +613,7 @@ define_lang ::nest::lang {
     forward {optional} qualifier_helper optional_p true
     forward {required} qualifier_helper optional_p false
     forward {xor} qualifier_helper xor
+    forward {private} qualifier_helper access private
 
     ## data types
     meta {class} {class {type_helper}} base_type

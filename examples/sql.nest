@@ -1,12 +1,14 @@
 struct sql {
     
-    struct condition_t {
+    private struct condition_t {
         varchar op
         varchar lhs
         varchar rhs
     }
 
-    fun mk_condition_t {lhs op rhs} {
+    private fun mk_condition_t {expr} {
+        lassign $expr lhs op rhs
+
         sql.condition_t "" {
             op $op
             lhs $lhs
@@ -14,19 +16,26 @@ struct sql {
         }
     }
 
-    struct from_t {
-        xor A varchar table
-        xor A proxy sql subquery
-        xor A struct inner_join {
-            proxy sql lhs
-            proxy sql rhs
-            proxy sql.mk_condition_t on
-        }
+    private struct join_t {
+        proxy sql lhs
+        proxy sql rhs
+        proxy sql.mk_condition_t on
     }
+
+    private struct from_t {
+        multiple varchar table
+        multiple proxy sql subquery
+        multiple proxy sql.join_t inner_join
+        multiple proxy sql.join_t left_outer_join
+        multiple proxy sql.join_t right_outer_join
+        multiple proxy sql.join_t natural_join
+    }
+
 
     optional varchar scope = {}
     optional multiple varchar select = {}
-    from_t from
+    required from_t from
+    optional multiple proxy sql.mk_condition_t where
 
 }
 
@@ -70,7 +79,27 @@ sql query_posts_3 {
         inner_join pc {
             lhs p { from { table blog_posts } }
             rhs c { from { table blog_categories } }
-            on p.category_id = c.id 
+            on {p.category_id = c.id}
         }
     }
 }
+
+sql query_posts_4 {
+    scope {user}
+    multiple select {
+        title
+        body
+        date
+        author
+    }
+    from {
+        inner_join pc {
+            lhs p { from { table blog_posts } }
+            rhs c { from { table blog_categories } }
+            on {p.category_id = c.id}
+        }
+        subquery stats { from { table blog_stats } }
+    }
+    multiple where {{stats.post_id = pc.p.id} {stats.category_id = pc.c.id}}
+}
+
