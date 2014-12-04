@@ -35,7 +35,7 @@ struct sql {
     optional varchar scope = {}
     optional multiple varchar select = {}
     required from_t from
-    optional multiple proxy sql.mk_condition_t where
+    multiple proxy sql.mk_condition_t where
 
 }
 

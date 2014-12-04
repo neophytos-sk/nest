@@ -176,7 +176,7 @@ define_lang ::nest::lang {
 
     nsp_alias {interp_execNodeCmd} {lambda} {tag name type args} {
         if { [dom_p] } {
-            set cmd [list ::dom::execNodeCmd elementNode ${tag} -x-name ${name} -x-type ${type} {*}${args}]
+            set cmd [list ::dom::execNodeCmd elementNode ${tag} -x-name ${name} -x-tag ${type} {*}${args}]
             uplevel ${cmd}
         } else {
             # TODO: remove -x-attributes from args, one way or another
@@ -222,52 +222,28 @@ define_lang ::nest::lang {
             $node setAttribute x-proxy [top_proxy]
         }
 
-        ###
-
-        if { ![debug_p] } {
-            return $node
-        }
-
-        set nsp [uplevel {namespace current}]
-
-        if {  $tag ne {base_type} } {
-
-            # $node appendFromScript {
-            #     struct.type [$node @x-type] ;# $tag
-            #     struct.name [$node @x-name] ;# $name
-            #     struct.nsp  [$node @x-nsp]  ;# $nsp
-            # }
-            ${node} appendFromScript {
-                init_slots $node {struct}
-            }
-
-            set decls [$node selectNodes {child::decl}]
-            foreach decl $decls {
-                $decl appendFromScript {
-                    # $decl appendFromScript {
-                    #     struct.slot.cons          [$decl @x-type]
-                    #     struct.slot.name          [$decl @x-name]
-                    #     struct.slot.default_value [$decl @x-default_value] (opt) 
-                    #     struct.slot.optional_p    [$decl @x-optional_p]    (opt)
-                    #     struct.slot.container     [$decl @x-container]     (opt)
-                    # }
-                    init_slots $decl {struct.slot}
+        if {0} {
+            if { [string match *_t [lindex [split $id {.}] 0]] && $tag ni {meta} } {
+                ${node} appendFromScript {
+                    init_node $node $id
                 }
-                #$decl setAttribute x-meta {struct.slot}
             }
-
-            #$node setAttribute x-meta ${name}
-
         }
 
         return $node
 
     }
 
-    proc init_slots {node struct} {
+    proc init_node {node id} {
+        # log "initing [$node asXML]"
+        set tag [$node @x-tag]
         foreach attname [$node attributes] {
             set identifier [string range [set attname] 2 end]
-            ${struct}.[set identifier] [$node @[set attname]]
+            # log "initing identifier $identifier (id=$id eval_path=[eval_path])"
+            if { ${tag} eq {struct_t.attribute_t} } {
+                set identifier ${tag}.${identifier}
+            }
+            ${identifier} [$node @[set attname]]
         }
     }
 
@@ -461,6 +437,10 @@ define_lang ::nest::lang {
         {forward} $forward_name {*}$dotted_nest
 
         log "(declaration done) decl_type=$decl_type decl_name=$decl_name forward_name=$forward_name"
+
+        if { [top_proxy] ne {} } {
+            $node setAttribute x-proxy [top_proxy]
+        }
 
         return $node
 
@@ -740,6 +720,76 @@ define_lang ::nest::lang {
         with_fwd proxy nest [list with_proxy [gen_eval_name ${name}] ${target}] ${name} {
             target $target
             name $name
+        }
+
+    }
+
+    keyword code
+    forward {code} {lambda} {script} {
+        ::dom::execNodeCmd elementNode code -x-lang "tcl" { ::nest::lang::t $script }
+        uplevel $script
+    }
+
+    if {0} {
+        meta {class} {class {object}} {struct_t} {
+        
+            nest type_helper data_t
+
+            required data_t id
+            required data_t name
+            required data_t tag
+            optional data_t proxy
+
+            multiple struct_t attribute_t {
+                data_t id
+                data_t name
+                data_t tag
+                data_t default_value = {struct_t.varchar_t}
+                data_t optional_p
+                data_t container
+                data_t proxy
+            }
+
+            multiple struct_t proxy_t {
+                data_t target
+                data_t name
+            }
+
+            code {
+                rename struct_t.proxy_t struct_t._proxy_t
+
+                nsp_alias {struct_t.proxy_t} {lambda} {target name} {
+                    with_fwd proxy_t nest [list with_proxy [gen_eval_name ${name}] ${target}] ${name} {
+                        struct_t.proxy_t.target $target
+                        struct_t.proxy_t.name $name
+                    }
+                }
+            }
+
+            proxy_t attribute_t varchar_t
+            proxy_t attribute_t varint_t
+            proxy_t attribute_t bool_t
+            proxy_t attribute_t date_t
+
+            # Without a quantifier, the name does not exist
+            # as far as "which" is concerned, except
+            # within the scope of the block it was defined.
+            #
+            # IOW slot_t, attribute_t, and proxy_t do
+            # not exist outside the scope of this block.
+
+            required varchar_t id
+            required varchar_t name
+            required varchar_t tag
+            optional varchar_t proxy
+
+        }
+
+
+        struct_t message_t {
+            varchar_t title
+            varchar_t body
+            date_t date
         }
 
     }

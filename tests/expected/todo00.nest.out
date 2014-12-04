@@ -1,57 +1,61 @@
 <lang x-nsp="::nest::lang">
-    <decl x-name="base_type" x-type="meta" x-id="base_type"/>
-    <decl x-name="varchar" x-type="base_type" x-id="varchar"/>
-    <decl x-name="bool" x-type="base_type" x-id="bool"/>
-    <decl x-name="varint" x-type="base_type" x-id="varint"/>
-    <decl x-name="byte" x-type="base_type" x-id="byte"/>
-    <decl x-name="int16" x-type="base_type" x-id="int16"/>
-    <decl x-name="int32" x-type="base_type" x-id="int32"/>
-    <decl x-name="int64" x-type="base_type" x-id="int64"/>
-    <decl x-name="double" x-type="base_type" x-id="double"/>
-    <decl x-name="date" x-type="base_type" x-id="date"/>
-    <decl x-name="struct" x-type="meta" x-id="struct">
-        <decl x-name="id" x-type="varchar"/>
-        <decl x-name="name" x-type="varchar"/>
-        <decl x-name="type" x-type="varchar"/>
-        <decl x-name="nsp" x-type="varchar"/>
-        <decl x-name="default_value" x-type="varchar" x-default_value=""/>
-        <decl x-name="slot" x-type="struct" x-id="struct.slot" x-default_value="" x-container="multiple">
-            <decl x-name="id" x-type="varchar"/>
-            <decl x-name="name" x-type="varchar"/>
-            <decl x-name="type" x-type="varchar"/>
-            <decl x-name="default_value" x-type="varchar" x-default_value=""/>
-            <decl x-name="optional_p" x-type="bool" x-default_value="false"/>
-            <decl x-name="container" x-type="varchar" x-default_value=""/>
+    <decl x-name="base_type" x-tag="meta" x-id="base_type"/>
+    <decl x-name="varchar" x-tag="base_type" x-id="varchar"/>
+    <decl x-name="bool" x-tag="base_type" x-id="bool"/>
+    <decl x-name="varint" x-tag="base_type" x-id="varint"/>
+    <decl x-name="byte" x-tag="base_type" x-id="byte"/>
+    <decl x-name="int16" x-tag="base_type" x-id="int16"/>
+    <decl x-name="int32" x-tag="base_type" x-id="int32"/>
+    <decl x-name="int64" x-tag="base_type" x-id="int64"/>
+    <decl x-name="double" x-tag="base_type" x-id="double"/>
+    <decl x-name="date" x-tag="base_type" x-id="date"/>
+    <decl x-name="struct" x-tag="meta" x-id="struct">
+        <decl x-name="id" x-tag="varchar"/>
+        <decl x-name="name" x-tag="varchar"/>
+        <decl x-name="type" x-tag="varchar"/>
+        <decl x-name="nsp" x-tag="varchar"/>
+        <decl x-name="default_value" x-tag="varchar" x-default_value=""/>
+        <decl x-name="slot" x-tag="struct" x-id="struct.slot" x-default_value="" x-container="multiple">
+            <decl x-name="id" x-tag="varchar"/>
+            <decl x-name="name" x-tag="varchar"/>
+            <decl x-name="type" x-tag="varchar"/>
+            <decl x-name="default_value" x-tag="varchar" x-default_value=""/>
+            <decl x-name="optional_p" x-tag="bool" x-default_value="false"/>
+            <decl x-name="container" x-tag="varchar" x-default_value=""/>
         </decl>
-        <decl x-name="pk" x-type="varchar"/>
-        <decl x-name="is_final_if_no_scope" x-type="bool"/>
+        <decl x-name="pk" x-tag="varchar"/>
+        <decl x-name="is_final_if_no_scope" x-tag="bool"/>
     </decl>
-    <decl x-name="fun" x-type="struct" x-id="fun">
-        <decl x-name="name" x-type="varchar"/>
-        <decl x-name="param" x-type="varchar" x-default_value="" x-container="multiple"/>
-        <decl x-name="body" x-type="varchar"/>
+    <decl x-name="fun" x-tag="struct" x-id="fun">
+        <decl x-name="name" x-tag="varchar"/>
+        <decl x-name="param" x-tag="varchar" x-default_value="" x-container="multiple"/>
+        <decl x-name="body" x-tag="varchar"/>
+    </decl>
+    <decl x-name="proxy" x-tag="struct" x-id="proxy">
+        <decl x-name="target" x-tag="varchar"/>
+        <decl x-name="name" x-tag="varchar"/>
     </decl>
 </lang>
 
 <nest>
-    <decl x-name="todotask_t" x-type="struct" x-id="todotask_t">
-        <decl x-name="description" x-type="varchar"/>
-        <decl x-name="done" x-type="bool"/>
-        <decl x-name="due" x-type="date"/>
+    <decl x-name="todotask_t" x-tag="struct" x-id="todotask_t">
+        <decl x-name="description" x-tag="varchar"/>
+        <decl x-name="done" x-tag="bool"/>
+        <decl x-name="due" x-tag="date"/>
     </decl>
-    <decl x-name="todolist_t" x-type="struct" x-id="todolist_t">
-        <decl x-name="task" x-type="todotask_t" x-id="todolist_t.task" x-container="multiple"/>
+    <decl x-name="todolist_t" x-tag="struct" x-id="todolist_t">
+        <decl x-name="task" x-tag="todotask_t" x-id="todolist_t.task" x-container="multiple"/>
     </decl>
-    <inst x-name="worktodo" x-type="todolist_t" x-id="worktodo">
-        <inst x-name="todolist_t.task" x-type="todotask_t">
-            <inst x-name="todotask_t.description" x-type="varchar">finish user interface for X</inst>
-            <inst x-name="todotask_t.done" x-type="bool">false</inst>
-            <inst x-name="todotask_t.due" x-type="date">tomorrow</inst>
+    <inst x-name="worktodo" x-tag="todolist_t" x-id="worktodo">
+        <inst x-name="todolist_t.task" x-tag="todotask_t">
+            <inst x-name="todotask_t.description" x-tag="varchar">finish user interface for X</inst>
+            <inst x-name="todotask_t.done" x-tag="bool">false</inst>
+            <inst x-name="todotask_t.due" x-tag="date">tomorrow</inst>
         </inst>
-        <inst x-name="todolist_t.task" x-type="todotask_t">
-            <inst x-name="todotask_t.description" x-type="varchar">xmas party 2014</inst>
-            <inst x-name="todotask_t.due" x-type="date">2014-12-23</inst>
-            <inst x-name="todotask_t.done" x-type="bool">false</inst>
+        <inst x-name="todolist_t.task" x-tag="todotask_t">
+            <inst x-name="todotask_t.description" x-tag="varchar">xmas party 2014</inst>
+            <inst x-name="todotask_t.due" x-tag="date">2014-12-23</inst>
+            <inst x-name="todotask_t.done" x-tag="bool">false</inst>
         </inst>
     </inst>
 </nest>
