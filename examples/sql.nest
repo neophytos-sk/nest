@@ -14,19 +14,19 @@ struct sql {
         }
     }
 
-    struct from {
-        varchar table
-        proxy sql subquery
-        struct inner_join {
-            required proxy sql lhs
-            required proxy sql rhs
-            required proxy sql.mk_condition_t on
+    struct from_t {
+        xor A varchar table
+        xor A proxy sql subquery
+        xor A struct inner_join {
+            proxy sql lhs
+            proxy sql rhs
+            proxy sql.mk_condition_t on
         }
     }
 
     optional varchar scope = {}
     optional multiple varchar select = {}
-    required from from
+    from_t from
 
 }
 
