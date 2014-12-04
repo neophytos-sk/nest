@@ -1,41 +1,37 @@
+struct sql {
+    
+    struct condition_t {
+        varchar op
+        varchar lhs
+        varchar rhs
+    }
 
-# TODO: rename "sql_t" back to "sql" when done debugging 
-# issues with "from.sql" and "from.inner_join.sql"
-
-struct sql_t {
-
-    struct from {
-        optional varchar table
-
-        # problem with optional is that it ends up reporting
-        # an x-type="optional" of from.sql, without optional we
-        # get an x-type="struct", also instance gets x-type="sql_t"
-        # as opposed to x-type="sql_t.from.sql", which is what we want
-        #
-        # optional nest sql_t sql
-
-        nest sql_t sql
-        
-        
-        optional struct inner_join {
-
-            # same comments as above, 
-            # should report an x-type="sql_t.from.inner_join.sql"
-            #
-            # multiple nest sql_t sql
-
-            nest sql_t sql
-
-            varchar on
+    fun mk_condition_t {lhs op rhs} {
+        sql.condition_t "" {
+            op $op
+            lhs $lhs
+            rhs $rhs
         }
     }
+
+    struct from {
+        varchar table
+        proxy sql subquery
+        struct inner_join {
+            proxy sql lhs
+            proxy sql rhs
+            proxy sql.mk_condition_t on
+        }
+    }
+
     optional varchar scope = {}
     optional multiple varchar select = {}
     required from from
 
 }
 
-sql_t query_posts_1 {
+
+sql query_posts_1 {
     scope {user}
     multiple select {
         title
@@ -46,7 +42,7 @@ sql_t query_posts_1 {
     from { table blog_posts }
 }
 
-sql_t query_posts_2 {
+sql query_posts_2 {
     scope {user}
     multiple select {
         title
@@ -55,14 +51,14 @@ sql_t query_posts_2 {
         author
     }
     from {
-        sql blog_posts {
+        subquery blog_posts {
             multiple select {title body date author category_id}
             from { table blog_posts }
         }
     }
 }
 
-sql_t query_posts_3 {
+sql query_posts_3 {
     scope {user}
     multiple select {
         title
@@ -72,9 +68,9 @@ sql_t query_posts_3 {
     }
     from {
         inner_join pc {
-            sql p { from { table blog_posts } }
-            sql c { from { table blog_categories } }
-            on { p.category_id = c.id }
+            lhs p { from { table blog_posts } }
+            rhs c { from { table blog_categories } }
+            on p.category_id = c.id 
         }
     }
 }

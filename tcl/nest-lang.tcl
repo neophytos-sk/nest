@@ -38,6 +38,7 @@ define_lang ::nest::lang {
     variable stack_fwd [list]
     variable stack_mode [list {inst}]  ;# default mode is {inst}
     variable stack_eval [list]
+    variable stack_proxy [list]
 
     variable eval_path ""
 
@@ -143,6 +144,9 @@ define_lang ::nest::lang {
         {pop_ctx}           {stack_pop stack_nest}
         {top_ctx}           {stack_top stack_nest}
         {with_ctx}          {stack_with stack_nest}
+
+        {with_proxy}         {stack_with stack_proxy}
+        {top_proxy}          {stack_top stack_proxy}
         
         {push_eval}         {stack_push stack_eval}
         {pop_eval}          {stack_pop stack_eval}
@@ -198,8 +202,6 @@ define_lang ::nest::lang {
         # forward ${id} [list @ ${id} ${nest}]
         if { [top_mode] eq {decl} } {
 
-            set ::__nest($id) ${nest}
-
             set ctx [list ${tag} ${id}]
             set nest [list with_ctx ${ctx} {*}${nest}]
             {forward} ${id} {*}${nest}
@@ -216,6 +218,9 @@ define_lang ::nest::lang {
 
         set cmd [list {node} [top_mode] $name $tag -x-id ${id} {*}$args]
         set node [uplevel ${cmd}]
+        if { [top_proxy] ne {} } {
+            $node setAttribute x-proxy [top_proxy]
+        }
 
         ###
 
@@ -607,6 +612,7 @@ define_lang ::nest::lang {
     forward {multiple} container_helper container multiple
     forward {optional} qualifier_helper optional_p true
     forward {required} qualifier_helper optional_p false
+    forward {xor} qualifier_helper xor
 
     ## data types
     meta {class} {class {type_helper}} base_type
@@ -660,8 +666,6 @@ define_lang ::nest::lang {
         ${typefirst} {first}
         ${typesecond} {second}
     } {object_helper}
-
-
 
     ## Metaclass struct
 
@@ -719,6 +723,22 @@ define_lang ::nest::lang {
             name ${fun_name}
             multiple param ${fun_params}
             body ${fun_body}
+        }
+
+    }
+
+    struct {proxy} {
+        varchar target
+        varchar name
+    }
+
+    # needs more work
+    # struct proxy { varchar slot_type ; varchar slot_name }
+    shadow_alias {proxy} {lambda} {target name} {
+
+        with_fwd proxy nest [list with_proxy [gen_eval_name ${name}] ${target}] ${name} {
+            target $target
+            name $name
         }
 
     }
