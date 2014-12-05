@@ -189,8 +189,18 @@ define_lang ::nest::lang {
         }
     }
 
-    nsp_alias {node} {lambda} {tag name type args} \
-        {uplevel [list with_eval ${name} interp_execNodeCmd ${tag} ${name} ${type} {*}${args}]}
+    nsp_alias {node} {lambda} {tag name type args} {
+        set cmd [list with_eval ${name} interp_execNodeCmd ${tag} ${name} ${type} {*}${args}]
+        set node [uplevel ${cmd}]
+
+        if { [top_proxy] ne {} } {
+            $node setAttribute x-proxy [top_proxy]
+        }
+
+        return $node
+    }
+
+
 
     # nest argument holds nested calls in the procs below
     proc nest {nest name args} {
@@ -411,17 +421,9 @@ define_lang ::nest::lang {
         set forward_name [gen_eval_name $decl_name]
         set ctx [list $decl_type $decl_name]
         set dotted_nest [list with_mode {inst} $decl_type $forward_name]
-        set dotted_nest [list with_ctx $ctx {*}$dotted_nest] 
+        set dotted_nest [list with_proxy [top_proxy] with_ctx $ctx {*}$dotted_nest] 
         {forward} $forward_name {*}$dotted_nest
-
-        log "(declaration done) decl_type=$decl_type decl_name=$decl_name forward_name=$forward_name"
-
-        if { [top_proxy] ne {} } {
-            $node setAttribute x-proxy [top_proxy]
-        }
-
         return $node
-
     }
 
     proc typeinst {args} {
@@ -438,7 +440,8 @@ define_lang ::nest::lang {
         }
         set inst_arg0 [list ::nest::lang::interp_t $inst_arg0]
         set cmd [list with_mode {inst} {node} {inst} ${inst_name} ${inst_type} ${inst_arg0}]
-        return [uplevel ${cmd}]
+        set node [uplevel ${cmd}]
+        return $node
     }
 
     # case for composite or "unknown" types (e.g. pair<varchar,varint)
@@ -448,7 +451,8 @@ define_lang ::nest::lang {
         set inst_type $ctx_tag
         set inst_name $tag   ;# for inst_type=struct.slot => tag=struct.name => arg0=name
         set cmd [list with_mode {inst} {node} {inst} ${inst_name} ${inst_type} {*}$args]
-        return [uplevel ${cmd}]
+        set node [uplevel ${cmd}]
+        return $node
     }
 
 

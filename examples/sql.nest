@@ -1,49 +1,85 @@
 struct sql {
     
-    private struct condition_t {
+    private struct select_expr {
+        varchar column_name
+        varchar column_alias
+    }
+
+    private struct condition_expr {
         varchar op
         varchar lhs
         varchar rhs
     }
 
-    private fun mk_condition_t {expr} {
+    private fun mk_condition {expr} {
         lassign $expr lhs op rhs
 
-        sql.condition_t "" {
+        sql.condition_expr "" {
             op $op
             lhs $lhs
             rhs $rhs
         }
     }
+    
+    private fun mk_select {args} {
 
-    private struct join_t {
+        if { [llength $args] % 2 == 1 } { 
+            set expr [lindex $args end]
+            set args [lrange $args 0 end-1]
+        }
+
+        set llength_expr [llength $expr]
+        if { [llength $expr] == 1 } {
+            sql.select_expr $expr {*}$args {
+                column_name $expr
+            }
+        } elseif { $llength_expr == 3 } {
+            lassign $expr column_name _as_ column_alias
+            if { $_as_ ne {as} } {
+                error "must be column_name ?as column_alias?"
+            }
+            sql.select_expr $column_name {*}$args {
+                column_name $column_name
+                column_alias $column_alias
+            }
+        } else {
+            sql.select_expr "" {*}$args $expr
+        }
+    }
+
+    private struct join_expr {
         proxy sql lhs
         proxy sql rhs
-        proxy sql.mk_condition_t on
+
+        # should not be a proxy but a shadow alias, will do for now
+        proxy sql.mk_condition on
     }
 
-    private struct from_t {
+    private struct from_clause {
         multiple varchar table
         multiple proxy sql subquery
-        multiple proxy sql.join_t inner_join
-        multiple proxy sql.join_t left_outer_join
-        multiple proxy sql.join_t right_outer_join
-        multiple proxy sql.join_t natural_join
+        multiple proxy sql.join_expr inner_join
+        multiple proxy sql.join_expr left_outer_join
+        multiple proxy sql.join_expr right_outer_join
+        multiple proxy sql.join_expr natural_join
     }
+
+    # should not be a proxy but a shadow alias, will do for now
+    private optional multiple proxy sql.mk_select select_clause
+    private optional multiple proxy sql.mk_condition where_clause
 
 
     optional varchar scope = {}
-    optional multiple varchar select = {}
-    required from_t from
-    multiple proxy sql.mk_condition_t where
-
+    required sql.from_clause from
+    proxy sql.select_clause select
+    proxy sql.where_clause where
 }
 
 
 sql query_posts_1 {
     scope {user}
     multiple select {
-        title
+        {title as post_title}
         body
         date
         author
@@ -79,7 +115,7 @@ sql query_posts_3 {
         inner_join pc {
             lhs p { from { table blog_posts } }
             rhs c { from { table blog_categories } }
-            on {p.category_id = c.id}
+            on { p.category_id = c.id }
         }
     }
 }
