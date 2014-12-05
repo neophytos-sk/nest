@@ -222,31 +222,9 @@ define_lang ::nest::lang {
             $node setAttribute x-proxy [top_proxy]
         }
 
-        if {0} {
-            if { [string match *_t [lindex [split $id {.}] 0]] && $tag ni {meta} } {
-                ${node} appendFromScript {
-                    init_node $node $id
-                }
-            }
-        }
-
         return $node
 
     }
-
-    proc init_node {node id} {
-        # log "initing [$node asXML]"
-        set tag [$node @x-tag]
-        foreach attname [$node attributes] {
-            set identifier [string range [set attname] 2 end]
-            # log "initing identifier $identifier (id=$id eval_path=[eval_path])"
-            if { ${tag} eq {struct_t.attribute_t} } {
-                set identifier ${tag}.${identifier}
-            }
-            ${identifier} [$node @[set attname]]
-        }
-    }
-
 
     proc which {name} {
 
@@ -573,6 +551,19 @@ define_lang ::nest::lang {
 
     proc {container_helper} {args} {::nest::lang::container[top_mode] {*}${args}}
 
+    proc gen_shadow_name {name} { return _${name} }
+
+    nsp_alias {shadow_alias} {lambda} {name args} {
+        rename ${name} [gen_shadow_name ${name}]
+        set cmd [list nsp_alias ${name} {*}${args}]
+        uplevel ${cmd}
+    }
+
+    nsp_alias {shadow} {lambda} {name args} {
+        set cmd [list [gen_shadow_name ${name}] {*}${args}]
+        uplevel ${cmd}
+    }
+
     ### THE LANGUAGE
 
     ## basis of class/object methods
@@ -594,37 +585,6 @@ define_lang ::nest::lang {
     forward {required} qualifier_helper optional_p false
     forward {xor} qualifier_helper xor
     forward {private} qualifier_helper access private
-
-    ## data types
-    meta {class} {class {type_helper}} base_type
-
-    # a varying-length text string encoded using UTF-8 encoding
-    base_type "varchar"
-
-    # a boolean value (true or false)
-    base_type "bool"
-
-    # a varying-bit signed integer
-    base_type "varint"
-
-    # an 8-bit signed integer
-    base_type "byte"
-
-    # a 16-bit signed integer
-    base_type "int16"
-
-    # a 32-bit signed integer
-    base_type "int32"
-
-    # a 64-bit signed integer
-    base_type "int64"
-
-    # a 64-bit floating point number
-    base_type "double"
-
-    # timestamp/date
-    base_type "date"
-
 
     ## Generic Types
 
@@ -648,48 +608,89 @@ define_lang ::nest::lang {
         ${typesecond} {second}
     } {object_helper}
 
-    ## Metaclass struct
 
-    meta {class} {class {object}} {struct} {
-        varchar id
-        varchar name
-        varchar type
-        varchar nsp
-        varchar default_value = ""
-
-        multiple struct slot = {} {
-            varchar id
-            varchar name
-            varchar type
-            varchar default_value = ""
-            bool optional_p = false
-            varchar container = ""
-        }
-
-        varchar pk
-        bool is_final_if_no_scope
-
+    keyword code
+    forward {code} {lambda} {script} {
+        ::dom::execNodeCmd elementNode code { ::nest::lang::t $script }
+        uplevel $script
     }
 
-    ## self procs
+    meta {class} {class {object}} {struct} {
+    
+        multiple nest type_helper attribute {
+
+            required struct.attribute x-id
+            required struct.attribute x-tag
+            required struct.attribute x-name
+            optional struct.attribute x-proxy
+
+            optional struct.attribute x-default_value = {}
+            optional struct.attribute x-optional_p
+            optional struct.attribute x-container
+
+        }
+
+        multiple struct proxy {
+            attribute target
+            attribute name
+        }
+
+        code {
+            rename struct.proxy struct._proxy
+
+            nsp_alias {struct.proxy} {lambda} {target name} {
+                with_fwd proxy nest [list with_proxy [gen_eval_name ${name}] ${target}] ${name} {
+                    struct.proxy.target $target
+                    struct.proxy.name $name
+                }
+            }
+        }
+
+        # a varying-length text string encoded using UTF-8 encoding
+        proxy struct.attribute "varchar"
+
+        # a boolean value (true or false)
+        proxy struct.attribute "bool"
+
+        # a varying-bit signed integer
+        proxy struct.attribute "varint"
+
+        # date timestamp
+        proxy struct.attribute "date"
+
+        # an 8-bit signed integer
+        proxy struct.attribute "byte"
+
+        # a 16-bit signed integer
+        proxy struct.attribute "int16"
+
+        # a 32-bit signed integer
+        proxy struct.attribute "int32"
+
+        # a 64-bit signed integer
+        proxy struct.attribute "int64"
+
+        # a 64-bit floating point number
+        proxy struct.attribute "double"
+
+        # Without a quantifier, the name does not exist
+        # as far as "which" is concerned (TODO), except
+        # within the scope of the block it was defined.
+
+        required varchar x-id
+        required varchar x-name
+        required varchar x-tag
+        optional varchar x-proxy
+
+        optional varchar pk
+        optional varchar is_final_if_no_scope
+
+    }
 
     struct {fun} {
         varchar name
         multiple varchar param = {}
         varchar body
-    }
-
-    proc gen_shadow_name {name} { return _${name} }
-
-    nsp_alias {shadow_alias} {lambda} {name args} {
-        rename ${name} [gen_shadow_name ${name}]
-        set cmd [list nsp_alias ${name} {*}${args}]
-        uplevel ${cmd}
-    }
-
-    nsp_alias {shadow} {lambda} {name args} {
-        set cmd [list [gen_shadow_name ${name}] {*}${args}]
-        uplevel ${cmd}
     }
 
     shadow_alias {fun} {lambda} {fun_name fun_params fun_body} {
@@ -708,100 +709,13 @@ define_lang ::nest::lang {
 
     }
 
-    struct {proxy} {
-        varchar target
-        varchar name
-    }
-
-    # needs more work
-    # struct proxy { varchar slot_type ; varchar slot_name }
-    shadow_alias {proxy} {lambda} {target name} {
-
-        with_fwd proxy nest [list with_proxy [gen_eval_name ${name}] ${target}] ${name} {
-            target $target
-            name $name
-        }
-
-    }
-
-    keyword code
-    forward {code} {lambda} {script} {
-        ::dom::execNodeCmd elementNode code -x-lang "tcl" { ::nest::lang::t $script }
-        uplevel $script
-    }
-
-    if {0} {
-        meta {class} {class {object}} {struct_t} {
-        
-            nest type_helper data_t
-
-            required data_t id
-            required data_t name
-            required data_t tag
-            optional data_t proxy
-
-            multiple struct_t attribute_t {
-                data_t id
-                data_t name
-                data_t tag
-                data_t default_value = {struct_t.varchar_t}
-                data_t optional_p
-                data_t container
-                data_t proxy
-            }
-
-            multiple struct_t proxy_t {
-                data_t target
-                data_t name
-            }
-
-            code {
-                rename struct_t.proxy_t struct_t._proxy_t
-
-                nsp_alias {struct_t.proxy_t} {lambda} {target name} {
-                    with_fwd proxy_t nest [list with_proxy [gen_eval_name ${name}] ${target}] ${name} {
-                        struct_t.proxy_t.target $target
-                        struct_t.proxy_t.name $name
-                    }
-                }
-            }
-
-            proxy_t attribute_t varchar_t
-            proxy_t attribute_t varint_t
-            proxy_t attribute_t bool_t
-            proxy_t attribute_t date_t
-
-            # Without a quantifier, the name does not exist
-            # as far as "which" is concerned, except
-            # within the scope of the block it was defined.
-            #
-            # IOW slot_t, attribute_t, and proxy_t do
-            # not exist outside the scope of this block.
-
-            required varchar_t id
-            required varchar_t name
-            required varchar_t tag
-            optional varchar_t proxy
-
-        }
-
-
-        struct_t message_t {
-            varchar_t title
-            varchar_t body
-            date_t date
-        }
-
-    }
-
-    namespace export "struct" "varchar" "bool" "varint" "byte" "int16" "int32" "int64" "double" "multiple"
+    namespace export "struct"
 
 } lang_doc
 
 if { [::nest::debug::dom_p] } {
     puts [$lang_doc asXML]
 }
-
 
 define_lang ::nest::data {
 

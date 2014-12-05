@@ -1,6 +1,6 @@
 with_mode decl eval {
-    multiple varchar words
-    varint count
+    multiple struct.varchar words
+    struct.varint count
 }
 
 multiple words {abc def ghi}

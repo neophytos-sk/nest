@@ -1,6 +1,7 @@
 struct email {
     varchar name = ""
     varchar address
+    pk address
 }
 
 struct message {
