@@ -153,7 +153,7 @@ namespace eval ::nest::core {
             [list set_alias ${name} ${args}]]
         uplevel ${cmd}
     }}
-    {*}${nspAliasCmd} ${nsp} set_alias ${nsp}::array_setter alias
+    {*}${nspAliasCmd} ${nsp} set_alias array_setter alias
     {*}${nspAliasCmd} ${nsp} nsp_alias {*}${nspAliasCmd}
 
     foreach {name cmd} {
