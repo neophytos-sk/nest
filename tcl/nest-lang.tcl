@@ -1,205 +1,28 @@
-package require tdom
-
 package provide nest 1.5
 
 define_lang ::nest::lang {
 
-    # namespace import ::nest::core::* 
+    namespace import ::nest::core::* 
 
-    # =========
-    # stack_nest
-    # =========
-    #
-    # each context is a pair of ctx_tag, and ctx_name
-    #
-    # EXAMPLE 1:
-    #
-    # struct slot {
-    #     varchar name
-    #     varchar type
-    #     varchar default
-    #     -> bool optional_p = false
-    #     varchar container_type
-    #     varchar subtype
-    # }
-    # 
-    # stack_nest = {base_type bool} {meta struct}
-    #
-    # EXAMPLE 2:
-    # 
-    # struct email {
-    #   varchar name
-    #   -> varchar address
-    # }
-    #
-    # stack_nest = {base_type varchar} {meta struct}
-
-    variable stack_nest [list]
-    variable stack_fwd [list]
-    variable stack_mode [list {inst}]  ;# default mode is {inst}
-    variable stack_eval [list]
-    variable stack_proxy [list]
-
-    variable eval_path ""
-
-    array set alias [list]
-    array set forward [list]
-    array set dispatcher [list]
-    array set typeof [list]
- 
-    proc array_setter {arrayname name value} {
-        variable ${arrayname}
-        set ${arrayname}(${name}) ${value}
-    }
-    proc array_getter {arrayname name} {
-        variable ${arrayname}
-        set ${arrayname}(${name})
-    }
-    proc array_exister {arrayname name} {
-        variable ${arrayname}
-        info exists ${arrayname}(${name})
-    }
-
-    proc stack_push {varname value} {
-        variable ${varname}
-        set ${varname} [linsert [set ${varname}] 0 ${value}]
-    }
-    proc stack_pop {varname} {
-        variable ${varname}
-        set ${varname} [lreplace [set ${varname}] 0 0]
-    }
-    proc stack_top {varname} { 
-        variable ${varname}
-        lindex [set ${varname}] 0
-    }
-    proc stack_with {varname value args} {
-        stack_push ${varname} ${value}
-        set result [uplevel ${args}]
-        stack_pop ${varname}
-        return ${result}
-    }
-
-    proc {with_eval} {name args} {
-        variable eval_path
-        set old_eval_path ${eval_path}
-        set eval_path [join [concat ${eval_path} ${name}] {.}]
-        push_eval ${name}
-        set result [uplevel ${args}]
-        pop_eval
-        set eval_path ${old_eval_path}
-        return ${result}
-    }
-
-    proc {eval_path} {} {
-        variable {eval_path}
-        return ${eval_path}
-    }
-
-    proc {gen_eval_name} {name} {
-        variable {eval_path}
-        join [concat ${eval_path} ${name}] {.}
-    }
-
-
-    # Wow!!!
     set nsp [namespace current]
-    set {aliasCmd} {lambda {nsp name arg0 args} {
-        interp_alias ${nsp}::${name} ${nsp}::${arg0} {*}${args}
-        set_alias ${name} ${args}
-    }}
-    {*}${aliasCmd} ${nsp} {set_alias} array_setter alias
-    {*}${aliasCmd} ${nsp} {alias} {*}${aliasCmd}
-        
-    # binds nsp argument to current namespace
-    alias ${nsp} {nsp_alias} alias ${nsp}
-
-    foreach {name cmd} {
-
-        {get_alias}         {array_getter alias}
-        {exists_alias}      {array_exister alias}
-
-        {set_typeof}        {array_setter typeof}
-        {get_typeof}        {array_getter typeof}
-        {exists_typeof}     {array_exister typeof}
-
-        {set_forward}       {array_setter forward}
-        {get_forward}       {array_getter forward}
-        {exists_forward}    {array_exister forward}
-
-        {set_dispatcher}    {array_setter dispatcher}
-        {get_dispatcher}    {array_getter dispatcher}
-        {exists_dispatcher} {array_exister dispatcher}
-
-        {push_fwd}          {stack_push stack_fwd}
-        {pop_fwd}           {stack_pop stack_fwd}
-        {top_fwd}           {stack_top stack_fwd}
-        {with_fwd}          {stack_with stack_fwd}
-
-        {push_mode}         {stack_push stack_mode}
-        {pop_mode}          {stack_pop stack_mode}
-        {top_mode}          {stack_top stack_mode}
-        {with_mode}         {stack_with stack_mode}
-
-        {push_ctx}          {stack_push stack_nest}
-        {pop_ctx}           {stack_pop stack_nest}
-        {top_ctx}           {stack_top stack_nest}
-        {with_ctx}          {stack_with stack_nest}
-
-        {with_proxy}         {stack_with stack_proxy}
-        {top_proxy}          {stack_top stack_proxy}
-        
-        {push_eval}         {stack_push stack_eval}
-        {pop_eval}          {stack_pop stack_eval}
-        {top_eval}          {stack_top stack_eval}
-
-    } {
-        nsp_alias ${name} {*}${cmd}
-    }
 
     # forward is an alias that pushes its name to stack_fwd
-    nsp_alias {forward} {lambda} {name args} {
-        {set_forward} ${name} ${args}
-        {nsp_alias} ${name} {with_fwd} ${name} {*}${args}
+    nsp_alias ${nsp} forward lambda {name args} {
+        set_forward ${name} ${args}
+        nsp_alias [namespace current] ${name} {::nest::core::with_fwd} ${name} {*}${args}
     }
 
-    forward {meta} {lambda} {metaCmd args} {{*}$metaCmd {*}$args}
-    forward {keyword} ::dom::createNodeCmd elementNode
+    forward meta lambda {metaCmd args} {{*}$metaCmd {*}$args}
+    forward keyword ::dom::createNodeCmd elementNode
 
-    keyword {decl}
-    keyword {inst}
+    keyword decl
+    keyword inst
 
-    dom createNodeCmd textNode t
-
-    proc nt {text} { t -disableOutputEscaping ${text} }
-
-    nsp_alias {interp_t} interp_if dom_p t
-
-    nsp_alias {interp_execNodeCmd} {lambda} {tag name type args} {
-        if { [dom_p] } {
-            set cmd [list ::dom::execNodeCmd elementNode ${tag} -x-name ${name} -x-tag ${type} {*}${args}]
-            uplevel ${cmd}
-        } else {
-            # TODO: remove -x-attributes from args, one way or another
-            if { [llength $args] % 2 == 1 } {
-                uplevel [lindex ${args} end]
-            } else {
-                # do nothing, dom node attributes only in args
-            }
-            return {::nest::lang::interp_noop}
-        }
-    }
-
-    nsp_alias {node} {lambda} {tag name type args} {
-        set cmd [list with_eval ${name} interp_execNodeCmd ${tag} ${name} ${type} {*}${args}]
+    nsp_alias ${nsp} node lambda {mode name tag proxy args} {
+        set cmd [list with_eval ${name} interp_execNodeCmd_[get_option output_format] ${mode} ${name} ${tag} [top_proxy] {*}${args}]
         set node [uplevel ${cmd}]
-
-        if { [top_proxy] ne {} } {
-            $node setAttribute x-proxy [top_proxy]
-        }
-
         return $node
     }
-
 
 
     # nest argument holds nested calls in the procs below
@@ -226,12 +49,8 @@ define_lang ::nest::lang {
 
         {dispatcher} ${id}
 
-        set cmd [list {node} [top_mode] $name $tag -x-id ${id} {*}$args]
+        set cmd [list {node} [top_mode] $name $tag [top_proxy] -x-id ${id} {*}$args]
         set node [uplevel ${cmd}]
-        if { [top_proxy] ne {} } {
-            $node setAttribute x-proxy [top_proxy]
-        }
-
         return $node
 
     }
@@ -414,13 +233,13 @@ define_lang ::nest::lang {
         set decl_type $tag
         set decl_name $arg0
 
-        set cmd [list with_mode {decl} {node} {decl} $decl_name $decl_type {*}$args]
+        set cmd [list ::nest::core::with_mode {decl} {node} {decl} $decl_name $decl_type [top_proxy] {*}$args]
         set node [{*}${cmd}]  ;# uplevel $cmd
 
         # get full forward name and register the forward
         set forward_name [gen_eval_name $decl_name]
         set ctx [list $decl_type $decl_name]
-        set dotted_nest [list with_mode {inst} $decl_type $forward_name]
+        set dotted_nest [list ::nest::core::with_mode {inst} $decl_type $forward_name]
         set dotted_nest [list with_proxy [top_proxy] with_ctx $ctx {*}$dotted_nest] 
         {forward} $forward_name {*}$dotted_nest
         return $node
@@ -439,8 +258,9 @@ define_lang ::nest::lang {
             error "something wrong with instantiation statement args=[list $args]"
         }
         set inst_arg0 [list ::nest::lang::interp_t $inst_arg0]
-        set cmd [list with_mode {inst} {node} {inst} ${inst_name} ${inst_type} ${inst_arg0}]
+        set cmd [list ::nest::core::with_mode {inst} {node} {inst} ${inst_name} ${inst_type} [top_proxy] ${inst_arg0}]
         set node [uplevel ${cmd}]
+        $node setAttribute x-id $inst_name
         return $node
     }
 
@@ -450,13 +270,13 @@ define_lang ::nest::lang {
         lassign [top_ctx] ctx_tag ctx_name
         set inst_type $ctx_tag
         set inst_name $tag   ;# for inst_type=struct.slot => tag=struct.name => arg0=name
-        set cmd [list with_mode {inst} {node} {inst} ${inst_name} ${inst_type} {*}$args]
+        set cmd [list ::nest::core::with_mode {inst} {node} {inst} ${inst_name} ${inst_type} [top_proxy] {*}$args]
         set node [uplevel ${cmd}]
         return $node
     }
 
 
-    nsp_alias {objectdecl} {typedecl}
+    nsp_alias ${nsp} {objectdecl} {typedecl}
     # nsp_route {type} eval top_mode
     # nsp_route {object} eval top_mode
     proc {type_helper} {args} {::nest::lang::type[top_mode] {*}${args}}
@@ -510,7 +330,7 @@ define_lang ::nest::lang {
         }
 
         set node [$arg0 $name {*}$args]
-        ${node} setAttribute x-$attname $attvalue
+        # ${node} setAttribute x-$attname $attvalue
         return ${node}
     }
 
@@ -539,31 +359,32 @@ define_lang ::nest::lang {
     #
 
     proc {containerinst} {attname attvalue arg0 args} {
-        set args [lassign $args argvals]
+        set argvals [lindex $args end]
+        set attributes [lrange $args 0 end-1]
         set arg0 [which $arg0]
 
         set nodes [list]
         foreach argval $argvals {
             set node [uplevel \
-                [list {qualifierinst} ${attname} ${attvalue} ${arg0} ${argval}]]
+                [list {qualifierinst} ${attname} ${attvalue} ${arg0} {*}${attributes} ${argval}]]
             lappend nodes ${node}
         }
         return ${nodes}
     }
 
-    nsp_alias {containerdecl} {qualifierdecl}
+    nsp_alias ${nsp} {containerdecl} {qualifierdecl}
 
     proc {container_helper} {args} {::nest::lang::container[top_mode] {*}${args}}
 
     proc gen_shadow_name {name} { return _${name} }
 
-    nsp_alias {shadow_alias} {lambda} {name args} {
+    nsp_alias ${nsp} shadow_alias lambda {name args} {
         rename ${name} [gen_shadow_name ${name}]
-        set cmd [list nsp_alias ${name} {*}${args}]
+        set cmd [list nsp_alias [namespace current] ${name} {*}${args}]
         uplevel ${cmd}
     }
 
-    nsp_alias {shadow} {lambda} {name args} {
+    nsp_alias ${nsp} {shadow} {lambda} {name args} {
         set cmd [list [gen_shadow_name ${name}] {*}${args}]
         uplevel ${cmd}
     }
@@ -572,16 +393,16 @@ define_lang ::nest::lang {
 
     ## basis of class/object methods
 
-    nsp_alias {@} with_eval
+    nsp_alias ${nsp} @ ::nest::core::with_eval
 
-    nsp_alias {dispatcher} {lambda} {id} {
+    nsp_alias ${nsp} dispatcher lambda {id} {
         set_dispatcher ${id} "@${id}"
-        nsp_alias "@${id}" {@} ${id}
+        nsp_alias [namespace current] "@${id}" {@} ${id}
     }
 
     ## class/object aliases, used in def of base_type and struct
-    nsp_alias object nest {object_helper}
-    nsp_alias class with_mode {decl} {nest}
+    nsp_alias ${nsp} object nest {object_helper}
+    nsp_alias ${nsp} class ::nest::core::with_mode {decl} {nest}
 
     ## qualifiers
     forward {multiple} container_helper container multiple
@@ -642,7 +463,7 @@ define_lang ::nest::lang {
         code {
             rename struct.proxy struct._proxy
 
-            nsp_alias {struct.proxy} {lambda} {target name} {
+            nsp_alias [namespace current] {struct.proxy} {lambda} {target name} {
                 with_fwd proxy nest [list with_proxy [gen_eval_name ${name}] ${target}] ${name} {
                     struct.proxy.target $target
                     struct.proxy.name $name
@@ -699,13 +520,13 @@ define_lang ::nest::lang {
 
     shadow_alias {fun} {lambda} {fun_name fun_params fun_body} {
 
-        nsp_alias [gen_eval_name ${fun_name}] {lambda} ${fun_params} ${fun_body}
+        nsp_alias ${nsp} [gen_eval_name ${fun_name}] {lambda} ${fun_params} ${fun_body}
 
         # must be last so that it returns the dom node
         # otherwise, we would have to keep the resulting 
         # node in a variable and return it at the end
 
-        with_mode {inst} shadow fun ${fun_name} {
+        ::nest::core::with_mode {inst} shadow fun ${fun_name} {
             name ${fun_name}
             multiple param ${fun_params}
             body ${fun_body}

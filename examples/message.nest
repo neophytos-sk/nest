@@ -21,16 +21,22 @@ message msg1 {
 
   body "this is a test"
 
-  from {
+  # update email record by address
+  # raise error if not found
+  from -find_by "address" {
       name "Zena Wow"
       address "zena@example.com"
   }
+
+  # create new email record
   to {
       name "Jane Awesome"
       address "jane@example.com"
   }
 
-  multiple bcc {{
+  # update email record by address
+  # if not found create new record
+  multiple bcc -find_by "address" {{
       name "Someone Great"
       address "someone@example.com"
   } {
@@ -40,7 +46,7 @@ message msg1 {
       name "Paris Love"
       address "paris@example.com"
   }}
-  
+
   multiple wordcount {{
       first "hello"
       second "123"
