@@ -12,7 +12,7 @@ define_lang ::nest::lang {
         nsp_alias [namespace current] ${name} {::nest::core::with_fwd} ${name} {*}${args}
     }
 
-    forward meta lambda {metaCmd args} {{*}$metaCmd {*}$args}
+    nsp_alias ${nsp} meta lambda {metaCmd args} {{*}$metaCmd {*}$args}
     forward keyword ::dom::createNodeCmd elementNode
 
     keyword decl
@@ -405,11 +405,11 @@ define_lang ::nest::lang {
     nsp_alias ${nsp} class ::nest::core::with_mode {decl} {nest}
 
     ## qualifiers
-    forward {multiple} container_helper container multiple
-    forward {optional} qualifier_helper optional_p true
-    forward {required} qualifier_helper optional_p false
-    forward {xor} qualifier_helper xor
-    forward {private} qualifier_helper access private
+    nsp_alias ${nsp} {multiple} container_helper container multiple
+    nsp_alias ${nsp} {optional} qualifier_helper optional_p true
+    nsp_alias ${nsp} {required} qualifier_helper optional_p false
+    nsp_alias ${nsp} {xor} qualifier_helper xor
+    nsp_alias ${nsp} {private} qualifier_helper access private
 
     ## Generic Types
 

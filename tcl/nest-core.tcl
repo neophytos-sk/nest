@@ -207,17 +207,76 @@ namespace eval ::nest::core {
 
     nsp_alias ${nsp} {interp_t} interp_if dom_p t
 
-    nsp_alias ${nsp} {interp_execNodeCmd_1} {lambda} {mode name tag proxy args} {
+    nsp_alias ${nsp} {interp_execNodeCmd_5} {lambda} {mode name tag proxy args} {
+        set node_tag [lsearch -not -inline [list ${proxy} ${tag}] {}]
+
+        if { [exists_typeof $tag] } {
+            set metatag [get_typeof $tag]
+        } else {
+            set metatag "generic_type"
+        }
+
+        set node_tag [lsearch -not -inline [list $metatag [lindex [split $tag {.}] end]] {}]
+
+        ::dom::createNodeCmd elementNode ${mode}:${node_tag}
+        set cmd \
+            [list ::dom::execNodeCmd elementNode ${mode}:${node_tag} \
+                -x-name ${name} -x-tag ${tag} -x-mode ${mode} -x-metatag $metatag {*}${args}]
+        set node [uplevel ${cmd}]
+        if { $proxy ne {} } {
+            $node setAttribute x-proxy $proxy
+        }
+        return $node
+    }
+
+    nsp_alias ${nsp} {interp_execNodeCmd_4} {lambda} {mode name tag proxy args} {
+        set node_tag [lsearch -not -inline [list ${proxy} ${tag}] {}]
+
+        if { [exists_typeof $tag] } {
+            set metatag [get_typeof $tag]
+        } else {
+            set metatag "generic_type"
+        }
+
+        ::dom::createNodeCmd elementNode ${mode}:${node_tag}
+        set cmd \
+            [list ::dom::execNodeCmd elementNode ${mode}:${node_tag} \
+                -x-name ${name} -x-tag ${tag} -x-mode ${mode} -x-metatag $metatag {*}${args}]
+        set node [uplevel ${cmd}]
+        if { $proxy ne {} } {
+            $node setAttribute x-proxy $proxy
+        }
+        return $node
+    }
+
+    nsp_alias ${nsp} {interp_execNodeCmd_3} {lambda} {mode name tag proxy args} {
+        set node_tag [lindex [split [lsearch -not -inline [list ${proxy} ${tag}] {}] {.}] end]
+        ::dom::createNodeCmd elementNode ${mode}:${node_tag}
+        set cmd \
+            [list ::dom::execNodeCmd elementNode ${mode}:${node_tag} \
+                -x-name ${name} -x-tag ${tag} -x-mode ${mode} {*}${args}]
+        set node [uplevel ${cmd}]
+        if { $proxy ne {} } {
+            $node setAttribute x-proxy $proxy
+        }
+        return $node
+    }
+
+
+    nsp_alias ${nsp} {interp_execNodeCmd_2} {lambda} {mode name tag proxy args} {
         set node_tag [lindex [split ${tag} {.}] end]
         ::dom::createNodeCmd elementNode ${mode}:${node_tag}
         set cmd \
             [list ::dom::execNodeCmd elementNode ${mode}:${node_tag} \
                 -x-name ${name} -x-tag ${tag} -x-mode ${mode} {*}${args}]
         set node [uplevel ${cmd}]
+        if { $proxy ne {} } {
+            $node setAttribute x-proxy $proxy
+        }
         return $node
     }
 
-    nsp_alias ${nsp} {interp_execNodeCmd_2} {lambda} {mode name tag proxy args} {
+    nsp_alias ${nsp} {interp_execNodeCmd_1} {lambda} {mode name tag proxy args} {
         set node_tag $tag
 
         ::dom::createNodeCmd elementNode ${mode}:${node_tag}
@@ -233,22 +292,22 @@ namespace eval ::nest::core {
 
     # default output format (inst/decl) - output_format==0
     nsp_alias ${nsp} {interp_execNodeCmd_0} {lambda} {mode name tag proxy args} {
-        if { [dom_p] } {
-            set cmd [list ::dom::execNodeCmd elementNode ${mode} -x-name ${name} -x-tag ${tag} {*}${args}]
-            set node [uplevel ${cmd}]
-            if { $proxy ne {} } {
-                $node setAttribute x-proxy $proxy
-            }
-            return $node
-        } else {
-            # TODO: remove -x-attributes from args, one way or another
-            if { [llength $args] % 2 == 1 } {
-                uplevel [lindex ${args} end]
-            } else {
-                # do nothing, dom node attributes only in args
-            }
-            return {::nest::lang::interp_noop}
+        set cmd [list ::dom::execNodeCmd elementNode ${mode} -x-name ${name} -x-tag ${tag} {*}${args}]
+        set node [uplevel ${cmd}]
+        if { $proxy ne {} } {
+            $node setAttribute x-proxy $proxy
         }
+        return $node
+    }
+
+    nsp_alias ${nsp} {interp_execNodeCmd_none} {lambda} {mode name tag proxy args} {
+        # TODO: remove -x-attributes from args, one way or another
+        if { [llength $args] % 2 == 1 } {
+            uplevel [lindex ${args} end]
+        } else {
+            # do nothing, dom node attributes only in args
+        }
+        return {::nest::lang::interp_noop}
     }
         
 }

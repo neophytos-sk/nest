@@ -8,6 +8,8 @@ if { [llength $argv] != 1 } {
     exit
 }
 
+::nest::conf::set_option output_format 5
+
 set filename [lindex $argv 0]
 set lang_nsp ::nest::data
 set doc [source_tdom $filename $lang_nsp]

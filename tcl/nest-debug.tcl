@@ -37,11 +37,11 @@ namespace eval ::nest::debug {
     }
 
     proc dump {} {
-        variable ::nest::lang::stack_nest
-        variable ::nest::lang::stack_fwd
-        variable ::nest::lang::stack_mode
-        variable ::nest::lang::stack_eval
-        variable ::nest::lang::eval_path
+        variable ::nest::core::stack_nest
+        variable ::nest::core::stack_fwd
+        variable ::nest::core::stack_mode
+        variable ::nest::core::stack_eval
+        variable ::nest::core::eval_path
         
         set vars [list]
         foreach varname [uplevel {info vars}] {
