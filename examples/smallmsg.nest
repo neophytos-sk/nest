@@ -1,0 +1,23 @@
+struct email {
+    varchar name
+    varchar address
+}
+
+struct message {
+    varchar title
+    varchar body
+    date date
+    email author
+}
+
+message msg1 {
+    title "hello world"
+    body "this is a test"
+    date "yesterday"
+    author {
+        name "zena wow"
+        address "zena@example.com"
+    }
+}
+
+
