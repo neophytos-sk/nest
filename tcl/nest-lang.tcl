@@ -15,15 +15,31 @@ define_lang ::nest::lang {
     nsp_alias ${nsp} meta lambda {metaCmd args} {{*}$metaCmd {*}$args}
     forward keyword ::dom::createNodeCmd elementNode
 
+    keyword node
     keyword decl
     keyword inst
 
-    nsp_alias ${nsp} node lambda {mode name tag proxy args} {
-        set cmd [list with_eval ${name} interp_execNodeCmd_[get_option output_format] ${mode} ${name} ${tag} [top_proxy] {*}${args}]
+    nsp_alias ${nsp} node lambda {mode name tag nest_p args} {
+        set cmd [list with_eval ${name} interp_execNodeCmd_[get_option output_format] ${mode} ${name} ${tag} $nest_p [top_eval] {*}${args}]
         set node [uplevel ${cmd}]
+
+        # if { $mode eq {decl} } {
+        # init_node $node
+        # }
+
         return $node
     }
 
+    proc init_node {node} {
+        $node appendFromScript {
+            foreach attname [$node attributes] {
+                set value [$node @$attname]
+                set slotname [string range $attname 2 end]
+                #struct.attribute.$attname $value
+                #interp_execNodeCmd_[get_option output_format] inst $slotname "struct.attribute" nest_p [top_eval] { t $value }
+            }
+        }
+    }
 
     # nest argument holds nested calls in the procs below
     proc nest {nest name args} {
@@ -49,7 +65,7 @@ define_lang ::nest::lang {
 
         {dispatcher} ${id}
 
-        set cmd [list {node} [top_mode] $name $tag [top_proxy] -x-id ${id} {*}$args]
+        set cmd [list {node} [top_mode] $name $tag true -x-id ${id} {*}$args]
         set node [uplevel ${cmd}]
         return $node
 
@@ -233,7 +249,7 @@ define_lang ::nest::lang {
         set decl_type $tag
         set decl_name $arg0
 
-        set cmd [list ::nest::core::with_mode {decl} {node} {decl} $decl_name $decl_type [top_proxy] {*}$args]
+        set cmd [list ::nest::core::with_mode {decl} {node} {decl} $decl_name $decl_type false {*}$args]
         set node [{*}${cmd}]  ;# uplevel $cmd
 
         # get full forward name and register the forward
@@ -258,7 +274,7 @@ define_lang ::nest::lang {
             error "something wrong with instantiation statement args=[list $args]"
         }
         set inst_arg0 [list ::nest::lang::interp_t $inst_arg0]
-        set cmd [list ::nest::core::with_mode {inst} {node} {inst} ${inst_name} ${inst_type} [top_proxy] ${inst_arg0}]
+        set cmd [list ::nest::core::with_mode {inst} {node} {inst} ${inst_name} ${inst_type} false ${inst_arg0}]
         set node [uplevel ${cmd}]
         $node setAttribute x-id $inst_name
         return $node
@@ -270,8 +286,9 @@ define_lang ::nest::lang {
         lassign [top_ctx] ctx_tag ctx_name
         set inst_type $ctx_tag
         set inst_name $tag   ;# for inst_type=struct.slot => tag=struct.name => arg0=name
-        set cmd [list ::nest::core::with_mode {inst} {node} {inst} ${inst_name} ${inst_type} [top_proxy] {*}$args]
+        set cmd [list ::nest::core::with_mode {inst} {node} {inst} ${inst_name} ${inst_type} false {*}$args]
         set node [uplevel ${cmd}]
+        $node setAttribute x-id $inst_name
         return $node
     }
 
@@ -330,7 +347,7 @@ define_lang ::nest::lang {
         }
 
         set node [$arg0 $name {*}$args]
-        # ${node} setAttribute x-$attname $attvalue
+        ${node} setAttribute x-$attname $attvalue
         return ${node}
     }
 
@@ -442,6 +459,7 @@ define_lang ::nest::lang {
 
     meta {class} {class {object}} {struct} {
     
+
         multiple nest type_helper attribute {
 
             required struct.attribute x-id
@@ -463,40 +481,40 @@ define_lang ::nest::lang {
         code {
             rename struct.proxy struct._proxy
 
-            nsp_alias [namespace current] {struct.proxy} {lambda} {target name} {
+            nsp_alias [namespace current] {struct.proxy} {lambda} {name target} {
                 with_fwd proxy nest [list with_proxy [gen_eval_name ${name}] ${target}] ${name} {
-                    struct.proxy.target $target
                     struct.proxy.name $name
+                    struct.proxy.target $target
                 }
             }
         }
 
         # a varying-length text string encoded using UTF-8 encoding
-        proxy struct.attribute "varchar"
+        proxy "varchar" struct.attribute
 
         # a boolean value (true or false)
-        proxy struct.attribute "bool"
+        proxy "bool" struct.attribute
 
         # a varying-bit signed integer
-        proxy struct.attribute "varint"
+        proxy "varint" struct.attribute
 
         # date timestamp
-        proxy struct.attribute "date"
+        proxy "date" struct.attribute
 
         # an 8-bit signed integer
-        proxy struct.attribute "byte"
+        proxy "byte" struct.attribute
 
         # a 16-bit signed integer
-        proxy struct.attribute "int16"
+        proxy "int16" struct.attribute
 
         # a 32-bit signed integer
-        proxy struct.attribute "int32"
+        proxy "int32" struct.attribute
 
         # a 64-bit signed integer
-        proxy struct.attribute "int64"
+        proxy "int64" struct.attribute
 
         # a 64-bit floating point number
-        proxy struct.attribute "double"
+        proxy "double" struct.attribute
 
         # Without a quantifier, the name does not exist
         # as far as "which" is concerned (TODO), except
@@ -520,7 +538,7 @@ define_lang ::nest::lang {
 
     shadow_alias {fun} {lambda} {fun_name fun_params fun_body} {
 
-        nsp_alias ${nsp} [gen_eval_name ${fun_name}] {lambda} ${fun_params} ${fun_body}
+        nsp_alias [namespace current] [gen_eval_name ${fun_name}] {lambda} ${fun_params} ${fun_body}
 
         # must be last so that it returns the dom node
         # otherwise, we would have to keep the resulting 
@@ -544,7 +562,7 @@ if { [::nest::debug::dom_p] } {
 
 define_lang ::nest::data {
 
-    upvar ::nest::lang::dispatcher {}
+    upvar ::nest::core::dispatcher {}
 
     namespace import ::nest::lang::*
     namespace path [list ::nest::data ::nest::lang]

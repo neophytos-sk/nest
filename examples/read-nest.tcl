@@ -8,7 +8,7 @@ if { [llength $argv] != 1 } {
     exit
 }
 
-::nest::conf::set_option output_format 5
+#::nest::conf::set_option output_format "oo"
 
 set filename [lindex $argv 0]
 set lang_nsp ::nest::data

@@ -1,75 +1,75 @@
 <lang x-nsp="::nest::lang">
-    <decl x-name="struct" x-tag="meta" x-id="struct">
-        <decl x-name="attribute" x-tag="multiple" x-id="struct.attribute" x-container="multiple">
-            <decl x-name="id" x-tag="struct.attribute" x-optional_p="false"/>
-            <decl x-name="tag" x-tag="struct.attribute" x-optional_p="false"/>
-            <decl x-name="name" x-tag="struct.attribute" x-optional_p="false"/>
-            <decl x-name="default_value" x-tag="struct.attribute" x-default_value="" x-optional_p="true"/>
-            <decl x-name="optional_p" x-tag="struct.attribute" x-optional_p="true"/>
-            <decl x-name="container" x-tag="struct.attribute" x-optional_p="true"/>
-            <decl x-name="proxy" x-tag="struct.attribute" x-optional_p="true"/>
+    <decl x-name="struct" x-tag="" x-parent="" x-id="struct">
+        <decl x-name="attribute" x-tag="" x-parent="struct" x-id="struct.attribute" x-container="multiple">
+            <decl x-name="x-id" x-tag="struct.attribute" x-parent="attribute" x-optional_p="false"/>
+            <decl x-name="x-tag" x-tag="struct.attribute" x-parent="attribute" x-optional_p="false"/>
+            <decl x-name="x-name" x-tag="struct.attribute" x-parent="attribute" x-optional_p="false"/>
+            <decl x-name="x-proxy" x-tag="struct.attribute" x-parent="attribute" x-optional_p="true"/>
+            <decl x-name="x-default_value" x-tag="struct.attribute" x-parent="attribute" x-default_value="" x-optional_p="true"/>
+            <decl x-name="x-optional_p" x-tag="struct.attribute" x-parent="attribute" x-optional_p="true"/>
+            <decl x-name="x-container" x-tag="struct.attribute" x-parent="attribute" x-optional_p="true"/>
         </decl>
-        <decl x-name="proxy" x-tag="struct" x-id="struct.proxy" x-container="multiple">
-            <decl x-name="target" x-tag="struct.attribute"/>
-            <decl x-name="name" x-tag="struct.attribute"/>
+        <decl x-name="proxy" x-tag="struct" x-parent="struct" x-id="struct.proxy" x-container="multiple">
+            <decl x-name="target" x-tag="struct.attribute" x-parent="proxy"/>
+            <decl x-name="name" x-tag="struct.attribute" x-parent="proxy"/>
         </decl>
         <code>
             rename struct.proxy struct._proxy
 
-            nsp_alias {struct.proxy} {lambda} {target name} {
+            nsp_alias [namespace current] {struct.proxy} {lambda} {name target} {
                 with_fwd proxy nest [list with_proxy [gen_eval_name ${name}] ${target}] ${name} {
-                    struct.proxy.target $target
                     struct.proxy.name $name
+                    struct.proxy.target $target
                 }
             }
         </code>
-        <decl x-name="varchar" x-tag="proxy" x-id="struct.varchar">
-            <inst x-name="struct.proxy.target" x-tag="struct.attribute">struct.attribute</inst>
-            <inst x-name="struct.proxy.name" x-tag="struct.attribute">varchar</inst>
+        <decl x-name="varchar" x-tag="proxy" x-parent="struct" x-id="struct.varchar">
+            <inst x-name="struct.proxy.name" x-tag="struct.attribute" x-parent="varchar" x-id="struct.proxy.name">varchar</inst>
+            <inst x-name="struct.proxy.target" x-tag="struct.attribute" x-parent="varchar" x-id="struct.proxy.target">struct.attribute</inst>
         </decl>
-        <decl x-name="bool" x-tag="proxy" x-id="struct.bool">
-            <inst x-name="struct.proxy.target" x-tag="struct.attribute">struct.attribute</inst>
-            <inst x-name="struct.proxy.name" x-tag="struct.attribute">bool</inst>
+        <decl x-name="bool" x-tag="proxy" x-parent="struct" x-id="struct.bool">
+            <inst x-name="struct.proxy.name" x-tag="struct.attribute" x-parent="bool" x-id="struct.proxy.name">bool</inst>
+            <inst x-name="struct.proxy.target" x-tag="struct.attribute" x-parent="bool" x-id="struct.proxy.target">struct.attribute</inst>
         </decl>
-        <decl x-name="varint" x-tag="proxy" x-id="struct.varint">
-            <inst x-name="struct.proxy.target" x-tag="struct.attribute">struct.attribute</inst>
-            <inst x-name="struct.proxy.name" x-tag="struct.attribute">varint</inst>
+        <decl x-name="varint" x-tag="proxy" x-parent="struct" x-id="struct.varint">
+            <inst x-name="struct.proxy.name" x-tag="struct.attribute" x-parent="varint" x-id="struct.proxy.name">varint</inst>
+            <inst x-name="struct.proxy.target" x-tag="struct.attribute" x-parent="varint" x-id="struct.proxy.target">struct.attribute</inst>
         </decl>
-        <decl x-name="date" x-tag="proxy" x-id="struct.date">
-            <inst x-name="struct.proxy.target" x-tag="struct.attribute">struct.attribute</inst>
-            <inst x-name="struct.proxy.name" x-tag="struct.attribute">date</inst>
+        <decl x-name="date" x-tag="proxy" x-parent="struct" x-id="struct.date">
+            <inst x-name="struct.proxy.name" x-tag="struct.attribute" x-parent="date" x-id="struct.proxy.name">date</inst>
+            <inst x-name="struct.proxy.target" x-tag="struct.attribute" x-parent="date" x-id="struct.proxy.target">struct.attribute</inst>
         </decl>
-        <decl x-name="byte" x-tag="proxy" x-id="struct.byte">
-            <inst x-name="struct.proxy.target" x-tag="struct.attribute">struct.attribute</inst>
-            <inst x-name="struct.proxy.name" x-tag="struct.attribute">byte</inst>
+        <decl x-name="byte" x-tag="proxy" x-parent="struct" x-id="struct.byte">
+            <inst x-name="struct.proxy.name" x-tag="struct.attribute" x-parent="byte" x-id="struct.proxy.name">byte</inst>
+            <inst x-name="struct.proxy.target" x-tag="struct.attribute" x-parent="byte" x-id="struct.proxy.target">struct.attribute</inst>
         </decl>
-        <decl x-name="int16" x-tag="proxy" x-id="struct.int16">
-            <inst x-name="struct.proxy.target" x-tag="struct.attribute">struct.attribute</inst>
-            <inst x-name="struct.proxy.name" x-tag="struct.attribute">int16</inst>
+        <decl x-name="int16" x-tag="proxy" x-parent="struct" x-id="struct.int16">
+            <inst x-name="struct.proxy.name" x-tag="struct.attribute" x-parent="int16" x-id="struct.proxy.name">int16</inst>
+            <inst x-name="struct.proxy.target" x-tag="struct.attribute" x-parent="int16" x-id="struct.proxy.target">struct.attribute</inst>
         </decl>
-        <decl x-name="int32" x-tag="proxy" x-id="struct.int32">
-            <inst x-name="struct.proxy.target" x-tag="struct.attribute">struct.attribute</inst>
-            <inst x-name="struct.proxy.name" x-tag="struct.attribute">int32</inst>
+        <decl x-name="int32" x-tag="proxy" x-parent="struct" x-id="struct.int32">
+            <inst x-name="struct.proxy.name" x-tag="struct.attribute" x-parent="int32" x-id="struct.proxy.name">int32</inst>
+            <inst x-name="struct.proxy.target" x-tag="struct.attribute" x-parent="int32" x-id="struct.proxy.target">struct.attribute</inst>
         </decl>
-        <decl x-name="int64" x-tag="proxy" x-id="struct.int64">
-            <inst x-name="struct.proxy.target" x-tag="struct.attribute">struct.attribute</inst>
-            <inst x-name="struct.proxy.name" x-tag="struct.attribute">int64</inst>
+        <decl x-name="int64" x-tag="proxy" x-parent="struct" x-id="struct.int64">
+            <inst x-name="struct.proxy.name" x-tag="struct.attribute" x-parent="int64" x-id="struct.proxy.name">int64</inst>
+            <inst x-name="struct.proxy.target" x-tag="struct.attribute" x-parent="int64" x-id="struct.proxy.target">struct.attribute</inst>
         </decl>
-        <decl x-name="double" x-tag="proxy" x-id="struct.double">
-            <inst x-name="struct.proxy.target" x-tag="struct.attribute">struct.attribute</inst>
-            <inst x-name="struct.proxy.name" x-tag="struct.attribute">double</inst>
+        <decl x-name="double" x-tag="proxy" x-parent="struct" x-id="struct.double">
+            <inst x-name="struct.proxy.name" x-tag="struct.attribute" x-parent="double" x-id="struct.proxy.name">double</inst>
+            <inst x-name="struct.proxy.target" x-tag="struct.attribute" x-parent="double" x-id="struct.proxy.target">struct.attribute</inst>
         </decl>
-        <decl x-name="id" x-tag="struct.attribute" x-proxy="struct.varchar" x-optional_p="false"/>
-        <decl x-name="name" x-tag="struct.attribute" x-proxy="struct.varchar" x-optional_p="false"/>
-        <decl x-name="tag" x-tag="struct.attribute" x-proxy="struct.varchar" x-optional_p="false"/>
-        <decl x-name="proxy" x-tag="struct.attribute" x-proxy="struct.varchar" x-optional_p="true"/>
-        <decl x-name="pk" x-tag="struct.attribute" x-proxy="struct.varchar" x-optional_p="true"/>
-        <decl x-name="is_final_if_no_scope" x-tag="struct.attribute" x-proxy="struct.varchar" x-optional_p="true"/>
+        <decl x-name="x-id" x-tag="struct.attribute" x-parent="struct" x-proxy="struct.varchar" x-optional_p="false"/>
+        <decl x-name="x-name" x-tag="struct.attribute" x-parent="struct" x-proxy="struct.varchar" x-optional_p="false"/>
+        <decl x-name="x-tag" x-tag="struct.attribute" x-parent="struct" x-proxy="struct.varchar" x-optional_p="false"/>
+        <decl x-name="x-proxy" x-tag="struct.attribute" x-parent="struct" x-proxy="struct.varchar" x-optional_p="true"/>
+        <decl x-name="pk" x-tag="struct.attribute" x-parent="struct" x-proxy="struct.varchar" x-optional_p="true"/>
+        <decl x-name="is_final_if_no_scope" x-tag="struct.attribute" x-parent="struct" x-proxy="struct.varchar" x-optional_p="true"/>
     </decl>
-    <decl x-name="fun" x-tag="struct" x-id="fun">
-        <decl x-name="name" x-tag="struct.attribute" x-proxy="struct.varchar"/>
-        <decl x-name="param" x-tag="struct.attribute" x-default_value="" x-proxy="struct.varchar" x-container="multiple"/>
-        <decl x-name="body" x-tag="struct.attribute" x-proxy="struct.varchar"/>
+    <decl x-name="fun" x-tag="struct" x-parent="" x-id="fun">
+        <decl x-name="name" x-tag="struct.attribute" x-parent="fun" x-proxy="struct.varchar"/>
+        <decl x-name="param" x-tag="struct.attribute" x-parent="fun" x-default_value="" x-proxy="struct.varchar" x-container="multiple"/>
+        <decl x-name="body" x-tag="struct.attribute" x-parent="fun" x-proxy="struct.varchar"/>
     </decl>
 </lang>
 
@@ -80,144 +80,144 @@ hello world
 num_between_p 3 7 9 = 0
 num_between_p 15 7 27 = 1
 <nest>
-    <decl x-name="email" x-tag="struct" x-id="email">
-        <decl x-name="name" x-tag="struct.attribute" x-default_value="" x-proxy="struct.varchar"/>
-        <decl x-name="address" x-tag="struct.attribute" x-proxy="struct.varchar"/>
-        <inst x-name="struct.pk" x-tag="struct.attribute">address</inst>
+    <decl x-name="email" x-tag="struct" x-parent="" x-id="email">
+        <decl x-name="name" x-tag="struct.attribute" x-parent="email" x-default_value="" x-proxy="struct.varchar"/>
+        <decl x-name="address" x-tag="struct.attribute" x-parent="email" x-proxy="struct.varchar"/>
+        <inst x-name="struct.pk" x-tag="struct.attribute" x-parent="email" x-proxy="struct.varchar" x-id="struct.pk">address</inst>
     </decl>
-    <decl x-name="file" x-tag="struct" x-id="file">
-        <decl x-name="name" x-tag="struct.attribute" x-proxy="struct.varchar"/>
-        <decl x-name="mime_type" x-tag="struct.attribute" x-proxy="struct.varchar"/>
-        <decl x-name="size" x-tag="struct.attribute" x-proxy="struct.int32"/>
+    <decl x-name="file" x-tag="struct" x-parent="" x-id="file">
+        <decl x-name="name" x-tag="struct.attribute" x-parent="file" x-proxy="struct.varchar"/>
+        <decl x-name="mime_type" x-tag="struct.attribute" x-parent="file" x-proxy="struct.varchar"/>
+        <decl x-name="size" x-tag="struct.attribute" x-parent="file" x-proxy="struct.int32"/>
     </decl>
-    <decl x-name="folder" x-tag="struct" x-id="folder">
-        <decl x-name="name" x-tag="struct.attribute" x-proxy="struct.varchar"/>
-        <decl x-name="num_items" x-tag="struct.attribute" x-proxy="struct.int32"/>
+    <decl x-name="folder" x-tag="struct" x-parent="" x-id="folder">
+        <decl x-name="name" x-tag="struct.attribute" x-parent="folder" x-proxy="struct.varchar"/>
+        <decl x-name="num_items" x-tag="struct.attribute" x-parent="folder" x-proxy="struct.int32"/>
     </decl>
-    <decl x-name="category" x-tag="struct" x-id="category">
-        <decl x-name="category_name" x-tag="struct.attribute" x-proxy="struct.varchar"/>
-        <decl x-name="parent_category" x-tag="struct.attribute" x-proxy="struct.varchar"/>
+    <decl x-name="category" x-tag="struct" x-parent="" x-id="category">
+        <decl x-name="category_name" x-tag="struct.attribute" x-parent="category" x-proxy="struct.varchar"/>
+        <decl x-name="parent_category" x-tag="struct.attribute" x-parent="category" x-proxy="struct.varchar"/>
     </decl>
-    <decl x-name="word_count_pair" x-tag="struct" x-id="word_count_pair">
-        <decl x-name="word" x-tag="struct.attribute" x-proxy="struct.varchar"/>
-        <decl x-name="count" x-tag="struct.attribute" x-proxy="struct.varint"/>
+    <decl x-name="word_count_pair" x-tag="struct" x-parent="" x-id="word_count_pair">
+        <decl x-name="word" x-tag="struct.attribute" x-parent="word_count_pair" x-proxy="struct.varchar"/>
+        <decl x-name="count" x-tag="struct.attribute" x-parent="word_count_pair" x-proxy="struct.varint"/>
     </decl>
-    <decl x-name="message" x-tag="struct" x-id="message">
-        <inst x-name="struct.pk" x-tag="struct.attribute">message_id</inst>
-        <inst x-name="struct.is_final_if_no_scope" x-tag="struct.attribute">yes</inst>
-        <decl x-name="message_id" x-tag="struct.attribute" x-proxy="struct.varint"/>
-        <decl x-name="device" x-tag="struct.attribute" x-default_value="sms" x-proxy="struct.varchar"/>
-        <decl x-name="num_comments" x-tag="struct.attribute" x-default_value="0" x-proxy="struct.int16"/>
-        <decl x-name="subject" x-tag="struct.attribute" x-proxy="struct.varchar"/>
-        <decl x-name="body" x-tag="struct.attribute" x-proxy="struct.varchar"/>
-        <decl x-name="from" x-tag="email" x-id="message.from"/>
-        <decl x-name="to" x-tag="email" x-id="message.to" x-container="multiple"/>
-        <decl x-name="cc" x-tag="email" x-id="message.cc" x-default_value="" x-container="multiple"/>
-        <decl x-name="bcc" x-tag="email" x-id="message.bcc" x-default_value="" x-container="multiple"/>
-        <decl x-name="public_p" x-tag="struct.attribute" x-default_value="false" x-proxy="struct.bool"/>
-        <decl x-name="categories" x-tag="category" x-id="message.categories" x-default_value="" x-container="multiple"/>
-        <decl x-name="folders" x-tag="folder" x-id="message.folders" x-default_value="" x-container="multiple"/>
-        <decl x-name="tags" x-tag="struct.attribute" x-default_value="" x-proxy="struct.varchar" x-container="multiple"/>
-        <decl x-name="attachment" x-tag="file" x-id="message.attachment" x-default_value="" x-container="multiple"/>
-        <decl x-name="_wordcount_X" x-tag="struct" x-id="message._wordcount_X">
-            <decl x-name="word" x-tag="struct.attribute" x-proxy="struct.varchar"/>
-            <decl x-name="count" x-tag="struct.attribute" x-proxy="struct.int32"/>
+    <decl x-name="message" x-tag="struct" x-parent="" x-id="message">
+        <inst x-name="struct.pk" x-tag="struct.attribute" x-parent="message" x-proxy="struct.varchar" x-id="struct.pk">message_id</inst>
+        <inst x-name="struct.is_final_if_no_scope" x-tag="struct.attribute" x-parent="message" x-proxy="struct.varchar" x-id="struct.is_final_if_no_scope">yes</inst>
+        <decl x-name="message_id" x-tag="struct.attribute" x-parent="message" x-proxy="struct.varint"/>
+        <decl x-name="device" x-tag="struct.attribute" x-parent="message" x-default_value="sms" x-proxy="struct.varchar"/>
+        <decl x-name="num_comments" x-tag="struct.attribute" x-parent="message" x-default_value="0" x-proxy="struct.int16"/>
+        <decl x-name="subject" x-tag="struct.attribute" x-parent="message" x-proxy="struct.varchar"/>
+        <decl x-name="body" x-tag="struct.attribute" x-parent="message" x-proxy="struct.varchar"/>
+        <decl x-name="from" x-tag="email" x-parent="message" x-id="message.from"/>
+        <decl x-name="to" x-tag="email" x-parent="message" x-id="message.to" x-container="multiple"/>
+        <decl x-name="cc" x-tag="email" x-parent="message" x-id="message.cc" x-default_value="" x-container="multiple"/>
+        <decl x-name="bcc" x-tag="email" x-parent="message" x-id="message.bcc" x-default_value="" x-container="multiple"/>
+        <decl x-name="public_p" x-tag="struct.attribute" x-parent="message" x-default_value="false" x-proxy="struct.bool"/>
+        <decl x-name="categories" x-tag="category" x-parent="message" x-id="message.categories" x-default_value="" x-container="multiple"/>
+        <decl x-name="folders" x-tag="folder" x-parent="message" x-id="message.folders" x-default_value="" x-container="multiple"/>
+        <decl x-name="tags" x-tag="struct.attribute" x-parent="message" x-default_value="" x-proxy="struct.varchar" x-container="multiple"/>
+        <decl x-name="attachment" x-tag="file" x-parent="message" x-id="message.attachment" x-default_value="" x-container="multiple"/>
+        <decl x-name="_wordcount_X" x-tag="struct" x-parent="message" x-id="message._wordcount_X">
+            <decl x-name="word" x-tag="struct.attribute" x-parent="_wordcount_X" x-proxy="struct.varchar"/>
+            <decl x-name="count" x-tag="struct.attribute" x-parent="_wordcount_X" x-proxy="struct.int32"/>
         </decl>
-        <decl x-name="wordcount_X" x-tag="message._wordcount_X" x-id="message.wordcount_X" x-container="multiple"/>
-        <decl x-name="wordcount_Y" x-tag="word_count_pair" x-id="message.wordcount_Y" x-container="multiple"/>
-        <decl x-name="wordcount_Z" x-tag="word_count_pair" x-id="message.wordcount_Z" x-default_value="" x-container="multiple"/>
-        <decl x-name="words" x-tag="struct.attribute" x-proxy="struct.varchar" x-container="multiple"/>
-        <decl x-name="wordcount_V" x-tag="pair" x-id="message.wordcount_V">
-            <decl x-name="first" x-tag="struct.attribute" x-proxy="struct.varchar"/>
-            <decl x-name="second" x-tag="struct.attribute" x-proxy="struct.varint"/>
+        <decl x-name="wordcount_X" x-tag="message._wordcount_X" x-parent="message" x-id="message.wordcount_X" x-container="multiple"/>
+        <decl x-name="wordcount_Y" x-tag="word_count_pair" x-parent="message" x-id="message.wordcount_Y" x-container="multiple"/>
+        <decl x-name="wordcount_Z" x-tag="word_count_pair" x-parent="message" x-id="message.wordcount_Z" x-default_value="" x-container="multiple"/>
+        <decl x-name="words" x-tag="struct.attribute" x-parent="message" x-proxy="struct.varchar" x-container="multiple"/>
+        <decl x-name="wordcount_V" x-tag="pair" x-parent="message" x-id="message.wordcount_V">
+            <decl x-name="first" x-tag="struct.attribute" x-parent="wordcount_V" x-proxy="struct.varchar"/>
+            <decl x-name="second" x-tag="struct.attribute" x-parent="wordcount_V" x-proxy="struct.varint"/>
         </decl>
-        <decl x-name="wordcount_U" x-tag="pair" x-id="message.wordcount_U">
-            <decl x-name="first" x-tag="struct.attribute" x-proxy="struct.varchar"/>
-            <decl x-name="second" x-tag="struct.attribute" x-proxy="struct.varint"/>
+        <decl x-name="wordcount_U" x-tag="pair" x-parent="message" x-id="message.wordcount_U">
+            <decl x-name="first" x-tag="struct.attribute" x-parent="wordcount_U" x-proxy="struct.varchar"/>
+            <decl x-name="second" x-tag="struct.attribute" x-parent="wordcount_U" x-proxy="struct.varint"/>
         </decl>
-        <decl x-name="wordcount_T" x-tag="pair" x-id="message.wordcount_T" x-container="multiple">
-            <decl x-name="first" x-tag="struct.attribute" x-proxy="struct.varchar"/>
-            <decl x-name="second" x-tag="struct.attribute" x-proxy="struct.varint"/>
+        <decl x-name="wordcount_T" x-tag="pair" x-parent="message" x-id="message.wordcount_T" x-container="multiple">
+            <decl x-name="first" x-tag="struct.attribute" x-parent="wordcount_T" x-proxy="struct.varchar"/>
+            <decl x-name="second" x-tag="struct.attribute" x-parent="wordcount_T" x-proxy="struct.varint"/>
         </decl>
     </decl>
-    <inst x-name="msg4" x-tag="message" x-id="msg4">
-        <inst x-name="message.subject" x-tag="struct.attribute">hello</inst>
-        <inst x-name="message.body" x-tag="struct.attribute">this is a test</inst>
-        <inst x-name="message.from" x-tag="email">
-            <inst x-name="email.name" x-tag="struct.attribute">zena wow</inst>
-            <inst x-name="email.address" x-tag="struct.attribute">zena@example.com</inst>
+    <inst x-name="msg4" x-tag="message" x-parent="" x-id="msg4">
+        <inst x-name="message.subject" x-tag="struct.attribute" x-parent="msg4" x-proxy="struct.varchar" x-id="message.subject">hello</inst>
+        <inst x-name="message.body" x-tag="struct.attribute" x-parent="msg4" x-proxy="struct.varchar" x-id="message.body">this is a test</inst>
+        <inst x-name="message.from" x-tag="email" x-parent="msg4" x-id="message.from">
+            <inst x-name="email.name" x-tag="struct.attribute" x-parent="message.from" x-proxy="struct.varchar" x-id="email.name">zena wow</inst>
+            <inst x-name="email.address" x-tag="struct.attribute" x-parent="message.from" x-proxy="struct.varchar" x-id="email.address">zena@example.com</inst>
         </inst>
-        <inst x-name="message.to" x-tag="email">
-            <inst x-name="email.name" x-tag="struct.attribute">paris love</inst>
-            <inst x-name="email.address" x-tag="struct.attribute">bff@example.com</inst>
+        <inst x-name="message.to" x-tag="email" x-parent="msg4" x-id="message.to">
+            <inst x-name="email.name" x-tag="struct.attribute" x-parent="message.to" x-proxy="struct.varchar" x-id="email.name">paris love</inst>
+            <inst x-name="email.address" x-tag="struct.attribute" x-parent="message.to" x-proxy="struct.varchar" x-id="email.address">bff@example.com</inst>
         </inst>
-        <inst x-name="message.cc" x-tag="email">
-            <inst x-name="email.name" x-tag="struct.attribute">jane awesome</inst>
-            <inst x-name="email.address" x-tag="struct.attribute">jane@example.com</inst>
+        <inst x-name="message.cc" x-tag="email" x-parent="msg4" x-id="message.cc">
+            <inst x-name="email.name" x-tag="struct.attribute" x-parent="message.cc" x-proxy="struct.varchar" x-id="email.name">jane awesome</inst>
+            <inst x-name="email.address" x-tag="struct.attribute" x-parent="message.cc" x-proxy="struct.varchar" x-id="email.address">jane@example.com</inst>
         </inst>
-        <inst x-name="message.cc" x-tag="email">
-            <inst x-name="email.name" x-tag="struct.attribute">someone great</inst>
-            <inst x-name="email.address" x-tag="struct.attribute">someone@example.com</inst>
+        <inst x-name="message.cc" x-tag="email" x-parent="msg4" x-id="message.cc">
+            <inst x-name="email.name" x-tag="struct.attribute" x-parent="message.cc" x-proxy="struct.varchar" x-id="email.name">someone great</inst>
+            <inst x-name="email.address" x-tag="struct.attribute" x-parent="message.cc" x-proxy="struct.varchar" x-id="email.address">someone@example.com</inst>
         </inst>
-        <inst x-name="message.bcc" x-tag="email" x-container="multiple">
-            <inst x-name="email.name" x-tag="struct.attribute">vera cool</inst>
-            <inst x-name="email.address" x-tag="struct.attribute">vera@example.com</inst>
+        <inst x-name="message.bcc" x-tag="email" x-parent="msg4" x-id="message.bcc" x-container="multiple">
+            <inst x-name="email.name" x-tag="struct.attribute" x-parent="message.bcc" x-proxy="struct.varchar" x-id="email.name">vera cool</inst>
+            <inst x-name="email.address" x-tag="struct.attribute" x-parent="message.bcc" x-proxy="struct.varchar" x-id="email.address">vera@example.com</inst>
         </inst>
-        <inst x-name="message.bcc" x-tag="email" x-container="multiple">
-            <inst x-name="email.name" x-tag="struct.attribute">greg wise</inst>
-            <inst x-name="email.address" x-tag="struct.attribute">greg@example.com</inst>
+        <inst x-name="message.bcc" x-tag="email" x-parent="msg4" x-id="message.bcc" x-container="multiple">
+            <inst x-name="email.name" x-tag="struct.attribute" x-parent="message.bcc" x-proxy="struct.varchar" x-id="email.name">greg wise</inst>
+            <inst x-name="email.address" x-tag="struct.attribute" x-parent="message.bcc" x-proxy="struct.varchar" x-id="email.address">greg@example.com</inst>
         </inst>
-        <inst x-name="message.bcc" x-tag="email" x-container="multiple">
-            <inst x-name="email.name" x-tag="struct.attribute">max loyal</inst>
-            <inst x-name="email.address" x-tag="struct.attribute">max@example.com</inst>
+        <inst x-name="message.bcc" x-tag="email" x-parent="msg4" x-id="message.bcc" x-container="multiple">
+            <inst x-name="email.name" x-tag="struct.attribute" x-parent="message.bcc" x-proxy="struct.varchar" x-id="email.name">max loyal</inst>
+            <inst x-name="email.address" x-tag="struct.attribute" x-parent="message.bcc" x-proxy="struct.varchar" x-id="email.address">max@example.com</inst>
         </inst>
-        <inst x-name="message.wordcount_X" x-tag="message._wordcount_X" x-container="multiple">
-            <inst x-name="message._wordcount_X.word" x-tag="struct.attribute">X_the</inst>
-            <inst x-name="message._wordcount_X.count" x-tag="struct.attribute">X_123</inst>
+        <inst x-name="message.wordcount_X" x-tag="message._wordcount_X" x-parent="msg4" x-id="message.wordcount_X" x-container="multiple">
+            <inst x-name="message._wordcount_X.word" x-tag="struct.attribute" x-parent="message.wordcount_X" x-proxy="struct.varchar" x-id="message._wordcount_X.word">X_the</inst>
+            <inst x-name="message._wordcount_X.count" x-tag="struct.attribute" x-parent="message.wordcount_X" x-proxy="struct.int32" x-id="message._wordcount_X.count">X_123</inst>
         </inst>
-        <inst x-name="message.wordcount_X" x-tag="message._wordcount_X" x-container="multiple">
-            <inst x-name="message._wordcount_X.word" x-tag="struct.attribute">X_and</inst>
-            <inst x-name="message._wordcount_X.count" x-tag="struct.attribute">X_54</inst>
+        <inst x-name="message.wordcount_X" x-tag="message._wordcount_X" x-parent="msg4" x-id="message.wordcount_X" x-container="multiple">
+            <inst x-name="message._wordcount_X.word" x-tag="struct.attribute" x-parent="message.wordcount_X" x-proxy="struct.varchar" x-id="message._wordcount_X.word">X_and</inst>
+            <inst x-name="message._wordcount_X.count" x-tag="struct.attribute" x-parent="message.wordcount_X" x-proxy="struct.int32" x-id="message._wordcount_X.count">X_54</inst>
         </inst>
-        <inst x-name="message.wordcount_Y" x-tag="word_count_pair" x-container="multiple">
-            <inst x-name="word_count_pair.word" x-tag="struct.attribute">Y_the</inst>
-            <inst x-name="word_count_pair.count" x-tag="struct.attribute">Y_123</inst>
+        <inst x-name="message.wordcount_Y" x-tag="word_count_pair" x-parent="msg4" x-id="message.wordcount_Y" x-container="multiple">
+            <inst x-name="word_count_pair.word" x-tag="struct.attribute" x-parent="message.wordcount_Y" x-proxy="struct.varchar" x-id="word_count_pair.word">Y_the</inst>
+            <inst x-name="word_count_pair.count" x-tag="struct.attribute" x-parent="message.wordcount_Y" x-proxy="struct.varint" x-id="word_count_pair.count">Y_123</inst>
         </inst>
-        <inst x-name="message.wordcount_Y" x-tag="word_count_pair" x-container="multiple">
-            <inst x-name="word_count_pair.word" x-tag="struct.attribute">Y_and</inst>
-            <inst x-name="word_count_pair.count" x-tag="struct.attribute">Y_54</inst>
+        <inst x-name="message.wordcount_Y" x-tag="word_count_pair" x-parent="msg4" x-id="message.wordcount_Y" x-container="multiple">
+            <inst x-name="word_count_pair.word" x-tag="struct.attribute" x-parent="message.wordcount_Y" x-proxy="struct.varchar" x-id="word_count_pair.word">Y_and</inst>
+            <inst x-name="word_count_pair.count" x-tag="struct.attribute" x-parent="message.wordcount_Y" x-proxy="struct.varint" x-id="word_count_pair.count">Y_54</inst>
         </inst>
-        <inst x-name="message.wordcount_V" x-tag="pair">
-            <inst x-name="message.wordcount_V.first" x-tag="struct.attribute">V_the</inst>
-            <inst x-name="message.wordcount_V.second" x-tag="struct.attribute">V_123</inst>
+        <inst x-name="message.wordcount_V" x-tag="pair" x-parent="msg4" x-id="message.wordcount_V">
+            <inst x-name="message.wordcount_V.first" x-tag="struct.attribute" x-parent="message.wordcount_V" x-proxy="struct.varchar" x-id="message.wordcount_V.first">V_the</inst>
+            <inst x-name="message.wordcount_V.second" x-tag="struct.attribute" x-parent="message.wordcount_V" x-proxy="struct.varint" x-id="message.wordcount_V.second">V_123</inst>
         </inst>
-        <inst x-name="message.wordcount_U" x-tag="pair">
-            <inst x-name="message.wordcount_U.first" x-tag="struct.attribute">U_the</inst>
-            <inst x-name="message.wordcount_U.second" x-tag="struct.attribute">U_123</inst>
+        <inst x-name="message.wordcount_U" x-tag="pair" x-parent="msg4" x-id="message.wordcount_U">
+            <inst x-name="message.wordcount_U.first" x-tag="struct.attribute" x-parent="message.wordcount_U" x-proxy="struct.varchar" x-id="message.wordcount_U.first">U_the</inst>
+            <inst x-name="message.wordcount_U.second" x-tag="struct.attribute" x-parent="message.wordcount_U" x-proxy="struct.varint" x-id="message.wordcount_U.second">U_123</inst>
         </inst>
-        <inst x-name="message.wordcount_T" x-tag="pair" x-container="multiple">
-            <inst x-name="message.wordcount_T.first" x-tag="struct.attribute">T_the</inst>
-            <inst x-name="message.wordcount_T.second" x-tag="struct.attribute">T_123</inst>
+        <inst x-name="message.wordcount_T" x-tag="pair" x-parent="msg4" x-id="message.wordcount_T" x-container="multiple">
+            <inst x-name="message.wordcount_T.first" x-tag="struct.attribute" x-parent="message.wordcount_T" x-proxy="struct.varchar" x-id="message.wordcount_T.first">T_the</inst>
+            <inst x-name="message.wordcount_T.second" x-tag="struct.attribute" x-parent="message.wordcount_T" x-proxy="struct.varint" x-id="message.wordcount_T.second">T_123</inst>
         </inst>
-        <inst x-name="message.wordcount_T" x-tag="pair" x-container="multiple">
-            <inst x-name="message.wordcount_T.first" x-tag="struct.attribute">T_and</inst>
-            <inst x-name="message.wordcount_T.second" x-tag="struct.attribute">T_54</inst>
+        <inst x-name="message.wordcount_T" x-tag="pair" x-parent="msg4" x-id="message.wordcount_T" x-container="multiple">
+            <inst x-name="message.wordcount_T.first" x-tag="struct.attribute" x-parent="message.wordcount_T" x-proxy="struct.varchar" x-id="message.wordcount_T.first">T_and</inst>
+            <inst x-name="message.wordcount_T.second" x-tag="struct.attribute" x-parent="message.wordcount_T" x-proxy="struct.varint" x-id="message.wordcount_T.second">T_54</inst>
         </inst>
-        <inst x-name="sayhi" x-tag="fun" x-id="msg4.sayhi">
-            <inst x-name="fun.name" x-tag="struct.attribute">sayhi</inst>
-            <inst x-name="fun.param" x-tag="struct.attribute" x-container="multiple">what</inst>
-            <inst x-name="fun.body" x-tag="struct.attribute"> puts "hello ${what} \n" </inst>
+        <inst x-name="sayhi" x-tag="fun" x-parent="msg4" x-id="msg4.sayhi">
+            <inst x-name="fun.name" x-tag="struct.attribute" x-parent="sayhi" x-proxy="struct.varchar" x-id="fun.name">sayhi</inst>
+            <inst x-name="fun.param" x-tag="struct.attribute" x-parent="sayhi" x-proxy="struct.varchar" x-id="fun.param" x-container="multiple">what</inst>
+            <inst x-name="fun.body" x-tag="struct.attribute" x-parent="sayhi" x-proxy="struct.varchar" x-id="fun.body"> puts "hello ${what} \n" </inst>
         </inst>
-        <inst x-name="num_between_p" x-tag="fun" x-id="msg4.num_between_p">
-            <inst x-name="fun.name" x-tag="struct.attribute">num_between_p</inst>
-            <inst x-name="fun.param" x-tag="struct.attribute" x-container="multiple">num</inst>
-            <inst x-name="fun.param" x-tag="struct.attribute" x-container="multiple">from</inst>
-            <inst x-name="fun.param" x-tag="struct.attribute" x-container="multiple">to</inst>
-            <inst x-name="fun.body" x-tag="struct.attribute"> expr { $num &gt;= $from &amp;&amp; $num &lt; $to } </inst>
+        <inst x-name="num_between_p" x-tag="fun" x-parent="msg4" x-id="msg4.num_between_p">
+            <inst x-name="fun.name" x-tag="struct.attribute" x-parent="num_between_p" x-proxy="struct.varchar" x-id="fun.name">num_between_p</inst>
+            <inst x-name="fun.param" x-tag="struct.attribute" x-parent="num_between_p" x-proxy="struct.varchar" x-id="fun.param" x-container="multiple">num</inst>
+            <inst x-name="fun.param" x-tag="struct.attribute" x-parent="num_between_p" x-proxy="struct.varchar" x-id="fun.param" x-container="multiple">from</inst>
+            <inst x-name="fun.param" x-tag="struct.attribute" x-parent="num_between_p" x-proxy="struct.varchar" x-id="fun.param" x-container="multiple">to</inst>
+            <inst x-name="fun.body" x-tag="struct.attribute" x-parent="num_between_p" x-proxy="struct.varchar" x-id="fun.body"> expr { $num &gt;= $from &amp;&amp; $num &lt; $to } </inst>
         </inst>
-        <inst x-name="do_nothing" x-tag="fun" x-id="msg4.do_nothing">
-            <inst x-name="fun.name" x-tag="struct.attribute">do_nothing</inst>
-            <inst x-name="fun.body" x-tag="struct.attribute"></inst>
+        <inst x-name="do_nothing" x-tag="fun" x-parent="msg4" x-id="msg4.do_nothing">
+            <inst x-name="fun.name" x-tag="struct.attribute" x-parent="do_nothing" x-proxy="struct.varchar" x-id="fun.name">do_nothing</inst>
+            <inst x-name="fun.body" x-tag="struct.attribute" x-parent="do_nothing" x-proxy="struct.varchar" x-id="fun.body"></inst>
         </inst>
     </inst>
 </nest>

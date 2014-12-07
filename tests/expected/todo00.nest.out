@@ -1,97 +1,97 @@
 <lang x-nsp="::nest::lang">
-    <decl x-name="struct" x-tag="meta" x-id="struct">
-        <decl x-name="attribute" x-tag="multiple" x-id="struct.attribute" x-container="multiple">
-            <decl x-name="id" x-tag="struct.attribute" x-optional_p="false"/>
-            <decl x-name="tag" x-tag="struct.attribute" x-optional_p="false"/>
-            <decl x-name="name" x-tag="struct.attribute" x-optional_p="false"/>
-            <decl x-name="default_value" x-tag="struct.attribute" x-default_value="" x-optional_p="true"/>
-            <decl x-name="optional_p" x-tag="struct.attribute" x-optional_p="true"/>
-            <decl x-name="container" x-tag="struct.attribute" x-optional_p="true"/>
-            <decl x-name="proxy" x-tag="struct.attribute" x-optional_p="true"/>
+    <decl x-name="struct" x-tag="" x-parent="" x-id="struct">
+        <decl x-name="attribute" x-tag="" x-parent="struct" x-id="struct.attribute" x-container="multiple">
+            <decl x-name="x-id" x-tag="struct.attribute" x-parent="attribute" x-optional_p="false"/>
+            <decl x-name="x-tag" x-tag="struct.attribute" x-parent="attribute" x-optional_p="false"/>
+            <decl x-name="x-name" x-tag="struct.attribute" x-parent="attribute" x-optional_p="false"/>
+            <decl x-name="x-proxy" x-tag="struct.attribute" x-parent="attribute" x-optional_p="true"/>
+            <decl x-name="x-default_value" x-tag="struct.attribute" x-parent="attribute" x-default_value="" x-optional_p="true"/>
+            <decl x-name="x-optional_p" x-tag="struct.attribute" x-parent="attribute" x-optional_p="true"/>
+            <decl x-name="x-container" x-tag="struct.attribute" x-parent="attribute" x-optional_p="true"/>
         </decl>
-        <decl x-name="proxy" x-tag="struct" x-id="struct.proxy" x-container="multiple">
-            <decl x-name="target" x-tag="struct.attribute"/>
-            <decl x-name="name" x-tag="struct.attribute"/>
+        <decl x-name="proxy" x-tag="struct" x-parent="struct" x-id="struct.proxy" x-container="multiple">
+            <decl x-name="target" x-tag="struct.attribute" x-parent="proxy"/>
+            <decl x-name="name" x-tag="struct.attribute" x-parent="proxy"/>
         </decl>
         <code>
             rename struct.proxy struct._proxy
 
-            nsp_alias {struct.proxy} {lambda} {target name} {
+            nsp_alias [namespace current] {struct.proxy} {lambda} {name target} {
                 with_fwd proxy nest [list with_proxy [gen_eval_name ${name}] ${target}] ${name} {
-                    struct.proxy.target $target
                     struct.proxy.name $name
+                    struct.proxy.target $target
                 }
             }
         </code>
-        <decl x-name="varchar" x-tag="proxy" x-id="struct.varchar">
-            <inst x-name="struct.proxy.target" x-tag="struct.attribute">struct.attribute</inst>
-            <inst x-name="struct.proxy.name" x-tag="struct.attribute">varchar</inst>
+        <decl x-name="varchar" x-tag="proxy" x-parent="struct" x-id="struct.varchar">
+            <inst x-name="struct.proxy.name" x-tag="struct.attribute" x-parent="varchar" x-id="struct.proxy.name">varchar</inst>
+            <inst x-name="struct.proxy.target" x-tag="struct.attribute" x-parent="varchar" x-id="struct.proxy.target">struct.attribute</inst>
         </decl>
-        <decl x-name="bool" x-tag="proxy" x-id="struct.bool">
-            <inst x-name="struct.proxy.target" x-tag="struct.attribute">struct.attribute</inst>
-            <inst x-name="struct.proxy.name" x-tag="struct.attribute">bool</inst>
+        <decl x-name="bool" x-tag="proxy" x-parent="struct" x-id="struct.bool">
+            <inst x-name="struct.proxy.name" x-tag="struct.attribute" x-parent="bool" x-id="struct.proxy.name">bool</inst>
+            <inst x-name="struct.proxy.target" x-tag="struct.attribute" x-parent="bool" x-id="struct.proxy.target">struct.attribute</inst>
         </decl>
-        <decl x-name="varint" x-tag="proxy" x-id="struct.varint">
-            <inst x-name="struct.proxy.target" x-tag="struct.attribute">struct.attribute</inst>
-            <inst x-name="struct.proxy.name" x-tag="struct.attribute">varint</inst>
+        <decl x-name="varint" x-tag="proxy" x-parent="struct" x-id="struct.varint">
+            <inst x-name="struct.proxy.name" x-tag="struct.attribute" x-parent="varint" x-id="struct.proxy.name">varint</inst>
+            <inst x-name="struct.proxy.target" x-tag="struct.attribute" x-parent="varint" x-id="struct.proxy.target">struct.attribute</inst>
         </decl>
-        <decl x-name="date" x-tag="proxy" x-id="struct.date">
-            <inst x-name="struct.proxy.target" x-tag="struct.attribute">struct.attribute</inst>
-            <inst x-name="struct.proxy.name" x-tag="struct.attribute">date</inst>
+        <decl x-name="date" x-tag="proxy" x-parent="struct" x-id="struct.date">
+            <inst x-name="struct.proxy.name" x-tag="struct.attribute" x-parent="date" x-id="struct.proxy.name">date</inst>
+            <inst x-name="struct.proxy.target" x-tag="struct.attribute" x-parent="date" x-id="struct.proxy.target">struct.attribute</inst>
         </decl>
-        <decl x-name="byte" x-tag="proxy" x-id="struct.byte">
-            <inst x-name="struct.proxy.target" x-tag="struct.attribute">struct.attribute</inst>
-            <inst x-name="struct.proxy.name" x-tag="struct.attribute">byte</inst>
+        <decl x-name="byte" x-tag="proxy" x-parent="struct" x-id="struct.byte">
+            <inst x-name="struct.proxy.name" x-tag="struct.attribute" x-parent="byte" x-id="struct.proxy.name">byte</inst>
+            <inst x-name="struct.proxy.target" x-tag="struct.attribute" x-parent="byte" x-id="struct.proxy.target">struct.attribute</inst>
         </decl>
-        <decl x-name="int16" x-tag="proxy" x-id="struct.int16">
-            <inst x-name="struct.proxy.target" x-tag="struct.attribute">struct.attribute</inst>
-            <inst x-name="struct.proxy.name" x-tag="struct.attribute">int16</inst>
+        <decl x-name="int16" x-tag="proxy" x-parent="struct" x-id="struct.int16">
+            <inst x-name="struct.proxy.name" x-tag="struct.attribute" x-parent="int16" x-id="struct.proxy.name">int16</inst>
+            <inst x-name="struct.proxy.target" x-tag="struct.attribute" x-parent="int16" x-id="struct.proxy.target">struct.attribute</inst>
         </decl>
-        <decl x-name="int32" x-tag="proxy" x-id="struct.int32">
-            <inst x-name="struct.proxy.target" x-tag="struct.attribute">struct.attribute</inst>
-            <inst x-name="struct.proxy.name" x-tag="struct.attribute">int32</inst>
+        <decl x-name="int32" x-tag="proxy" x-parent="struct" x-id="struct.int32">
+            <inst x-name="struct.proxy.name" x-tag="struct.attribute" x-parent="int32" x-id="struct.proxy.name">int32</inst>
+            <inst x-name="struct.proxy.target" x-tag="struct.attribute" x-parent="int32" x-id="struct.proxy.target">struct.attribute</inst>
         </decl>
-        <decl x-name="int64" x-tag="proxy" x-id="struct.int64">
-            <inst x-name="struct.proxy.target" x-tag="struct.attribute">struct.attribute</inst>
-            <inst x-name="struct.proxy.name" x-tag="struct.attribute">int64</inst>
+        <decl x-name="int64" x-tag="proxy" x-parent="struct" x-id="struct.int64">
+            <inst x-name="struct.proxy.name" x-tag="struct.attribute" x-parent="int64" x-id="struct.proxy.name">int64</inst>
+            <inst x-name="struct.proxy.target" x-tag="struct.attribute" x-parent="int64" x-id="struct.proxy.target">struct.attribute</inst>
         </decl>
-        <decl x-name="double" x-tag="proxy" x-id="struct.double">
-            <inst x-name="struct.proxy.target" x-tag="struct.attribute">struct.attribute</inst>
-            <inst x-name="struct.proxy.name" x-tag="struct.attribute">double</inst>
+        <decl x-name="double" x-tag="proxy" x-parent="struct" x-id="struct.double">
+            <inst x-name="struct.proxy.name" x-tag="struct.attribute" x-parent="double" x-id="struct.proxy.name">double</inst>
+            <inst x-name="struct.proxy.target" x-tag="struct.attribute" x-parent="double" x-id="struct.proxy.target">struct.attribute</inst>
         </decl>
-        <decl x-name="id" x-tag="struct.attribute" x-proxy="struct.varchar" x-optional_p="false"/>
-        <decl x-name="name" x-tag="struct.attribute" x-proxy="struct.varchar" x-optional_p="false"/>
-        <decl x-name="tag" x-tag="struct.attribute" x-proxy="struct.varchar" x-optional_p="false"/>
-        <decl x-name="proxy" x-tag="struct.attribute" x-proxy="struct.varchar" x-optional_p="true"/>
-        <decl x-name="pk" x-tag="struct.attribute" x-proxy="struct.varchar" x-optional_p="true"/>
-        <decl x-name="is_final_if_no_scope" x-tag="struct.attribute" x-proxy="struct.varchar" x-optional_p="true"/>
+        <decl x-name="x-id" x-tag="struct.attribute" x-parent="struct" x-proxy="struct.varchar" x-optional_p="false"/>
+        <decl x-name="x-name" x-tag="struct.attribute" x-parent="struct" x-proxy="struct.varchar" x-optional_p="false"/>
+        <decl x-name="x-tag" x-tag="struct.attribute" x-parent="struct" x-proxy="struct.varchar" x-optional_p="false"/>
+        <decl x-name="x-proxy" x-tag="struct.attribute" x-parent="struct" x-proxy="struct.varchar" x-optional_p="true"/>
+        <decl x-name="pk" x-tag="struct.attribute" x-parent="struct" x-proxy="struct.varchar" x-optional_p="true"/>
+        <decl x-name="is_final_if_no_scope" x-tag="struct.attribute" x-parent="struct" x-proxy="struct.varchar" x-optional_p="true"/>
     </decl>
-    <decl x-name="fun" x-tag="struct" x-id="fun">
-        <decl x-name="name" x-tag="struct.attribute" x-proxy="struct.varchar"/>
-        <decl x-name="param" x-tag="struct.attribute" x-default_value="" x-proxy="struct.varchar" x-container="multiple"/>
-        <decl x-name="body" x-tag="struct.attribute" x-proxy="struct.varchar"/>
+    <decl x-name="fun" x-tag="struct" x-parent="" x-id="fun">
+        <decl x-name="name" x-tag="struct.attribute" x-parent="fun" x-proxy="struct.varchar"/>
+        <decl x-name="param" x-tag="struct.attribute" x-parent="fun" x-default_value="" x-proxy="struct.varchar" x-container="multiple"/>
+        <decl x-name="body" x-tag="struct.attribute" x-parent="fun" x-proxy="struct.varchar"/>
     </decl>
 </lang>
 
 <nest>
-    <decl x-name="todotask_t" x-tag="struct" x-id="todotask_t">
-        <decl x-name="description" x-tag="struct.attribute" x-proxy="struct.varchar"/>
-        <decl x-name="done" x-tag="struct.attribute" x-proxy="struct.bool"/>
-        <decl x-name="due" x-tag="struct.attribute" x-proxy="struct.date"/>
+    <decl x-name="todotask_t" x-tag="struct" x-parent="" x-id="todotask_t">
+        <decl x-name="description" x-tag="struct.attribute" x-parent="todotask_t" x-proxy="struct.varchar"/>
+        <decl x-name="done" x-tag="struct.attribute" x-parent="todotask_t" x-proxy="struct.bool"/>
+        <decl x-name="due" x-tag="struct.attribute" x-parent="todotask_t" x-proxy="struct.date"/>
     </decl>
-    <decl x-name="todolist_t" x-tag="struct" x-id="todolist_t">
-        <decl x-name="task" x-tag="todotask_t" x-id="todolist_t.task" x-container="multiple"/>
+    <decl x-name="todolist_t" x-tag="struct" x-parent="" x-id="todolist_t">
+        <decl x-name="task" x-tag="todotask_t" x-parent="todolist_t" x-id="todolist_t.task" x-container="multiple"/>
     </decl>
-    <inst x-name="worktodo" x-tag="todolist_t" x-id="worktodo">
-        <inst x-name="todolist_t.task" x-tag="todotask_t">
-            <inst x-name="todotask_t.description" x-tag="struct.attribute">finish user interface for X</inst>
-            <inst x-name="todotask_t.done" x-tag="struct.attribute">false</inst>
-            <inst x-name="todotask_t.due" x-tag="struct.attribute">tomorrow</inst>
+    <inst x-name="worktodo" x-tag="todolist_t" x-parent="" x-id="worktodo">
+        <inst x-name="todolist_t.task" x-tag="todotask_t" x-parent="worktodo" x-id="todolist_t.task">
+            <inst x-name="todotask_t.description" x-tag="struct.attribute" x-parent="todolist_t.task" x-proxy="struct.varchar" x-id="todotask_t.description">finish user interface for X</inst>
+            <inst x-name="todotask_t.done" x-tag="struct.attribute" x-parent="todolist_t.task" x-proxy="struct.bool" x-id="todotask_t.done">false</inst>
+            <inst x-name="todotask_t.due" x-tag="struct.attribute" x-parent="todolist_t.task" x-proxy="struct.date" x-id="todotask_t.due">tomorrow</inst>
         </inst>
-        <inst x-name="todolist_t.task" x-tag="todotask_t">
-            <inst x-name="todotask_t.description" x-tag="struct.attribute">xmas party 2014</inst>
-            <inst x-name="todotask_t.due" x-tag="struct.attribute">2014-12-23</inst>
-            <inst x-name="todotask_t.done" x-tag="struct.attribute">false</inst>
+        <inst x-name="todolist_t.task" x-tag="todotask_t" x-parent="worktodo" x-id="todolist_t.task">
+            <inst x-name="todotask_t.description" x-tag="struct.attribute" x-parent="todolist_t.task" x-proxy="struct.varchar" x-id="todotask_t.description">xmas party 2014</inst>
+            <inst x-name="todotask_t.due" x-tag="struct.attribute" x-parent="todolist_t.task" x-proxy="struct.date" x-id="todotask_t.due">2014-12-23</inst>
+            <inst x-name="todotask_t.done" x-tag="struct.attribute" x-parent="todolist_t.task" x-proxy="struct.bool" x-id="todotask_t.done">false</inst>
         </inst>
     </inst>
 </nest>
