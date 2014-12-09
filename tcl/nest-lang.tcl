@@ -236,7 +236,7 @@ define_lang ::nest::lang {
 
     ### HELPERS
  
-    proc typedecl {args} {
+    proc base_typedecl {args} {
         
         set tag [top_fwd]  ;# varchar nsp -> tag=varchar name=nsp
 
@@ -261,7 +261,7 @@ define_lang ::nest::lang {
         return $node
     }
 
-    proc typeinst {args} {
+    proc base_typeinst {args} {
         set tag [top_fwd]  ;# varchar nsp -> tag=varchar name=nsp
 
         # message.subject "hello" 
@@ -281,7 +281,7 @@ define_lang ::nest::lang {
     }
 
     # case for composite or "unknown" types (e.g. pair<varchar,varint)
-    proc {objectinst} {args} {
+    proc {object_typeinst} {args} {
         set tag [top_fwd]
         lassign [top_ctx] ctx_tag ctx_name
         set inst_type $ctx_tag
@@ -293,11 +293,11 @@ define_lang ::nest::lang {
     }
 
 
-    nsp_alias ${nsp} {objectdecl} {typedecl}
+    nsp_alias ${nsp} {object_typedecl} {base_typedecl}
     # nsp_route {type} eval top_mode
     # nsp_route {object} eval top_mode
-    proc {type_helper} {args} {::nest::lang::type[top_mode] {*}${args}}
-    proc {object_helper} {args} {::nest::lang::object[top_mode] {*}${args}}
+    proc {base_type} {args} {::nest::lang::base_type[top_mode] {*}${args}}
+    proc {object_type} {args} {::nest::lang::object_type[top_mode] {*}${args}}
 
 
 
@@ -418,7 +418,7 @@ define_lang ::nest::lang {
     }
 
     ## class/object aliases, used in def of base_type and struct
-    nsp_alias ${nsp} object nest {object_helper}
+    nsp_alias ${nsp} object nest {object_type}
     nsp_alias ${nsp} class ::nest::core::with_mode {decl} {nest}
 
     ## qualifiers
@@ -439,7 +439,7 @@ define_lang ::nest::lang {
     # pair construct, equivalent to:
     #
     # => forward {pair} {lambda {typefirst typesecond name} {
-    #        nest {type_helper} ${name} {
+    #        nest {base_type} ${name} {
     #            ${typefirst} {first} 
     #            ${typesecond} {second}
     #        }
@@ -448,7 +448,7 @@ define_lang ::nest::lang {
     generic_type {pair} {typefirst typesecond} {
         ${typefirst} {first}
         ${typesecond} {second}
-    } {object_helper}
+    } {object_type}
 
 
     keyword code
@@ -460,7 +460,7 @@ define_lang ::nest::lang {
     meta {class} {class {object}} {struct} {
     
 
-        multiple nest type_helper attribute {
+        multiple nest base_type attribute {
 
             required struct.attribute x-id
             required struct.attribute x-tag
