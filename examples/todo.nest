@@ -5,16 +5,16 @@ struct todotask_t {
 }
 
 struct todolist_t {
-    multiple todotask_t task
+    multiple proxy task todotask_t
 }
 
 todolist_t worktodo {
-    task {
+    task "new" {
         description "finish user interface for X"
         done false
         due "tomorrow"
     }
-    task {
+    task "old" {
         description "xmas party 2014"
         due "2014-12-23"
         done false

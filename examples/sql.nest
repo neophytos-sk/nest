@@ -48,31 +48,31 @@ struct sql {
     }
 
     private struct join_expr {
-        proxy sql lhs
-        proxy sql rhs
+        proxy lhs sql
+        proxy rhs sql
 
         # should not be a proxy but a shadow alias, will do for now
-        proxy sql.mk_condition on
+        proxy on sql.mk_condition
     }
 
     private struct from_clause {
         multiple varchar table
-        multiple proxy sql subquery
-        multiple proxy sql.join_expr inner_join
-        multiple proxy sql.join_expr left_outer_join
-        multiple proxy sql.join_expr right_outer_join
-        multiple proxy sql.join_expr natural_join
+        multiple proxy subquery sql
+        multiple proxy inner_join sql.join_expr
+        multiple proxy left_outer_join sql.join_expr
+        multiple proxy right_outer_join sql.join_expr
+        multiple proxy natural_join sql.join_expr
     }
 
     # should not be a proxy but a shadow alias, will do for now
-    private optional multiple proxy sql.mk_select select_clause
-    private optional multiple proxy sql.mk_condition where_clause
+    private optional multiple proxy select_clause sql.mk_select
+    private optional multiple proxy where_clause sql.mk_condition
 
 
     optional varchar scope = {}
-    required sql.from_clause from
-    proxy sql.select_clause select
-    proxy sql.where_clause where
+    required proxy from sql.from_clause
+    proxy select sql.select_clause
+    proxy where sql.where_clause
 }
 
 
@@ -84,7 +84,7 @@ sql query_posts_1 {
         date
         author
     }
-    from { table blog_posts }
+    from "" { table blog_posts }
 }
 
 sql query_posts_2 {
@@ -95,10 +95,10 @@ sql query_posts_2 {
         date
         author
     }
-    from {
+    from "" {
         subquery blog_posts {
             multiple select {title body date author category_id}
-            from { table blog_posts }
+            from "" { table blog_posts }
         }
     }
 }
@@ -111,14 +111,15 @@ sql query_posts_3 {
         date
         author
     }
-    from {
+    from "" {
         inner_join pc {
-            lhs p { from { table blog_posts } }
-            rhs c { from { table blog_categories } }
+            lhs p { from "" { table blog_posts } }
+            rhs c { from "" { table blog_categories } }
             on { p.category_id = c.id }
         }
     }
 }
+
 
 sql query_posts_4 {
     scope {user}
@@ -128,7 +129,7 @@ sql query_posts_4 {
         date
         author
     }
-    from {
+    from "" {
         inner_join pc {
             lhs p { from { table blog_posts } }
             rhs c { from { table blog_categories } }

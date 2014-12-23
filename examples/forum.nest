@@ -6,7 +6,7 @@ struct email_t {
 
 struct user_t {
     varint user_id
-    email_t email
+    proxy email email_t
 }
 
 struct forum_t {
@@ -15,7 +15,7 @@ struct forum_t {
         varchar title
         varchar body
         date date
-        user_t author
+        proxy author user_t
     }
     multiple post_t post
 }
@@ -28,9 +28,9 @@ forum_t f1 {
             language in the making, solves chicken and egg problems
         }
         date "last tuesday"
-        author {
+        author __old__ {
             user_id "123"
-            email {
+            email __any__ {
                 name "someone great"
                 address "someone@example.com"
             }
@@ -41,9 +41,9 @@ forum_t f1 {
             nest to postgresql is coming soon
         }
         date "sunday before xmas"
-        author {
+        author __new__ {
             user_id "45"
-            email {
+            email __any__ {
                 name "zena wow"
                 address "zena@example.com"
             }

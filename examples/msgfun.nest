@@ -6,10 +6,10 @@ struct email {
 struct message {
     varchar subject
     optional varchar body = {}
-    email from
-    multiple email to
-    multiple email cc
-    multiple email bcc
+    proxy from email
+    multiple proxy to email
+    multiple proxy cc email
+    multiple proxy bcc email
     multiple pair<varchar,varint> wordcount
     multiple varchar tag
 
@@ -23,16 +23,16 @@ message msg1 {
 
     body "this is a test"
 
-    from {
+    from "" {
         name "Zena Wow"
         address "zena@example.com"
     }
-    to {
+    to "" {
         name "Jane Awesome"
         address "jane@example.com"
     }
 
-    multiple bcc {{
+    multiple bcc "new_and_old" {{
         name "Someone Great"
         address "someone@example.com"
     } {
@@ -65,4 +65,4 @@ message msg1 {
 }
 
 $(msg1) sayhi world
-$(msg1) send_msg 90
+# $(msg1) send_msg 90

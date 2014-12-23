@@ -293,7 +293,9 @@ define_lang ::nest::lang {
     }
 
 
-    nsp_alias ${nsp} {object_typedecl} {base_typedecl}
+    # DEPRECATED
+    # nsp_alias ${nsp} {object_typedecl} {base_typedecl}
+
     # nsp_route {type} eval top_mode
     # nsp_route {object} eval top_mode
     proc {base_type} {args} {::nest::lang::base_type[top_mode] {*}${args}}

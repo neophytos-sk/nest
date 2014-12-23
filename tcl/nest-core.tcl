@@ -207,7 +207,7 @@ namespace eval ::nest::core {
 
     nsp_alias ${nsp} {interp_t} interp_if dom_p t
 
-    nsp_alias ${nsp} {interp_execNodeCmd_4} {lambda} {mode name tag nest_p parent args} {
+    nsp_alias ${nsp} {interp_execNodeCmd_4} {lambda} {mode arg0 tag nest_p parent args} {
         set proxy [top_proxy]
         set node_tag [lsearch -not -inline [list ${proxy} ${tag}] {}]
 
@@ -220,7 +220,7 @@ namespace eval ::nest::core {
         ::dom::createNodeCmd elementNode ${mode}:${node_tag}
         set cmd \
             [list ::dom::execNodeCmd elementNode ${mode}:${node_tag} \
-                -x-name ${name} -x-tag ${tag} -x-mode ${mode} -x-metatag $metatag {*}${args}]
+                -x-arg0 ${arg0} -x-tag ${tag} -x-mode ${mode} -x-metatag $metatag {*}${args}]
         set node [uplevel ${cmd}]
         if { $proxy ne {} } {
             $node setAttribute x-proxy $proxy
@@ -228,13 +228,13 @@ namespace eval ::nest::core {
         return $node
     }
 
-    nsp_alias ${nsp} {interp_execNodeCmd_3} {lambda} {mode name tag nest_p parent args} {
+    nsp_alias ${nsp} {interp_execNodeCmd_3} {lambda} {mode arg0 tag nest_p parent args} {
         set proxy [top_proxy]
         set node_tag [lindex [split [lsearch -not -inline [list ${proxy} ${tag}] {}] {.}] end]
         ::dom::createNodeCmd elementNode ${mode}:${node_tag}
         set cmd \
             [list ::dom::execNodeCmd elementNode ${mode}:${node_tag} \
-                -x-name ${name} -x-tag ${tag} -x-mode ${mode} {*}${args}]
+                -x-arg0 ${arg0} -x-tag ${tag} -x-mode ${mode} {*}${args}]
         set node [uplevel ${cmd}]
         if { $proxy ne {} } {
             $node setAttribute x-proxy $proxy
@@ -243,13 +243,13 @@ namespace eval ::nest::core {
     }
 
 
-    nsp_alias ${nsp} {interp_execNodeCmd_2} {lambda} {mode name tag nest_p parent args} {
+    nsp_alias ${nsp} {interp_execNodeCmd_2} {lambda} {mode arg0 tag nest_p parent args} {
         set proxy [top_proxy]
         set node_tag [lindex [split ${tag} {.}] end]
         ::dom::createNodeCmd elementNode ${mode}:${node_tag}
         set cmd \
             [list ::dom::execNodeCmd elementNode ${mode}:${node_tag} \
-                -x-name ${name} -x-tag ${tag} -x-mode ${mode} {*}${args}]
+                -x-arg0 ${arg0} -x-tag ${tag} -x-mode ${mode} {*}${args}]
         set node [uplevel ${cmd}]
         if { $proxy ne {} } {
             $node setAttribute x-proxy $proxy
@@ -257,7 +257,7 @@ namespace eval ::nest::core {
         return $node
     }
 
-    nsp_alias ${nsp} {interp_execNodeCmd_oo} {lambda} {mode name tag nest_p parent args} {
+    nsp_alias ${nsp} {interp_execNodeCmd_oo} {lambda} {mode arg0 tag nest_p parent args} {
 
         set proxylist $::nest::core::stack_proxy
 
@@ -273,15 +273,15 @@ namespace eval ::nest::core {
 
         if { $parent eq {} } {
             set node_tag $mode
-            set attributes [list -x-name $name -x-type $tag]
+            set attributes [list -x-arg0 $arg0 -x-type $tag]
         } else {
             set node_tag $mode
             if { $mode eq {inst} } {
                 set name [lindex [split $name {.}] end]
-                set attributes [list -x-name $name]
+                set attributes [list -x-arg0 $name]
             } else {
                 set datatype [lindex [split [lindex $proxylist end] {.}] end]
-                set attributes [list -x-name $name -datatype $datatype]
+                set attributes [list -x-arg0 $name -datatype $datatype]
             }
         }
 
@@ -296,11 +296,11 @@ namespace eval ::nest::core {
     }
 
     # default output format (inst/decl) - output_format=1
-    nsp_alias ${nsp} {interp_execNodeCmd_1} {lambda} {mode name tag nest_p parent args} {
+    nsp_alias ${nsp} {interp_execNodeCmd_1} {lambda} {mode arg0 tag nest_p parent args} {
 
         set cmd \
             [list ::dom::execNodeCmd elementNode ${mode} \
-                -x-name ${name} -x-tag ${tag} -x-parent ${parent} {*}${args}]
+                -x-arg0 ${arg0} -x-tag ${tag} -x-parent ${parent} {*}${args}]
 
         set node [uplevel ${cmd}]
 
@@ -315,11 +315,11 @@ namespace eval ::nest::core {
 
    }
 
-    nsp_alias ${nsp} {interp_execNodeCmd_0} {lambda} {mode name tag nest_p parent args} {
+    nsp_alias ${nsp} {interp_execNodeCmd_0} {lambda} {mode arg0 tag nest_p parent args} {
 
         set cmd \
             [list ::dom::execNodeCmd elementNode node \
-                -x-mode ${mode} -x-name ${name} -x-tag ${tag} -x-parent ${parent} {*}${args}]
+                -x-mode ${mode} -x-arg0 ${arg0} -x-tag ${tag} -x-parent ${parent} {*}${args}]
 
         set node [uplevel ${cmd}]
 
@@ -334,7 +334,7 @@ namespace eval ::nest::core {
 
     }
 
-    nsp_alias ${nsp} {interp_execNodeCmd_none} {lambda} {mode name tag proxy nest_p parent args} {
+    nsp_alias ${nsp} {interp_execNodeCmd_none} {lambda} {mode arg0 tag proxy nest_p parent args} {
         # TODO: remove -x-attributes from args, one way or another
         if { [llength $args] % 2 == 1 } {
             uplevel [lindex ${args} end]

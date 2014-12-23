@@ -7,14 +7,14 @@ struct message {
     varchar title
     varchar body
     date date
-    email author
+    proxy author email
 }
 
 message msg1 {
     title "hello world"
     body "this is a test"
     date "yesterday"
-    author {
+    author _new_ {
         name "zena wow"
         address "zena@example.com"
     }
